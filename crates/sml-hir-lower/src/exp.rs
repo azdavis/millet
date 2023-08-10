@@ -107,7 +107,14 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::VectorExp(exp) => {
       st.err(exp.syntax(), ErrorKind::Disallowed(Disallowed::SuccMl("vector expressions")));
-      return None;
+      let last_comma =
+        exp.list_exp().into_iter().flat_map(|x| x.exp_args()).last().and_then(|x| x.comma());
+      if let Some(s) = last_comma {
+        st.err_tok(&s, ErrorKind::Trailing(Sep::Comma));
+      }
+      let exps: Vec<_> =
+        exp.list_exp().into_iter().flat_map(|x| x.exp_args()).map(|x| get(st, x.exp())).collect();
+      sml_hir::Exp::Vector(exps)
     }
     ast::Exp::SeqExp(exp) => {
       if !st.lang().exp.seq {

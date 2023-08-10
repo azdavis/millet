@@ -305,6 +305,11 @@ fn get_exp(
         Mode::Set => {}
       }
     }
+    sml_hir::Exp::Vector(exps) => {
+      for exp in exps {
+        get_exp(st, ars, scope, mode, *exp);
+      }
+    }
   }
 }
 

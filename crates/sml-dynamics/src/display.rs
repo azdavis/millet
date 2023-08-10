@@ -475,6 +475,7 @@ impl fmt::Display for ExpDisplay<'_> {
       sml_hir::Exp::Typed(exp, _, _) => {
         ExpDisplay { exp: *exp, prec: self.prec, cx: self.cx }.fmt(f)
       }
+      sml_hir::Exp::Vector(_) => todo!(),
     }
   }
 }

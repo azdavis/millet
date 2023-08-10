@@ -150,6 +150,15 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
       unify(st, exp.into(), want, got);
       want
     }
+    // Successor ML extension
+    sml_hir::Exp::Vector(exps) => {
+      let ty = st.syms_tys.tys.meta_var(Generalizable::Always);
+      for &inner in exps {
+        let inner_ty = get(st, cfg, cx, ars, inner);
+        unify(st, inner.unwrap_or(exp).into(), ty, inner_ty);
+      }
+      st.syms_tys.tys.con(vec![ty], Sym::VECTOR)
+    }
   };
   st.info.entries.tys.exp.insert(exp, TyEntry::new(ret, ty_scheme));
   if !defs.is_empty() {
@@ -233,6 +242,7 @@ fn maybe_contains_free_var(
     sml_hir::Exp::Raise(exp) | sml_hir::Exp::Typed(exp, _, _) => {
       maybe_contains_free_var(ars, *exp, name)
     }
+    sml_hir::Exp::Vector(exps) => exps.iter().any(|&exp| maybe_contains_free_var(ars, exp, name)),
   }
 }
 
@@ -353,6 +363,7 @@ pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bo
     | sml_hir::Exp::App(_, _)
     | sml_hir::Exp::Handle(_, _)
     | sml_hir::Exp::Raise(_) => true,
+    sml_hir::Exp::Vector(exps) => exps.iter().any(|&exp| maybe_effectful(ars, exp)),
   }
 }
 

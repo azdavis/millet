@@ -206,6 +206,7 @@ pub enum Exp {
   Raise(ExpIdx),
   Fn(Vec<Arm>, FnFlavor),
   Typed(ExpIdx, TyIdx, TypedFlavor),
+  Vector(Vec<ExpIdx>),
 }
 
 #[derive(Debug, Clone, Copy)]

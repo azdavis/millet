@@ -73,6 +73,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
         (Step::Val(Val::Closure(clos)), false)
       }
       sml_hir::Exp::Typed(exp, _, _) => (Step::exp(*exp), false),
+      sml_hir::Exp::Vector(_) => todo!(),
     },
     Step::Val(val) => match st.frames.pop() {
       // done evaluating
