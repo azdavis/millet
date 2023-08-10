@@ -651,7 +651,7 @@ fn get_ty_desc(
     disallow: None,
   };
   st.syms_tys.syms.finish(started, ty_info.clone(), equality);
-  let e = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info.with_default_val_env(), Item::Ty);
+  let e = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info.with_default_val_env_type(), Item::Ty);
   if let Some(e) = e {
     st.err(idx, e);
   }

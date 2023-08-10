@@ -27,8 +27,8 @@ impl<VE> TyInfo<VE>
 where
   VE: Into<ValEnv>,
 {
-  /// Returns this with the default kind of val env.
-  pub fn with_default_val_env(self) -> TyInfo<ValEnv> {
+  /// Returns this with the default type of val env.
+  pub fn with_default_val_env_type(self) -> TyInfo<ValEnv> {
     TyInfo {
       ty_scheme: self.ty_scheme,
       val_env: self.val_env.into(),

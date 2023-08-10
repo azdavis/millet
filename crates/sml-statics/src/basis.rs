@@ -186,7 +186,7 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
     .iter_syms()
     .map(|sym_info| {
       assert!(sym_info.path.prefix().is_empty(), "only built-in types are currently in this Syms");
-      (sym_info.path.last().clone(), sym_info.ty_info.clone().with_default_val_env())
+      (sym_info.path.last().clone(), sym_info.ty_info.clone().with_default_val_env_type())
     })
     .chain(aliases.into_iter().map(|(name, ty)| {
       let ti = TyInfo {

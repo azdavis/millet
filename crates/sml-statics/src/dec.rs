@@ -418,7 +418,7 @@ pub(crate) fn get_dat_binds(
     big_val_env.append(&mut val_env.clone().into());
     let ty_info =
       TyInfo { ty_scheme: datatype.ty_scheme, val_env, def: st.def(idx), disallow: None };
-    let ty_info_dve = ty_info.clone().with_default_val_env();
+    let ty_info_dve = ty_info.clone().with_default_val_env_type();
     let equality = equality::get_ty_info(
       st.info.mode,
       &st.syms_tys.syms,
