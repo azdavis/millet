@@ -337,6 +337,11 @@ fn get_pat(ars: &sml_hir::Arenas, ac: &mut TyVarSet, pat: sml_hir::PatIdx) {
         get_pat(ars, ac, pat);
       }
     }
+    sml_hir::Pat::Vector(pats) => {
+      for &pat in pats {
+        get_pat(ars, ac, pat);
+      }
+    }
   }
 }
 

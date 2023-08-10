@@ -317,5 +317,6 @@ fn rec_fn_names(ars: &sml_hir::Arenas, ac: &mut FxHashSet<Name>, pat: sml_hir::P
       rec_fn_names(ars, ac, *pat);
     }
     sml_hir::Pat::Or(_) => unreachable!("Or pat should have been denied with unreachable pattern"),
+    sml_hir::Pat::Vector(_) => unreachable!("Vector pat cannot match fn"),
   }
 }

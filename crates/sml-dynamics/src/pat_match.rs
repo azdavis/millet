@@ -60,6 +60,7 @@ pub(crate) fn get(ac: &mut ValEnv, cx: Cx<'_>, pat: sml_hir::PatIdx, val: &Val) 
       }
       false
     }
+    (sml_hir::Pat::Vector(_), _) => todo!(),
   }
 }
 

@@ -247,6 +247,11 @@ fn get_(
       ve.append(&mut fst_ve);
       (Pat::or(pm_pats, pat), ty)
     }
+    // Successor ML extension
+    sml_hir::Pat::Vector(_) => {
+      st.err(pat_idx, ErrorKind::Unsupported("vector pattern statics"));
+      (Pat::zero(Con::Any, pat), Ty::NONE)
+    }
   };
   Some(PatRet { pm_pat, ty, ty_scheme, defs })
 }
@@ -295,5 +300,6 @@ pub(crate) fn maybe_refutable(ars: &sml_hir::Arenas, pat: sml_hir::PatIdx) -> bo
     sml_hir::Pat::Or(or) => {
       maybe_refutable(ars, or.first) || or.rest.iter().any(|&pat| maybe_refutable(ars, pat))
     }
+    sml_hir::Pat::Vector(pats) => pats.iter().any(|&pat| maybe_refutable(ars, pat)),
   }
 }

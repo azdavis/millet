@@ -568,6 +568,7 @@ impl fmt::Display for PatDisplay<'_> {
         }
         Ok(())
       }
+      sml_hir::Pat::Vector(_) => todo!(),
     }
   }
 }

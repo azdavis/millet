@@ -117,8 +117,21 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       })
     }
     ast::Pat::VectorPat(pat) => {
-      st.err(pat.syntax(), ErrorKind::Disallowed(Disallowed::SuccMl("vector patterns")));
-      return None;
+      if !st.lang().successor_ml.vector {
+        st.err(pat.syntax(), ErrorKind::Disallowed(Disallowed::SuccMl("vector patterns")));
+      }
+      let last_comma =
+        pat.list_pat().into_iter().flat_map(|x| x.pat_args()).last().and_then(|x| x.comma());
+      if let Some(s) = last_comma {
+        st.err_tok(&s, ErrorKind::Trailing(Sep::Comma));
+      }
+      let pats: Vec<_> = pat
+        .list_pat()
+        .into_iter()
+        .flat_map(|x| x.pat_args())
+        .map(|x| get(st, flavor, x.pat()))
+        .collect();
+      sml_hir::Pat::Vector(pats)
     }
     ast::Pat::InfixPat(pat) => {
       let func = sml_path::Path::one(str_util::Name::new(pat.name_star_eq()?.token.text()));

@@ -332,6 +332,7 @@ pub enum Pat {
   /// also note that we parse `<pat> as <pat>` but reject when lowering.
   As(Name, PatIdx),
   Or(OrPat),
+  Vector(Vec<PatIdx>),
 }
 
 #[derive(Debug)]
