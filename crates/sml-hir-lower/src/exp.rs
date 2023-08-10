@@ -106,7 +106,9 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       })
     }
     ast::Exp::VectorExp(exp) => {
-      st.err(exp.syntax(), ErrorKind::Disallowed(Disallowed::SuccMl("vector expressions")));
+      if !st.lang().successor_ml.vector_exp {
+        st.err(exp.syntax(), ErrorKind::Disallowed(Disallowed::SuccMl("vector expressions")));
+      }
       let last_comma =
         exp.list_exp().into_iter().flat_map(|x| x.exp_args()).last().and_then(|x| x.comma());
       if let Some(s) = last_comma {

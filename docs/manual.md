@@ -247,6 +247,7 @@ Whether the `<kind>` is allowed.
 | `opt-bar`      | `false` | Optional preceding vertical bars           |
 | `opt-semi`     | `false` | Optional trailing `;` in `let` expressions |
 | `exp-row-pun`  | `false` | Record expression row punning              |
+| `vector-exp`   | `false` | Vector expressions                         |
 
 ### VS Code settings
 
