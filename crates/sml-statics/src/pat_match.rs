@@ -118,7 +118,6 @@ impl pattern_match::Lang for Lang {
             _ => return Err(CheckError),
           }
         }
-        Con::Record { .. } => return Err(CheckError),
         Con::Vector(n) => {
           if data.sym != Sym::VECTOR {
             return Err(CheckError);
@@ -129,6 +128,7 @@ impl pattern_match::Lang for Lang {
           };
           std::iter::repeat(ty).take(*n).collect()
         }
+        Con::Record { .. } => return Err(CheckError),
       },
     };
     Ok(ret)
