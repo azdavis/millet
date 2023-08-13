@@ -204,13 +204,12 @@ impl<'a> St<'a> {
 /// returns the missing pats.
 fn get_match(
   errors: &mut Vec<Error>,
-  syms_tys: &mut sml_statics_types::St,
+  mut syms_tys: &mut sml_statics_types::St,
   pats: Vec<Pat>,
   ty: Ty,
 ) -> Vec<Pat> {
   let ck = elapsed::log("pattern_match::check", || {
-    let mut cx = pat_match::Cx { syms: &syms_tys.syms, tys: &mut syms_tys.tys };
-    pattern_match::check::<pat_match::Lang>(&mut cx, pats, ty)
+    pattern_match::check::<pat_match::Lang>(&mut syms_tys, pats, ty)
   });
   let ck = match ck {
     Ok(x) => x,

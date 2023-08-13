@@ -3,18 +3,14 @@
 use fast_hash::FxHashSet;
 use pattern_match::{CheckError, Result};
 use sml_statics_types::sym::{Exn, Sym, Syms};
-use sml_statics_types::ty::{Ty, TyData, Tys};
+use sml_statics_types::ty::{Ty, TyData};
 use sml_statics_types::util::apply_bv;
 use std::collections::BTreeSet;
 
 pub(crate) type Pat = pattern_match::Pat<Lang>;
+pub(crate) type Cx<'a> = &'a mut sml_statics_types::St;
 
 pub(crate) struct Lang;
-
-pub(crate) struct Cx<'a> {
-  pub(crate) syms: &'a Syms,
-  pub(crate) tys: &'a mut Tys,
-}
 
 impl pattern_match::Lang for Lang {
   type Cx<'a> = Cx<'a>;
@@ -44,7 +40,7 @@ impl pattern_match::Lang for Lang {
           vec![Con::Any]
         }
         TyData::Con(data) => {
-          let all_cons = cons_for_sym(cx.syms, data.sym).unwrap_or_else(|| vec![Con::Any]);
+          let all_cons = cons_for_sym(&cx.syms, data.sym).unwrap_or_else(|| vec![Con::Any]);
           let cur_cons: FxHashSet<_> = cons.collect();
           // this is... a little strange.
           //
@@ -112,7 +108,7 @@ impl pattern_match::Lang for Lang {
                 TyData::Con(_) => Vec::new(),
                 TyData::Fn(fn_data) => {
                   let mut param = fn_data.param;
-                  apply_bv(cx.tys, &data.args, &mut param);
+                  apply_bv(&mut cx.tys, &data.args, &mut param);
                   vec![param]
                 }
                 _ => return Err(CheckError),
