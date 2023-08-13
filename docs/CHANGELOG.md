@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Add `language.successor-ml.<kind>` configuration to `millet.toml` for some (not all) Successor ML features. Most default to off.
+
 ## v0.12.9
 
 - Also package CLI binaries on the releases page.
