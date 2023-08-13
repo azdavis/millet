@@ -5,5 +5,5 @@ mod exp_row_pun;
 mod opt_bar;
 mod opt_semi;
 mod or_pat;
-mod vector_exp_and_pat;
+mod vector;
 mod withtype_spec;
