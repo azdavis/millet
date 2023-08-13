@@ -8,12 +8,12 @@ use sml_statics_types::util::apply_bv;
 use std::collections::BTreeSet;
 
 pub(crate) type Pat = pattern_match::Pat<Lang>;
-pub(crate) type Cx<'a> = &'a mut sml_statics_types::St;
+pub(crate) type Cx = sml_statics_types::St;
 
 pub(crate) struct Lang;
 
 impl pattern_match::Lang for Lang {
-  type Cx<'a> = Cx<'a>;
+  type Cx = Cx;
 
   type PatIdx = sml_hir::PatIdx;
 
@@ -25,7 +25,7 @@ impl pattern_match::Lang for Lang {
     Con::Any
   }
 
-  fn split<'a, I>(cx: &mut Cx<'_>, ty: &Ty, con: &Con, cons: I, depth: usize) -> Result<Vec<Con>>
+  fn split<'a, I>(cx: &mut Cx, ty: &Ty, con: &Con, cons: I, depth: usize) -> Result<Vec<Con>>
   where
     Con: 'a,
     I: Iterator<Item = &'a Con>,
@@ -86,7 +86,7 @@ impl pattern_match::Lang for Lang {
     Ok(ret)
   }
 
-  fn get_arg_tys(cx: &mut Cx<'_>, ty: &Ty, con: &Con) -> Result<Vec<Ty>> {
+  fn get_arg_tys(cx: &mut Cx, ty: &Ty, con: &Con) -> Result<Vec<Ty>> {
     let ret = match cx.tys.data(*ty) {
       TyData::None
       | TyData::BoundVar(_)
