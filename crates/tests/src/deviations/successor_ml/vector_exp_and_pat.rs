@@ -3,7 +3,7 @@
 use crate::check::check;
 
 #[test]
-fn vector_exp() {
+fn exp_default_disallow() {
   check(
     r#"
 val _ = #[1, 2]
@@ -13,7 +13,7 @@ val _ = #[1, 2]
 }
 
 #[test]
-fn vector_pat() {
+fn pat_default_disallow() {
   check(
     r#"
 val _ = fn #[x, 2] => x | _ => 2
