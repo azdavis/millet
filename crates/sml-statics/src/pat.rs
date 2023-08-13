@@ -11,7 +11,7 @@ use fast_hash::FxHashSet;
 use sml_statics_types::info::{IdStatus, ValEnv, ValInfo};
 use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme};
 use sml_statics_types::util::{get_scon, instantiate};
-use sml_statics_types::{def, env::Cx, item::Item, mode::Mode};
+use sml_statics_types::{def, env::Cx, item::Item, mode::Mode, sym::Sym};
 use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, Copy)]
@@ -248,9 +248,16 @@ fn get_(
       (Pat::or(pm_pats, pat), ty)
     }
     // Successor ML extension
-    sml_hir::Pat::Vector(_) => {
-      st.err(pat_idx, ErrorKind::Unsupported("vector pattern statics"));
-      (Pat::zero(Con::Any, pat), Ty::NONE)
+    sml_hir::Pat::Vector(pats) => {
+      let ty = st.syms_tys.tys.meta_var(Generalizable::Always);
+      let iter = pats.iter().map(|&inner| {
+        let (pm_pat, inner_ty) = get(st, cfg, ars, cx, ve, inner);
+        unify(st, inner.unwrap_or(pat_idx).into(), ty, inner_ty);
+        pm_pat
+      });
+      let pm_args: Vec<_> = iter.collect();
+      let ty = st.syms_tys.tys.con(vec![ty], Sym::VECTOR);
+      (Pat::con(Con::Vector(pm_args.len()), pm_args, pat), ty)
     }
   };
   Some(PatRet { pm_pat, ty, ty_scheme, defs })

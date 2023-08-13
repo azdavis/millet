@@ -149,6 +149,13 @@ impl fmt::Display for ConPatDisplay<'_> {
           }
         }
       }
+      Con::Vector(_) => {
+        f.write_str("#[")?;
+        let pats =
+          self.pat.args.iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::Min });
+        comma_seq(f, pats)?;
+        f.write_str("]")?;
+      }
     }
     Ok(())
   }

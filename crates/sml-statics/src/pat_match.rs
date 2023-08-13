@@ -79,7 +79,8 @@ impl pattern_match::Lang for Lang {
       | Con::Char(_)
       | Con::String(_)
       | Con::Record { .. }
-      | Con::Variant(_, _) => {
+      | Con::Variant(_, _)
+      | Con::Vector(_) => {
         vec![con.clone()]
       }
     };
@@ -118,6 +119,16 @@ impl pattern_match::Lang for Lang {
           }
         }
         Con::Record { .. } => return Err(CheckError),
+        Con::Vector(n) => {
+          if data.sym != Sym::VECTOR {
+            return Err(CheckError);
+          }
+          let ty = match data.args.as_slice() {
+            &[x] => x,
+            _ => return Err(CheckError),
+          };
+          std::iter::repeat(ty).take(*n).collect()
+        }
       },
     };
     Ok(ret)
@@ -138,6 +149,7 @@ pub(crate) enum Con {
   String(str_util::SmolStr),
   Record { labels: BTreeSet<sml_hir::Lab>, allows_other: bool },
   Variant(Sym, VariantName),
+  Vector(usize),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -146,7 +158,8 @@ pub(crate) enum VariantName {
   Exn(Exn),
 }
 
-const NON_EXN_INFINITE: [Sym; 5] = [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING];
+const NON_EXN_INFINITE: [Sym; 6] =
+  [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING, Sym::VECTOR];
 
 /// returns the value constructors for the symbol.
 ///
