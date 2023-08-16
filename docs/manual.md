@@ -242,10 +242,10 @@ Whether the `<kind>` is allowed.
 
 | Valid `<kind>` | Default | Description                                |
 | -------------- | ------- | ------------------------------------------ |
-| `or-pat`       | `true`  | Or patterns                                |
 | `do-dec`       | `false` | `do` declarations                          |
 | `opt-bar`      | `false` | Optional preceding vertical bars           |
 | `opt-semi`     | `false` | Optional trailing `;` in `let` expressions |
+| `or-pat`       | `true`  | Or patterns                                |
 | `exp-row-pun`  | `false` | Record expression row punning              |
 | `vector`       | `false` | Vector expressions and patterns            |
 

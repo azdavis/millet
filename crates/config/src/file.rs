@@ -188,13 +188,13 @@ pub struct Exp {
 #[serde(rename_all = "kebab-case")]
 pub struct SuccessorMl {
   #[serde(default)]
-  pub or_pat: Tool,
-  #[serde(default)]
   pub do_dec: bool,
   #[serde(default)]
   pub opt_bar: bool,
   #[serde(default)]
   pub opt_semi: bool,
+  #[serde(default)]
+  pub or_pat: Tool,
   #[serde(default)]
   pub exp_row_pun: bool,
   #[serde(default)]
