@@ -62,9 +62,13 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
     if let Mode::Root(root) = &ret.mode {
       // we'd like to only listen to millet.toml, not all toml, but "nested alternate groups are
       // not allowed" at time of writing.
-      let glob_pattern =
-        format!("{}/**/*.{{sml,sig,fun,cm,mlb,toml}}", root.path.as_path().display());
-      let watchers = vec![lsp_types::FileSystemWatcher { glob_pattern, kind: None }];
+      let watchers = vec![lsp_types::FileSystemWatcher {
+        glob_pattern: lsp_types::GlobPattern::Relative(lsp_types::RelativePattern {
+          base_uri: lsp_types::OneOf::Right(convert::file_url(root.path.as_path()).unwrap()),
+          pattern: "**/*.{sml,sig,fun,cm,mlb,toml}".to_owned(),
+        }),
+        kind: None,
+      }];
       let did_changed_registration =
         convert::registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
           lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
