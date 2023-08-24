@@ -399,7 +399,7 @@ fn get_sig_exp(
 
 fn gen_fresh_syms(st: &mut St<'_>, subst: &mut realize::TyRealization, ty_names: &TyNameSet) {
   let mut ac = Vec::<(StartedSym, SymTyInfo, Equality)>::new();
-  for &sym in ty_names.iter() {
+  for &sym in ty_names {
     let sym_info = st.syms_tys.syms.get(sym).unwrap();
     let mut ty_info = sym_info.ty_info.clone();
     let equality = sym_info.equality;

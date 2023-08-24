@@ -278,7 +278,7 @@ pub(crate) fn add_fixed_ty_vars(
   ty_vars: &[sml_hir::TyVar],
 ) -> generalize::FixedTyVars {
   let mut ret = generalize::FixedTyVars::default();
-  for ty_var in ty_vars.iter() {
+  for ty_var in ty_vars {
     let fv = st.syms_tys.tys.fixed_var(ty_var.clone(), src);
     if cx.fixed.insert(ty_var.clone(), fv).is_some() {
       let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
@@ -333,7 +333,7 @@ pub(crate) fn get_dat_binds(
   let mut datatypes = Vec::<Datatype>::new();
   // do a first pass through the datatypes to allow for recursive reference, and to put them in
   // scope for the types.
-  for dat_bind in dat_binds.iter() {
+  for dat_bind in dat_binds {
     let started = st.syms_tys.syms.start(st.mk_path(dat_bind.name.clone()));
     // just create the fixed ty vars, do not bring them into the scope of the cx yet.
     let mut fixed = generalize::FixedTyVars::default();

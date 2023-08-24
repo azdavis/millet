@@ -22,7 +22,7 @@ fn run_inner(
 ) -> anyhow::Result<()> {
   log::info!("start up main loop: {init:#?}");
   let mut st = init::init(init, conn.sender.clone());
-  for msg in conn.receiver.iter() {
+  for msg in &conn.receiver {
     match msg {
       lsp_server::Message::Request(req) => {
         if conn.handle_shutdown(&req)? {
