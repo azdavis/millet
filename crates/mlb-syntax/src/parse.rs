@@ -89,10 +89,7 @@ enum BasDecOne {
 }
 
 fn bas_dec_one(p: &mut Parser<'_>) -> Result<BasDecOne> {
-  let tok = match p.cur_tok() {
-    Some(x) => x,
-    None => return Ok(BasDecOne::NoStartTok),
-  };
+  let Some(tok) = p.cur_tok() else { return Ok(BasDecOne::NoStartTok) };
   let ret = match tok.val {
     Token::Basis => {
       p.bump();
@@ -149,10 +146,7 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<BasDecOne> {
           return p.err(ErrorKind::SlashVarPathError(e));
         }
       };
-      let kind = match path_kind(path.as_path()) {
-        Some(x) => x,
-        None => return p.err(ErrorKind::PathNotSmlOrMlb),
-      };
+      let Some(kind) = path_kind(path.as_path()) else { return p.err(ErrorKind::PathNotSmlOrMlb) };
       BasDec::Path(tok.wrap(ParsedPath { kind, path }))
     }
     Token::Ann => {
@@ -186,10 +180,7 @@ fn path_kind(path: &Path) -> Option<PathKind> {
 }
 
 fn bas_exp(p: &mut Parser<'_>) -> Result<BasExp> {
-  let tok = match p.cur_tok() {
-    Some(x) => x,
-    None => return p.err(ErrorKind::ExpectedBasExp),
-  };
+  let Some(tok) = p.cur_tok() else { return p.err(ErrorKind::ExpectedBasExp) };
   let ret = match tok.val {
     Token::Bas => {
       p.bump();

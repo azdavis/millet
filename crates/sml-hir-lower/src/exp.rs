@@ -274,10 +274,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
 }
 
 fn is_bool_lit(exp: &Option<ast::Exp>) -> bool {
-  let exp = match exp {
-    Some(x) => x,
-    None => return false,
-  };
+  let Some(exp) = exp else { return false };
   match exp {
     ast::Exp::PathExp(exp) => exp.path().map_or(false, |p| {
       let mut iter = p.name_star_eq_dots();

@@ -19,10 +19,7 @@ where
     if let Some(semi) = dec.semicolon() {
       st.err_tok(&semi, ErrorKind::UnnecessarySemicolon);
     }
-    let dwt = match dec.dec_with_tail() {
-      Some(x) => x,
-      None => continue,
-    };
+    let Some(dwt) = dec.dec_with_tail() else { continue };
     if let Some(tail) = dwt.sharing_tails().next() {
       st.err(tail.syntax(), ErrorKind::InvalidSharingType);
     }
@@ -238,10 +235,7 @@ where
     if let Some(semi) = dec.semicolon() {
       st.err_tok(&semi, ErrorKind::UnnecessarySemicolon);
     }
-    let dwt = match dec.dec_with_tail() {
-      Some(x) => x,
-      None => continue,
-    };
+    let Some(dwt) = dec.dec_with_tail() else { continue };
     let ptr = SyntaxNodePtr::new(dwt.syntax());
     let mut inner_specs = Vec::<sml_hir::SpecIdx>::new();
     for dec in dwt.dec_in_seqs() {
@@ -266,10 +260,7 @@ where
 /// the Definition doesn't ask us to lower `and` into `seq` but we mostly do anyway, since we have
 /// to for `type t = u` specifications.
 fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecIdx> {
-  let dec = match dec {
-    Some(x) => x,
-    None => return vec![],
-  };
+  let Some(dec) = dec else { return vec![] };
   let ptr = SyntaxNodePtr::new(dec.syntax());
   match dec {
     ast::DecOne::HoleDec(_) => {

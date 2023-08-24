@@ -1,8 +1,6 @@
 //! A map optimized for the use-case of cloning and adding a few elements to the clone.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-// TODO remove once rustfmt support lands
-#![allow(clippy::manual_let_else)]
 
 use fast_hash::{map, FxHashMap, FxHashSet};
 use std::borrow::Borrow;

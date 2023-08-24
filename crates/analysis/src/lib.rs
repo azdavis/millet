@@ -1,8 +1,6 @@
 //! The unification of all the passes into a single high-level API.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-// TODO remove once rustfmt support lands
-#![allow(clippy::manual_let_else)]
 
 mod diagnostic;
 mod matcher;
@@ -120,6 +118,10 @@ impl Analysis {
 
   /// Update only the give path to have the new text, not recalculating diagnostics or anything in
   /// any other paths.
+  ///
+  /// # Panics
+  ///
+  /// If we couldn't find the source file for this path.
   pub fn update_one(&mut self, input: &input::Input, path: paths::PathId) {
     let source_file = self.source_files.get_mut(&path).expect("no source file");
     let contents = input.sources.get(&path).expect("no contents");

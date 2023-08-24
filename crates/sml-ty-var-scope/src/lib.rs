@@ -29,8 +29,6 @@
 //! ```
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-// TODO remove once rustfmt support lands
-#![allow(clippy::manual_let_else)]
 
 use fast_hash::{FxHashMap, FxHashSet};
 
@@ -103,10 +101,7 @@ fn get_str_dec_one(st: &mut St, ars: &sml_hir::Arenas, str_dec: sml_hir::StrDecI
 }
 
 fn get_str_exp(st: &mut St, ars: &sml_hir::Arenas, str_exp: sml_hir::StrExpIdx) {
-  let str_exp = match str_exp {
-    Some(x) => x,
-    None => return,
-  };
+  let Some(str_exp) = str_exp else { return };
   match &ars.str_exp[str_exp] {
     sml_hir::StrExp::Struct(str_dec) => get_str_dec(st, ars, str_dec),
     sml_hir::StrExp::Path(_) => {}
@@ -123,10 +118,7 @@ fn get_str_exp(st: &mut St, ars: &sml_hir::Arenas, str_exp: sml_hir::StrExpIdx) 
 }
 
 fn get_sig_exp(st: &mut St, ars: &sml_hir::Arenas, sig_exp: sml_hir::SigExpIdx) {
-  let sig_exp = match sig_exp {
-    Some(x) => x,
-    None => return,
-  };
+  let Some(sig_exp) = sig_exp else { return };
   match &ars.sig_exp[sig_exp] {
     sml_hir::SigExp::Spec(spec) => get_spec(st, ars, spec),
     sml_hir::SigExp::Name(_) => {}
@@ -259,10 +251,7 @@ fn get_exp(
   mode: &mut Mode,
   exp: sml_hir::ExpIdx,
 ) {
-  let exp = match exp {
-    Some(x) => x,
-    None => return,
-  };
+  let Some(exp) = exp else { return };
   match &ars.exp[exp] {
     sml_hir::Exp::Hole | sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) => {}
     sml_hir::Exp::Record(rows) => {
@@ -314,10 +303,7 @@ fn get_exp(
 }
 
 fn get_pat(ars: &sml_hir::Arenas, ac: &mut TyVarSet, pat: sml_hir::PatIdx) {
-  let pat = match pat {
-    Some(x) => x,
-    None => return,
-  };
+  let Some(pat) = pat else { return };
   match &ars.pat[pat] {
     sml_hir::Pat::Wild | sml_hir::Pat::SCon(_) => {}
     sml_hir::Pat::Con(_, argument) => get_pat(ars, ac, argument.flatten()),
@@ -346,10 +332,7 @@ fn get_pat(ars: &sml_hir::Arenas, ac: &mut TyVarSet, pat: sml_hir::PatIdx) {
 }
 
 fn get_ty(ars: &sml_hir::Arenas, ac: &mut TyVarSet, ty: sml_hir::TyIdx) {
-  let ty = match ty {
-    Some(x) => x,
-    None => return,
-  };
+  let Some(ty) = ty else { return };
   match &ars.ty[ty] {
     sml_hir::Ty::Hole => {}
     sml_hir::Ty::Var(tv) => {

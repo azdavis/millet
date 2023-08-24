@@ -6,8 +6,6 @@
 //! 2. may contain path variables starting with `$`
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-// TODO remove once rustfmt support lands
-#![allow(clippy::manual_let_else)]
 
 use fast_hash::FxHashMap;
 use std::{fmt, path::PathBuf};

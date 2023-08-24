@@ -1,8 +1,6 @@
 //! Utilities for lexing SML-adjacent languages.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-// TODO remove once rustfmt support lands
-#![allow(clippy::manual_let_else)]
 
 pub mod block_comment;
 pub mod string;

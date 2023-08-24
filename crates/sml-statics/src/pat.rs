@@ -29,10 +29,7 @@ pub(crate) fn get(
   ve: &mut ValEnv,
   pat: sml_hir::PatIdx,
 ) -> (Pat, Ty) {
-  let pat_ = match pat {
-    Some(x) => x,
-    None => return (Pat::zero(Con::Any, pat), Ty::NONE),
-  };
+  let Some(pat_) = pat else { return (Pat::zero(Con::Any, pat), Ty::NONE) };
   let ret = match get_(st, cfg, ars, cx, ve, pat_) {
     Some(x) => x,
     None => PatRet {
@@ -224,12 +221,9 @@ fn get_(
         let idx = sml_hir::Idx::from(pat.unwrap_or(pat_idx));
         unify(st, idx, ty, rest_ty);
         for (name, fst_val_info) in fst_ve.iter_mut() {
-          let rest_val_info = match rest_ve.remove(name) {
-            Some(x) => x,
-            None => {
-              st.err(idx, ErrorKind::OrPatNotSameBindings(name.clone()));
-              continue;
-            }
+          let Some(rest_val_info) = rest_ve.remove(name) else {
+            st.err(idx, ErrorKind::OrPatNotSameBindings(name.clone()));
+            continue;
           };
           assert!(fst_val_info.id_status.same_kind_as(IdStatus::Val));
           assert!(rest_val_info.id_status.same_kind_as(IdStatus::Val));
@@ -295,10 +289,7 @@ fn insert_name(
 }
 
 pub(crate) fn maybe_refutable(ars: &sml_hir::Arenas, pat: sml_hir::PatIdx) -> bool {
-  let pat = match pat {
-    Some(x) => x,
-    None => return true,
-  };
+  let Some(pat) = pat else { return true };
   match &ars.pat[pat] {
     sml_hir::Pat::Wild => false,
     sml_hir::Pat::SCon(_) | sml_hir::Pat::Con(_, _) => true,

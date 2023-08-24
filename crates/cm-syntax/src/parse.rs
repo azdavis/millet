@@ -108,10 +108,7 @@ enum Prec {
 }
 
 fn export_prec(p: &mut Parser<'_>, min_prec: Prec) -> Result<Option<Export>> {
-  let mut ret = match at_export(p)? {
-    Some(x) => x,
-    None => return Ok(None),
-  };
+  let Some(mut ret) = at_export(p)? else { return Ok(None) };
   while let Some(tok) = p.cur_tok() {
     match tok.val {
       Token::Minus => {
@@ -138,10 +135,7 @@ fn export_prec(p: &mut Parser<'_>, min_prec: Prec) -> Result<Option<Export>> {
 
 /// iff not at the beginning of an export, return Ok(None) and consume no tokens
 fn at_export(p: &mut Parser<'_>) -> Result<Option<Export>> {
-  let tok = match p.cur_tok() {
-    Some(x) => x,
-    None => return Ok(None),
-  };
+  let Some(tok) = p.cur_tok() else { return Ok(None) };
   let ret = match tok.val {
     Token::Structure => name_export(p, tok, Namespace::Structure)?,
     Token::Signature => name_export(p, tok, Namespace::Signature)?,
@@ -204,14 +198,8 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Export, Vec<Member>)> {
   let mut members = Vec::<Member>::new();
   loop {
     let tok = p.cur_tok();
-    let tok = match tok {
-      Some(x) => x,
-      None => break,
-    };
-    let s = match tok.val {
-      Token::String(s) => s,
-      _ => break,
-    };
+    let Some(tok) = tok else { break };
+    let Token::String(s) = tok.val else { break };
     p.bump();
     let pathname = path(p, s)?;
     let class = match p.cur() {

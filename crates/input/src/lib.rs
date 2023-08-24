@@ -2,8 +2,6 @@
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::single_match_else)]
-// TODO remove once rustfmt support lands
-#![allow(clippy::manual_let_else)]
 
 mod lower_cm;
 mod lower_mlb;
@@ -41,6 +39,10 @@ impl Input {
   /// # Errors
   ///
   /// When getting input failed.
+  ///
+  /// # Panics
+  ///
+  /// When the path has no parent, or other such weird cases.
   pub fn new<F>(fs: &F, paths: &mut paths::Store, root: &paths::CanonicalPathBuf) -> Input
   where
     F: paths::FileSystem,

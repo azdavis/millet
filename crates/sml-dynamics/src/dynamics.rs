@@ -22,7 +22,11 @@ impl<'a> Dynamics<'a> {
     Some(Self { cx, st, step: Some(Step::StrDec(str_dec)) })
   }
 
-  /// Takes a step. Panics if this was already finished.
+  /// Takes a step.
+  ///
+  /// # Panics
+  ///
+  /// If this was already finished.
   #[must_use]
   pub fn step(mut self) -> Progress<'a> {
     let mut s = self.step.take().expect("no step");

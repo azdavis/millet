@@ -2,8 +2,6 @@
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::single_match_else)]
-// TODO remove once rustfmt support lands
-#![allow(clippy::manual_let_else)]
 
 use anyhow::{anyhow, bail, Context as _, Result};
 use flate2::{write::GzEncoder, Compression};
@@ -243,10 +241,7 @@ where
 }
 
 fn tag(tag_arg: &str) -> Result<()> {
-  let version = match tag_arg.strip_prefix('v') {
-    Some(x) => x,
-    None => bail!("tag must start with v"),
-  };
+  let Some(version) = tag_arg.strip_prefix('v') else { bail!("tag must start with v") };
   let version_parts: Vec<_> = version.split('.').collect();
   let num_parts = version_parts.len();
   if num_parts != 3 {

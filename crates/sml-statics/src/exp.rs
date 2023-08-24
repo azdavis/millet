@@ -29,10 +29,7 @@ pub(crate) fn get_and_check_ty_escape(
 }
 
 fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> Ty {
-  let exp = match exp {
-    Some(x) => x,
-    None => return Ty::NONE,
-  };
+  let Some(exp) = exp else { return Ty::NONE };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
   let mut defs = FxHashSet::<def::Def>::default();
@@ -177,10 +174,7 @@ fn lint_eta_reduce(
     (sml_hir::FnFlavor::Fn, [x]) => *x,
     _ => return None,
   };
-  let pat = match fst.pat {
-    Some(x) => x,
-    None => return None,
-  };
+  let Some(pat) = fst.pat else { return None };
   let name = match &ars.pat[pat] {
     sml_hir::Pat::Con(path, None) => {
       if path.prefix().is_empty() {
@@ -194,14 +188,8 @@ fn lint_eta_reduce(
   if !pat::val_info_for_var(cx.env.val_env.get(name)) {
     return None;
   }
-  let exp = match fst.exp {
-    Some(x) => x,
-    None => return None,
-  };
-  let (func, argument) = match ars.exp[exp] {
-    sml_hir::Exp::App(x, Some(y)) => (x, y),
-    _ => return None,
-  };
+  let Some(exp) = fst.exp else { return None };
+  let sml_hir::Exp::App(func, Some(argument)) = ars.exp[exp] else { return None };
   match &ars.exp[argument] {
     sml_hir::Exp::Path(path) => {
       if !path.prefix().is_empty() || path.last() != name {
@@ -221,10 +209,7 @@ fn maybe_contains_free_var(
   exp: sml_hir::ExpIdx,
   name: &str_util::Name,
 ) -> bool {
-  let exp = match exp {
-    Some(x) => x,
-    None => return false,
-  };
+  let Some(exp) = exp else { return false };
   match &ars.exp[exp] {
     // base cases
     sml_hir::Exp::Hole | sml_hir::Exp::SCon(_) => false,
@@ -302,10 +287,7 @@ fn get_pair(ars: &sml_hir::Arenas, idx: SomeExpIdx) -> Option<[SomeExpIdx; 2]> {
 /// not just for `=` but also `<>`.
 fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<ErrorKind> {
   get_pair(ars, argument?)?.into_iter().find_map(|argument| {
-    let path = match &ars.exp[argument] {
-      sml_hir::Exp::Path(p) => p,
-      _ => return None,
-    };
+    let sml_hir::Exp::Path(path) = &ars.exp[argument] else { return None };
     let vi = get_env_raw(&cx.env, path.prefix()).ok()?.val_env.get(path.last())?;
     match vi.defs.iter().next()? {
       def::Def::Path(def::Path::BuiltinLib(_), _) | def::Def::Primitive(_) => {}
@@ -350,10 +332,7 @@ fn lint_append(ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<Error
 }
 
 pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
-  let exp = match exp {
-    Some(x) => x,
-    None => return true,
-  };
+  let Some(exp) = exp else { return true };
   match &ars.exp[exp] {
     sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) | sml_hir::Exp::Fn(_, _) => false,
     sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| maybe_effectful(ars, exp)),
@@ -386,10 +365,7 @@ fn get_matcher(
     let cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes, rec: false };
     let (pm_pat, pat_ty) = pat::get(st, cfg, ars, cx, &mut ve, arm.pat);
     for (name, new_vi) in ve.iter() {
-      let old_vi = match cx.env.val_env.get(name) {
-        Some(x) => x,
-        None => continue,
-      };
+      let Some(old_vi) = cx.env.val_env.get(name) else { continue };
       let idx = arm.pat.map_or(idx, Into::into);
       st.insert_shadow(idx, name.clone(), old_vi.ty_scheme.clone(), new_vi.ty_scheme.clone());
     }

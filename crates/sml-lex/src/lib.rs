@@ -1,8 +1,6 @@
 //! Lexing a string into tokens.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-// TODO remove once rustfmt support lands
-#![allow(clippy::manual_let_else)]
 
 use diagnostic::{Code, Severity};
 use lex_util::{advance_while, block_comment, is_whitespace, string};

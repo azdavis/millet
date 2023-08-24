@@ -60,10 +60,7 @@ impl Root {
         }
       };
       for entry in dir_entries {
-        let group_path = match GroupPathBuf::new(fs, entry.clone()) {
-          Some(x) => x,
-          None => continue,
-        };
+        let Some(group_path) = GroupPathBuf::new(fs, entry.clone()) else { continue };
         match root_group_paths.first() {
           Some(rgp) => errors.push(Error::new(
             ErrorSource { path: Some(rgp.path.clone()), range: None },
@@ -195,16 +192,13 @@ fn disallow(
 ) {
   for (path, allowed) in map {
     let parts: Option<Vec<_>> = path.split('.').map(str_util::Name::try_new).collect();
-    let parts = match parts {
-      Some(x) => x,
-      None => {
-        errors.push(Error::new(
-          ErrorSource::default(),
-          config_path.to_owned(),
-          ErrorKind::EmptyStrInPath(path),
-        ));
-        continue;
-      }
+    let Some(parts) = parts else {
+      errors.push(Error::new(
+        ErrorSource::default(),
+        config_path.to_owned(),
+        ErrorKind::EmptyStrInPath(path),
+      ));
+      continue;
     };
     if !allowed {
       let p = sml_path::Path::try_new(parts).expect("split always returns non-empty iter");

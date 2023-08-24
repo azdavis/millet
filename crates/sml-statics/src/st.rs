@@ -131,10 +131,7 @@ impl<'a> St<'a> {
       Mode::BuiltinLib(_) => {}
       Mode::Regular(_) | Mode::PathOrder | Mode::Dynamics => return false,
     }
-    let prefix = match &self.cur_prefix[..] {
-      [x] => x,
-      _ => return false,
-    };
+    let [prefix] = &self.cur_prefix[..] else { return false };
     matches!(prefix.as_str(), "Option" | "Array" | "Vector")
   }
 
@@ -211,10 +208,9 @@ fn get_match(
   let ck = elapsed::log("pattern_match::check", || {
     pattern_match::check::<pat_match::Lang>(syms_tys, pats, ty)
   });
-  let ck = match ck {
-    Ok(x) => x,
+  let Ok(ck) = ck else {
     // we already should have emitted other errors in this case.
-    Err(_) => return Vec::new(),
+    return Vec::new();
   };
   let mut unreachable: Vec<_> = ck.unreachable.into_iter().flatten().collect();
   unreachable.sort_unstable_by_key(|x| x.into_raw());

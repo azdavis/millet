@@ -5,8 +5,6 @@
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::needless_pass_by_value, clippy::too_many_lines)]
-// TODO remove once rustfmt support lands
-#![allow(clippy::manual_let_else)]
 
 use fast_hash::FxHashSet;
 use sml_syntax::ast::{self, AstNode as _};
@@ -508,10 +506,7 @@ where
 
 /// if there was a ty var seq, this'll also add a space after it.
 fn ty_var_seq(st: &mut St, tvs: Option<ast::TyVarSeq>) -> Res {
-  let tvs = match tvs {
-    Some(x) => x,
-    None => return Some(()),
-  };
+  let Some(tvs) = tvs else { return Some(()) };
   let parens = tvs.l_round().is_some();
   if parens {
     st.write("(");
@@ -727,10 +722,9 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
 }
 
 fn get_matcher_across_lines(st: &mut St, cfg: Cfg, matcher: Option<ast::Matcher>) -> Res {
-  let matcher = match matcher {
-    Some(x) => x,
+  let Some(matcher) = matcher else {
     // we allow formatting no matcher, even though it's a parse error.
-    None => return Some(()),
+    return Some(());
   };
   cfg.indented().output_indent(st);
   sep_with_lines(st, cfg, "| ", matcher.arms(), |st, arm| get_matcher_arm(st, cfg, arm))

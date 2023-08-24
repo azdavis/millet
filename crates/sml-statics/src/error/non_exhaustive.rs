@@ -187,14 +187,12 @@ fn list_pat<'p>(ac: &mut Vec<&'p ConPat<Lang>>, mut pat: &'p ConPat<Lang>) -> Li
           RawPat::Con(x) => x,
           RawPat::Or(_) => unreachable!("the argument to :: is a con pat"),
         };
-        let labels = match &arg_pat.con {
-          Con::Record { allows_other: false, labels } => labels,
-          _ => unreachable!("the argument to :: is a record that does not allow others"),
+        let Con::Record { allows_other: false, labels } = &arg_pat.con else {
+          unreachable!("the argument to :: is a record that does not allow others")
         };
-        assert!(
-          labels.len() == 2 && (0..2).all(|x| labels.contains(&sml_hir::Lab::tuple(x))),
-          "the argument to :: is a 2-tuple"
-        );
+        let is_2_tup =
+          labels.len() == 2 && (0..2).all(|x| labels.contains(&sml_hir::Lab::tuple(x)));
+        assert!(is_2_tup, "the argument to :: is a 2-tuple");
         let (hd, tl) = match &arg_pat.args[..] {
           [a, b] => (unwrap_non_or(a), unwrap_non_or(b)),
           _ => unreachable!("the argument to :: is a 2-tuple"),

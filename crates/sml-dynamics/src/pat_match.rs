@@ -72,10 +72,7 @@ fn get_con(
   pat_arg: Option<sml_hir::PatIdx>,
   val: &Val,
 ) -> bool {
-  let con = match val {
-    Val::Con(x) => x,
-    _ => unreachable!("match Con with non-Con"),
-  };
+  let Val::Con(con) = val else { unreachable!("match Con with non-Con") };
   let same_con = match (kind, &con.kind) {
     (ConKind::Dat, ConKind::Dat) => *name == con.name,
     (ConKind::Exn(e1), ConKind::Exn(e2)) => e1 == *e2,

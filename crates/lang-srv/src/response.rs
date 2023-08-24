@@ -5,26 +5,17 @@ use lsp_server::Response;
 
 pub(crate) fn handle(st: &mut St, res: Response) {
   log::info!("got response: {res:?}");
-  let data = match st.cx.req_queue.outgoing.complete(res.id.clone()) {
-    Some(x) => x,
-    None => {
-      log::warn!("received response for non-queued request: {res:?}");
-      return;
-    }
+  let Some(data) = st.cx.req_queue.outgoing.complete(res.id.clone()) else {
+    log::warn!("received response for non-queued request: {res:?}");
+    return;
   };
-  let code = match data {
-    Some(x) => x,
-    None => {
-      log::info!("no error code associated with this request");
-      return;
-    }
+  let Some(code) = data else {
+    log::info!("no error code associated with this request");
+    return;
   };
-  let val = match res.result {
-    Some(x) => x,
-    None => {
-      log::info!("user did not click to look at the error URL");
-      return;
-    }
+  let Some(val) = res.result else {
+    log::info!("user did not click to look at the error URL");
+    return;
   };
   let item = match serde_json::from_value::<lsp_types::MessageActionItem>(val) {
     Ok(x) => x,

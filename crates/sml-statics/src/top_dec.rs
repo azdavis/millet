@@ -196,10 +196,7 @@ fn get_str_exp(
   ac: &mut Env,
   str_exp: sml_hir::StrExpIdx,
 ) {
-  let str_exp = match str_exp {
-    Some(x) => x,
-    None => return,
-  };
+  let Some(str_exp) = str_exp else { return };
   match &ars.str_exp[str_exp] {
     // @def(50)
     sml_hir::StrExp::Struct(str_dec) => get_str_dec(st, bs, ars, StrDecAc::Env(ac), str_dec),
@@ -276,12 +273,9 @@ fn get_str_exp(
     }
     // @def(54)
     sml_hir::StrExp::App(fun_name, arg_str_exp, flavor) => {
-      let fun_sig = match bs.fun_env.get(fun_name) {
-        Some(x) => x,
-        None => {
-          st.err(str_exp, ErrorKind::Undefined(Item::Functor, fun_name.clone()));
-          return;
-        }
+      let Some(fun_sig) = bs.fun_env.get(fun_name) else {
+        st.err(str_exp, ErrorKind::Undefined(Item::Functor, fun_name.clone()));
+        return;
       };
       if let Some(d) = &fun_sig.disallow {
         st.err(str_exp, ErrorKind::Disallowed(Item::Functor, d.clone(), fun_name.clone()));
@@ -341,10 +335,7 @@ fn get_sig_exp(
   ac: &mut Env,
   sig_exp: sml_hir::SigExpIdx,
 ) -> Option<overload::Basic> {
-  let sig_exp = match sig_exp {
-    Some(x) => x,
-    None => return None,
-  };
+  let Some(sig_exp) = sig_exp else { return None };
   match &ars.sig_exp[sig_exp] {
     // @def(62)
     sml_hir::SigExp::Spec(spec) => {
@@ -353,12 +344,9 @@ fn get_sig_exp(
     }
     // @def(63)
     sml_hir::SigExp::Name(name) => {
-      let sig = match bs.sig_env.get(name) {
-        Some(x) => x,
-        None => {
-          st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone()));
-          return None;
-        }
+      let Some(sig) = bs.sig_env.get(name) else {
+        st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone()));
+        return None;
       };
       if let Some(d) = &sig.disallow {
         st.err(sig_exp, ErrorKind::Disallowed(Item::Sig, d.clone(), name.clone()));

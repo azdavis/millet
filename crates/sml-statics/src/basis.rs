@@ -83,9 +83,8 @@ impl Bs {
       Ok(x) => x,
       Err(n) => return Err(disallow::Error::Undefined(Item::Struct, n.clone())),
     };
-    let val_info = match env.val_env.get_mut(val.last()) {
-      Some(x) => x,
-      None => return Err(disallow::Error::Undefined(Item::Val, val.last().clone())),
+    let Some(val_info) = env.val_env.get_mut(val.last()) else {
+      return Err(disallow::Error::Undefined(Item::Val, val.last().clone()));
     };
     match &val_info.disallow {
       None => {
@@ -106,9 +105,8 @@ impl Bs {
       Ok(x) => x,
       Err(n) => return Err(disallow::Error::Undefined(Item::Struct, n.clone())),
     };
-    let env = match env.str_env.get_mut(val.last()) {
-      Some(x) => x,
-      None => return Err(disallow::Error::Undefined(Item::Struct, val.last().clone())),
+    let Some(env) = env.str_env.get_mut(val.last()) else {
+      return Err(disallow::Error::Undefined(Item::Struct, val.last().clone()));
     };
     match &env.disallow {
       None => {

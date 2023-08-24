@@ -122,10 +122,7 @@ impl pattern_match::Lang for Lang {
           if data.sym != Sym::VECTOR {
             return Err(CheckError);
           }
-          let ty = match data.args.as_slice() {
-            &[x] => x,
-            _ => return Err(CheckError),
-          };
+          let &[ty] = data.args.as_slice() else { return Err(CheckError) };
           std::iter::repeat(ty).take(*n).collect()
         }
         Con::Record { .. } => return Err(CheckError),

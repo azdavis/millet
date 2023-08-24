@@ -120,10 +120,7 @@ fn get_one(
           Ok(ts) => val_info.ty_scheme = ts,
           Err(ur) => st.err(ur.idx, ErrorKind::UnresolvedRecordTy(ur.rows)),
         }
-        let e = match exp {
-          Some(e) => e,
-          None => continue,
-        };
+        let Some(e) = exp else { continue };
         if val_info.ty_scheme.bound_vars.is_empty() {
           continue;
         }
@@ -439,10 +436,7 @@ pub(crate) fn get_dat_binds(
 }
 
 fn expansive(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
-  let exp = match exp {
-    Some(x) => x,
-    None => return false,
-  };
+  let Some(exp) = exp else { return false };
   match &ars.exp[exp] {
     sml_hir::Exp::Hole | sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) | sml_hir::Exp::Fn(_, _) => {
       false
@@ -461,10 +455,7 @@ fn expansive(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
 /// the sense of section 4.7 of the definition, like records. but there would have been a type error
 /// emitted for the application already anyway.
 fn constructor(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
-  let exp = match exp {
-    Some(x) => x,
-    None => return true,
-  };
+  let Some(exp) = exp else { return true };
   match &ars.exp[exp] {
     sml_hir::Exp::Hole | sml_hir::Exp::SCon(_) => true,
     sml_hir::Exp::Let(_, _)
@@ -511,10 +502,7 @@ fn maybe_effectful_val(ars: &sml_hir::Arenas, val_binds: &[sml_hir::ValBind]) ->
 
 /// "maybe" because it's more liberal (i.e. if it's a hole or not there at all, return true).
 fn maybe_fn(ar: &sml_hir::ExpArena, exp: sml_hir::ExpIdx) -> bool {
-  let exp = match exp {
-    Some(x) => x,
-    None => return true,
-  };
+  let Some(exp) = exp else { return true };
   match &ar[exp] {
     sml_hir::Exp::Hole | sml_hir::Exp::Fn(_, _) => true,
     sml_hir::Exp::SCon(_)

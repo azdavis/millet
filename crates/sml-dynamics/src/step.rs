@@ -154,10 +154,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
           if recursive {
             let mut this = FxHashSet::<Name>::default();
             rec_fn_names(cx.ars, &mut this, pat);
-            let mut clos = match val {
-              Val::Closure(x) => x,
-              _ => unreachable!("val rec value must be Closure"),
-            };
+            let Val::Closure(mut clos) = val else { unreachable!("val rec value must be Closure") };
             assert!(clos.this.is_empty());
             clos.this = this.clone();
             for name in this {

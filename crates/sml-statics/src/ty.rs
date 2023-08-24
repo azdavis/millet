@@ -21,10 +21,7 @@ pub(crate) fn get(
   mode: Mode,
   ty: sml_hir::TyIdx,
 ) -> Ty {
-  let ty = match ty {
-    Some(x) => x,
-    None => return Ty::NONE,
-  };
+  let Some(ty) = ty else { return Ty::NONE };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
   let mut def = None::<def::Def>;
@@ -40,9 +37,8 @@ pub(crate) fn get(
         Ty::NONE
       }
       Some(fv) => {
-        let fv_data = match st.syms_tys.tys.data(*fv) {
-          TyData::FixedVar(fv) => fv,
-          _ => unreachable!("not a fixed var"),
+        let TyData::FixedVar(fv_data) = st.syms_tys.tys.data(*fv) else {
+          unreachable!("not a fixed var")
         };
         match (mode, fv_data.src) {
           // regular mode allows all ty var types, and ty vars bound at types are always valid.

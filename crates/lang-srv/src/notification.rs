@@ -71,9 +71,8 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
     let url = params.text_document.uri;
     let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.paths, &url)?;
     if let Mode::Root(root) = &mut st.mode {
-      let text = match root.input.sources.get_mut(&path) {
-        Some(x) => x,
-        None => bail!("no source in the input for DidChangeTextDocument"),
+      let Some(text) = root.input.sources.get_mut(&path) else {
+        bail!("no source in the input for DidChangeTextDocument")
       };
       helpers::apply_changes(text, params.content_changes);
       if st.cx.options.diagnostics.on_change {

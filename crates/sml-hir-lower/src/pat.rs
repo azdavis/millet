@@ -176,9 +176,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
 }
 
 fn get_pat_name(st: &mut St<'_>, pat: ast::Pat) -> Option<str_util::Name> {
-  let pat = if let ast::Pat::ConPat(pat) = pat {
-    pat
-  } else {
+  let ast::Pat::ConPat(pat) = pat else {
     st.err(pat.syntax(), ErrorKind::AsPatLhsNotName);
     return None;
   };
