@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.13.0
 
 - Support `do` declarations under `language.successor-ml.do-dec`.
 - Support optional leading `|` for `datatype`, `case`, etc under `language.successor-ml.opt-bar`.
