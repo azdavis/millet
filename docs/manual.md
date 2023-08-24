@@ -236,18 +236,97 @@ See docs for [`language.val.<path>`](#languagevalpath).
 
 Configuration for [Successor ML][succ-ml] features.
 
-#### `language.successor-ml.<kind>`
+#### `language.successor-ml.do-dec`
 
-Whether the `<kind>` is allowed.
+Whether `do` declarations are allowed. Defaults to false.
 
-| Valid `<kind>` | Default | Description                                |
-| -------------- | ------- | ------------------------------------------ |
-| `do-dec`       | `false` | `do` declarations                          |
-| `opt-bar`      | `false` | Optional preceding vertical bars           |
-| `opt-semi`     | `false` | Optional trailing `;` in `let` expressions |
-| `or-pat`       | `true`  | Or patterns                                |
-| `exp-row-pun`  | `false` | Record expression row punning              |
-| `vector`       | `false` | Vector expressions and patterns            |
+```sml
+(* do dec *)
+do e
+
+(* equivalent to *)
+val () = e
+```
+
+#### `language.successor-ml.opt-bar`
+
+Whether `|` are allowed before the first `datatype`, `fn`, `case`, `handle`, or `fun` case. Defaults to false.
+
+```sml
+datatype thing =
+| Foo
+| Bar of int
+
+fun check x =
+  case x of
+  | 1 => 2
+  | 3 => 4
+  | _ => 5
+```
+
+#### `language.successor-ml.opt-semi`
+
+Whether a trailing `;` is allowed in the expression sequence of a `let` expression. Defaults to false.
+
+```sml
+(* trailing ; *)
+val () =
+  let
+    val x = 3
+    val y = 4
+  in
+    foo x;
+    bar y;
+  end
+
+(* equivalent to *)
+val () =
+  let
+    val x = 3
+    val y = 4
+  in
+    foo x;
+    bar y;
+    ()
+  end
+```
+
+#### `language.successor-ml.or-pat`
+
+Whether or-patterns are allowed. Defaults to true.
+
+```sml
+datatype thing = Foo of int | Bar of int
+fun extract (Foo x | Bar x) = x
+```
+
+#### `language.successor-ml.exp-row-pun`
+
+Whether expression row punning is allowed. Defaults to false.
+
+```sml
+(* row punning *)
+fun incB {a, b, c} = {a, b = b + 1, c}
+
+(* equivalent to *)
+fun incB {a, b, c} = {a = a, b = b + 1, c = c}
+```
+
+#### `language.successor-ml.vector`
+
+Whether vector expressions and patterns are allowed. Defaults to false.
+
+```sml
+val vec : int vector = #[1, 2, 3]
+
+fun foo (xs : int vector) : int =
+  case xs of
+    #[] => 1
+  | #[x, 4] => x
+  | #[a, b, _] => a * b
+  | #[_] => 5
+  | _ => 6
+```
 
 ### VS Code settings
 
