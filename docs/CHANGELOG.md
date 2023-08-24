@@ -15,7 +15,12 @@ The versioning system is basically the following:
 
 ## main
 
-- Add `language.successor-ml.<kind>` configuration to `millet.toml` for some (not all) Successor ML features. Most default to off.
+- Support `do` declarations under `language.successor-ml.do-dec`.
+- Support optional leading `|` for `datatype`, `case`, etc under `language.successor-ml.opt-bar`.
+- Support optional trailing `;` for `let` expression sequences under `language.successor-ml.opt-semi`.
+- Allow configuring support for or-patterns under `language.successor-ml.or-pat`. (Millet already supported or-patterns themselves, so this defaults to true.)
+- Support expression row punning under `language.successor-ml.exp-row-pun`.
+- Support vector expressions and patterns under `language.successor-ml.vector`.
 
 ## v0.12.9
 
