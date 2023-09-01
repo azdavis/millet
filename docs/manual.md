@@ -253,7 +253,7 @@ Valid `<kind>`s:
 - Type: `boolean`
 - Default: `true`
 
-Whether the `<kind>` of expression is allowed. Each defaults to `true`.
+Whether the `<kind>` of expression is allowed.
 
 Valid `<kind>`s:
 
