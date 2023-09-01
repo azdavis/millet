@@ -37,7 +37,7 @@ When VS Code is not opened onto a folder, Millet only provides basic analysis of
 
 After opening VS Code onto a folder, Millet will look for a "group file" directly contained in that folder.
 
-A group file is either
+A group file is either:
 
 - a [ML Basis][mlb] file (`.mlb`), or
 - a [SML/NJ Compilation Manager][cm] file (`.cm`).
