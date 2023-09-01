@@ -203,11 +203,13 @@ Then the given variable, when referenced inside the given file, has the given va
 
 #### `diagnostics.<code>.severity`
 
-Overrides the default severity for this [diagnostic](#inline-diagnostics). The acceptable values are:
+- Type: `string`
+- Valid values:
+  - `"ignore"`: the diagnostic is not reported.
+  - `"warning"`: the diagnostic is reported as a warning.
+  - `"error"`: the diagnostic is reported as an error.
 
-- `"ignore"`: the diagnostic is not reported.
-- `"warning"`: the diagnostic is reported as a warning.
-- `"error"`: the diagnostic is reported as an error.
+Overrides the default severity for this [diagnostic](#inline-diagnostics). The acceptable values are:
 
 The `<code>` must be a positive integer.
 
