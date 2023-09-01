@@ -433,10 +433,6 @@ Millet has VS Code specific settings, which are stored as [JSON][]. You may need
 
 #### `millet.format.engine`
 
-**WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
-
-How to [format](#formatter) open SML files on save.
-
 - Type: `string`
 - Default: `"none"`
 - Valid values:
@@ -444,9 +440,11 @@ How to [format](#formatter) open SML files on save.
   - `"naive"`: Naive formatting.
   - `"smlfmt"`: Formatting provided by [`smlfmt`](https://github.com/shwestrick/smlfmt), which must be installed in your `$PATH`.
 
-#### `millet.server.diagnostics.ignore`
+**WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
 
-What [diagnostics](#inline-diagnostics) to ignore.
+How to [format](#formatter) open SML files on save.
+
+#### `millet.server.diagnostics.ignore`
 
 - Type: `string`
 - Default: `"after-syntax"`
@@ -455,49 +453,51 @@ What [diagnostics](#inline-diagnostics) to ignore.
   - `"after-syntax"`: If there are syntax diagnostics (lex error, parse error, etc), send only those, and ignore e.g. statics diagnostics.
   - `"all"`: Ignore all diagnostics.
 
-#### `millet.server.diagnostics.moreInfoHint.enable`
+What [diagnostics](#inline-diagnostics) to ignore.
 
-Show a hint on diagnostic messages about clicking the error code number for more information.
+#### `millet.server.diagnostics.moreInfoHint.enable`
 
 - Type: `boolean`
 - Default: `true`
 
-#### `millet.server.diagnostics.onChange.enable`
+Show a hint on diagnostic messages about clicking the error code number for more information.
 
-Send diagnostics when file contents change before saving.
+#### `millet.server.diagnostics.onChange.enable`
 
 - Type: `boolean`
 - Default: `false`
 
+Send diagnostics when file contents change before saving.
+
 #### `millet.server.enable`
+
+- Type: `boolean`
+- Default: `true`
 
 Enable the language server.
 
+#### `millet.server.fileSystemWatcher.enable`
+
 - Type: `boolean`
 - Default: `true`
-
-#### `millet.server.fileSystemWatcher.enable`
 
 Use a file system watcher to send events when files change, if one is available.
 
+#### `millet.server.hover.token.enable`
+
 - Type: `boolean`
 - Default: `true`
-
-#### `millet.server.hover.token.enable`
 
 Show information about tokens on hover.
 
-- Type: `boolean`
-- Default: `true`
-
 #### `millet.server.path`
+
+- Type: `string`
+- Default: `""`
 
 Path to the `millet-ls` executable.
 
 When set to the empty string `""` (the default), use the path to the one that's pre-built and bundled with the extension.
-
-- Type: `string`
-- Default: `""`
 
 <!-- @end vscode-config -->
 
