@@ -93,10 +93,6 @@ or-pat = false
 
 The version of the config file. At time of writing, it must be exactly `1`.
 
-#### `workspace`
-
-Configuration for the workspace.
-
 #### `workspace.root`
 
 Sets the root group file(s).
@@ -105,21 +101,13 @@ In the case where there is exactly one group file in the root project folder, Mi
 
 You can use glob syntax for this to specify multiple roots.
 
-#### `workspace.path-vars`
+#### `workspace.path-vars.<var>`
 
-A table for expanding variables in paths in group files.
+How to expand the `<var>` inside paths in group files.
 
 - If the value is a `value`, the value is used unchanged.
 - If it is a `path`, then the value is expanded into a full path relative to the `millet.toml` file.
 - If it is a `workspace-path`, then the value is expanded into a full path relative to the workspace root group file (of which there may be many, because `workspace.root` can be a glob).
-
-#### `diagnostics`
-
-A table for configuring diagnostic codes.
-
-#### `diagnostics.<code>`
-
-Configuration for the diagnostic with code number `<code>`. It must be a positive integer.
 
 #### `diagnostics.<code>.severity`
 
@@ -129,9 +117,7 @@ Overrides the default severity for this [diagnostic](#inline-diagnostics). The a
 - `"warning"`: the diagnostic is reported as a warning.
 - `"error"`: the diagnostic is reported as an error.
 
-#### `language`
-
-Configuration for the language.
+The `<code>` must be a positive integer.
 
 #### `language.fixity-across-files`
 
@@ -140,10 +126,6 @@ Whether fixity declarations (`infix`, `infixr`, and `nonfix`) can take effect ac
 When this is `false`, each file is parsed starting with the default fixity environment provided by the standard basis. This means we can incrementally re-parse files and/or parse files in parallel since there are no inter-file dependencies when parsing. (At time of writing, we do not currently do this.)
 
 When this is `true`, we cannot do the above things, and we must also use more memory to store the fixity environments used when parsing each file.
-
-#### `language.dec`
-
-What kinds of declarations/specifications are permitted.
 
 #### `language.dec.<kind>`
 
@@ -165,10 +147,6 @@ Valid `<kind>`s:
 - `functor`
 - `exp` (expression declarations)
 - `include` (technically a specification, not a declaration)
-
-#### `language.exp`
-
-What kind of expressions are permitted.
 
 #### `language.exp.<kind>`
 
@@ -201,10 +179,6 @@ Valid `<kind>`s:
 - `case`
 - `fn`
 
-#### `language.val`
-
-Configuration for values.
-
 #### `language.val.<path>`
 
 Whether the `<path>` is allowed. All paths default to `true`.
@@ -221,10 +195,6 @@ Because paths can have special characters in them, namely `.`, you may need to u
 Note that some standard basis library declarations are re-declared at different paths. To disallow them entirely, you must (currently) specify all possible paths. For instance, you should specify both `hd` and `List.hd` to disallow usage of the list head function.
 
 No error is currently emitted when disallowing a path that does not exist. To be sure you spelled the path correctly, try running Millet with the given config file, and see if errors are correctly emitted when you try to use the value.
-
-#### `language.structure`
-
-Configuration for structures.
 
 #### `language.structure.<path>`
 
