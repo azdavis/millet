@@ -91,9 +91,15 @@ or-pat = false
 
 #### `version`
 
+- Type: `number`
+- Valid values:
+  - `1`: the first version of the config file.
+
 The version of the config file. At time of writing, it must be exactly `1`.
 
 #### `workspace.root`
+
+- Type: `string`
 
 Sets the root group file(s).
 
@@ -102,6 +108,8 @@ In the case where there is exactly one group file in the root project folder, Mi
 You can use glob syntax for this to specify multiple roots.
 
 #### `workspace.path-vars.<var>`
+
+- Type: `{ value: string } | { path: string } | { workspace-path: string }`
 
 How to expand the `<var>` inside paths in group files.
 
@@ -121,7 +129,10 @@ The `<code>` must be a positive integer.
 
 #### `language.fixity-across-files`
 
-Whether fixity declarations (`infix`, `infixr`, and `nonfix`) can take effect across files. Defaults to `false`.
+- Type: `boolean`
+- Default: `false`
+
+Whether fixity declarations (`infix`, `infixr`, and `nonfix`) can take effect across files.
 
 When this is `false`, each file is parsed starting with the default fixity environment provided by the standard basis. This means we can incrementally re-parse files and/or parse files in parallel since there are no inter-file dependencies when parsing. (At time of writing, we do not currently do this.)
 
@@ -129,7 +140,10 @@ When this is `true`, we cannot do the above things, and we must also use more me
 
 #### `language.dec.<kind>`
 
-Whether the `<kind>` of declaration/specification is allowed. Each defaults to `true`.
+- Type: `boolean`
+- Default: `true`
+
+Whether the `<kind>` of declaration/specification is allowed.
 
 Valid `<kind>`s:
 
@@ -149,6 +163,9 @@ Valid `<kind>`s:
 - `include` (technically a specification, not a declaration)
 
 #### `language.exp.<kind>`
+
+- Type: `boolean`
+- Default: `true`
 
 Whether the `<kind>` of expression is allowed. Each defaults to `true`.
 
@@ -181,7 +198,10 @@ Valid `<kind>`s:
 
 #### `language.val.<path>`
 
-Whether the `<path>` is allowed. All paths default to `true`.
+- Type: `boolean`
+- Default: `true`
+
+Whether the `<path>` is allowed.
 
 The path must be a valid, fully qualified path in the standard basis library, like `Real.==` or `+`.
 
@@ -198,7 +218,10 @@ No error is currently emitted when disallowing a path that does not exist. To be
 
 #### `language.structure.<path>`
 
-Whether the `<path>` is allowed. All paths default to `true`.
+- Type: `boolean`
+- Default: `true`
+
+Whether the `<path>` is allowed.
 
 See docs for [`language.val.<path>`](#languagevalpath).
 
@@ -208,7 +231,10 @@ Configuration for [Successor ML][succ-ml] features.
 
 #### `language.successor-ml.do-dec`
 
-Whether `do` declarations are allowed. Defaults to false.
+- Type: `boolean`
+- Default: `false`
+
+Whether `do` declarations are allowed.
 
 ```sml
 (* do dec *)
@@ -220,7 +246,10 @@ val () = e
 
 #### `language.successor-ml.opt-bar`
 
-Whether `|` are allowed before the first `datatype`, `fn`, `case`, `handle`, or `fun` case. Defaults to false.
+- Type: `boolean`
+- Default: `false`
+
+Whether `|` are allowed before the first `datatype`, `fn`, `case`, `handle`, or `fun` case.
 
 ```sml
 datatype thing =
@@ -236,7 +265,10 @@ fun check x =
 
 #### `language.successor-ml.opt-semi`
 
-Whether a trailing `;` is allowed in the expression sequence of a `let` expression. Defaults to false.
+- Type: `boolean`
+- Default: `false`
+
+Whether a trailing `;` is allowed in the expression sequence of a `let` expression.
 
 ```sml
 (* trailing ; *)
@@ -263,7 +295,10 @@ val () =
 
 #### `language.successor-ml.or-pat`
 
-Whether or-patterns are allowed. Defaults to true.
+- Type: `boolean`
+- Default: `true`
+
+Whether or-patterns are allowed.
 
 ```sml
 datatype thing = Foo of int | Bar of int
@@ -272,7 +307,10 @@ fun extract (Foo x | Bar x) = x
 
 #### `language.successor-ml.exp-row-pun`
 
-Whether expression row punning is allowed. Defaults to false.
+- Type: `boolean`
+- Default: `false`
+
+Whether expression row punning is allowed.
 
 ```sml
 (* row punning *)
@@ -284,7 +322,10 @@ fun incB {a, b, c} = {a = a, b = b + 1, c = c}
 
 #### `language.successor-ml.vector`
 
-Whether vector expressions and patterns are allowed. Defaults to false.
+- Type: `boolean`
+- Default: `false`
+
+Whether vector expressions and patterns are allowed.
 
 ```sml
 val vec : int vector = #[1, 2, 3]
