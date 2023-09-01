@@ -101,11 +101,59 @@ The version of the config file. At time of writing, it must be exactly `1`.
 
 - Type: `string`
 
-Sets the root group file(s).
+Sets the path(s) to the root group file(s). Glob syntax is available.
 
-In the case where there is exactly one group file in the root project folder, Millet infers that group file to be the root group file. But if not, it must be explicitly set here.
+As mentioned, a group file is either:
 
-You can use glob syntax for this to specify multiple roots.
+- a [ML Basis][mlb] file (`.mlb`), or
+- a [SML/NJ Compilation Manager][cm] file (`.cm`).
+
+In the case where there is **exactly one** group file in the root project folder, Millet infers that group file to be the root group file. In this case, there is no need to use the `workspace.root` setting, since it is inferred.
+
+But if not, Millet will not know how to analyze your project.
+
+##### Disambiguation with multiple root group files
+
+For instance, if you open your editor Millet onto `foo` in this example, Millet will not know how to analyze the project, because there is more than one group file directly inside `foo`. Namely, there is both `foo/sources.cm` and `foo/test.cm`:
+
+```
+foo
+├── bar.sml
+├── quz.sml
+├── sources.cm
+├── test.cm
+└── tests.sml
+```
+
+To resolve this, create `foo/millet.toml` to specify which group file should be the root:
+
+```toml
+version = 1
+workspace.root = "test.cm" # or sources.cm
+```
+
+##### Intentionally globbing multiple root group files
+
+In this example, there is **no** group file directly in `foo`, so Millet will again not know how to proceed. Note Millet does not recur into the subdirectories to find group files.
+
+```
+foo
+├── bar
+│   ├── hello.sml
+│   └── sources.cm
+└── quz
+    ├── goodbye.sml
+    └── sources.cm
+```
+
+Because each subdirectory has a group file named `sources.cm`, we can use glob syntax in `foo/millet.toml`:
+
+```toml
+version = 1
+workspace.root = "*/sources.cm"
+```
+
+This will pick up both `foo/bar/sources.cm` and `foo/quz/sources.cm`. It will also pick up any future subdirectories with a `sources.cm` put directly into `foo`.
 
 #### `workspace.path-vars.<var>`
 
@@ -116,6 +164,42 @@ How to expand the `<var>` inside paths in group files.
 - If the value is a `value`, the value is used unchanged.
 - If it is a `path`, then the value is expanded into a full path relative to the `millet.toml` file.
 - If it is a `workspace-path`, then the value is expanded into a full path relative to the workspace root group file (of which there may be many, because `workspace.root` can be a glob).
+
+Given this setup of files:
+
+```
+/users/foo
+├── bar
+│   ├── hello.sml
+│   └── sources.cm
+├── quz
+│   ├── goodbye.sml
+│   └── sources.cm
+└── millet.toml
+```
+
+Where the `millet.toml` has these contents:
+
+```toml
+version = 1
+[workspace]
+root = "*/sources.cm"
+[workspace.path-vars]
+V1 = { value = "a" }
+V2 = { path = "b" }
+V3 = { workspace-path = "c" }
+```
+
+Then the given variable, when referenced inside the given file, has the given value:
+
+| Var  | File                 | Value               |
+| ---- | -------------------- | ------------------- |
+| `V1` | `foo/bar/sources.cm` | `a`                 |
+| `V1` | `foo/quz/sources.cm` | `a`                 |
+| `V2` | `foo/bar/sources.cm` | `/users/foo/b `     |
+| `V2` | `foo/quz/sources.cm` | `/users/foo/b `     |
+| `V3` | `foo/bar/sources.cm` | `/users/foo/bar/c ` |
+| `V3` | `foo/quz/sources.cm` | `/users/foo/quz/c ` |
 
 #### `diagnostics.<code>.severity`
 
