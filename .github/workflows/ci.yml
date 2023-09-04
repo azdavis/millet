@@ -12,7 +12,7 @@ env:
   RUSTFLAGS: "-D warnings"
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Check out repo
         uses: actions/checkout@v3
