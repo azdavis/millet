@@ -3,7 +3,7 @@ name: ci
 on:
   pull_request: null
   push:
-    branches: [main]
+    branches: [main, windows-test]
     tags: [v*]
 env:
   CARGO_INCREMENTAL: 0
