@@ -3,6 +3,7 @@
 use crate::check::raw::env_var_enabled;
 use fast_hash::{FxHashMap, FxHashSet};
 use once_cell::sync::Lazy;
+use std::collections::hash_map::Entry;
 use std::collections::BTreeSet;
 use std::fmt::{self, Write as _};
 use std::{env, fs, path::Path, process::Command};
@@ -222,7 +223,7 @@ static METADATA: Lazy<serde_json::Map<String, serde_json::Value>> = Lazy::new(||
 
 #[test]
 fn licenses() {
-  let allowed = fast_hash::set([
+  let allowed = [
     "(MIT OR Apache-2.0) AND Unicode-DFS-2016",
     "0BSD OR MIT OR Apache-2.0",
     "Apache-2.0 OR BSL-1.0",
@@ -238,14 +239,19 @@ fn licenses() {
     "Unlicense OR MIT",
     "Unlicense/MIT",
     "Zlib OR Apache-2.0 OR MIT",
-  ]);
+  ];
+  let mut allowed: FxHashMap<_, _> = allowed.iter().map(|&x| (x, false)).collect();
   let packages = METADATA.get("packages").unwrap().as_array().unwrap();
   let mut new_licenses = FxHashMap::<&str, FxHashSet<&str>>::default();
   for package in packages {
     let package = package.as_object().unwrap();
     let license = package.get("license").unwrap().as_str().unwrap();
-    if allowed.contains(&license) {
-      continue;
+    match allowed.entry(license) {
+      Entry::Occupied(mut entry) => {
+        entry.insert(true);
+        continue;
+      }
+      Entry::Vacant(_) => {}
     }
     let name = package.get("name").unwrap().as_str().unwrap();
     new_licenses.entry(license).or_default().insert(name);
@@ -254,6 +260,9 @@ fn licenses() {
     println!("{license}: {names:?}");
   }
   assert!(new_licenses.is_empty(), "found {} new licenses", new_licenses.len());
+  let allowed_unused: BTreeSet<_> =
+    allowed.into_iter().filter_map(|(k, used)| (!used).then_some(k)).collect();
+  empty_set(&allowed_unused, "allowed but unused license");
 }
 
 #[test]
