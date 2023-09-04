@@ -114,6 +114,8 @@
     "swatinem",
     "syms",
     "sysinfo",
+    "tempdir",
+    "tempfile",
     "termcolor",
     "tokenizes",
     "topo",

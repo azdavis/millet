@@ -3,6 +3,8 @@
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::single_match_else)]
 
+mod cli_test;
+
 use anyhow::{anyhow, bail, Context as _, Result};
 use flate2::{write::GzEncoder, Compression};
 use pico_args::Arguments;
@@ -13,6 +15,7 @@ use std::{env, fs, io, process::Command};
 enum Cmd {
   Help,
   Ci,
+  CliTest,
   Dist,
   Tag,
 }
@@ -25,12 +28,18 @@ struct CmdSpec {
 }
 
 impl Cmd {
-  const VALUES: [Cmd; 4] = [Cmd::Help, Cmd::Ci, Cmd::Dist, Cmd::Tag];
+  const VALUES: [Cmd; 5] = [Cmd::Help, Cmd::Ci, Cmd::CliTest, Cmd::Dist, Cmd::Tag];
 
   fn spec(self) -> CmdSpec {
     match self {
       Cmd::Help => CmdSpec { name: "help", desc: "show this help", options: &[], args: &[] },
-      Cmd::Ci => CmdSpec { name: "ci", desc: "run various tests", options: &[], args: &[] },
+      Cmd::Ci => CmdSpec {
+        name: "ci",
+        desc: "run various tests, including the cli test",
+        options: &[],
+        args: &[],
+      },
+      Cmd::CliTest => CmdSpec { name: "cli-test", desc: "run a cli test", options: &[], args: &[] },
       Cmd::Dist => CmdSpec {
         name: "dist",
         desc: "make artifacts for distribution",
@@ -120,6 +129,7 @@ fn run_ci() -> Result<()> {
     println!("note: SKIP_FULL_STD_BASIS env var was set to 1");
     println!("note: this means some slower tests were skipped (but appear as passed)");
   }
+  cli_test::run()?;
   Ok(())
 }
 
@@ -321,6 +331,10 @@ fn main() -> Result<()> {
     Cmd::Ci => {
       finish_args(args)?;
       run_ci()?;
+    }
+    Cmd::CliTest => {
+      finish_args(args)?;
+      cli_test::run()?;
     }
     Cmd::Dist => {
       let dist_args = DistArgs {

@@ -10,6 +10,8 @@ name = "xtask"
 test = false
 
 [dependencies]
+tempfile = "3.8.0"
+
 anyhow.workspace = true
 flate2.workspace = true
 pico-args.workspace = true
