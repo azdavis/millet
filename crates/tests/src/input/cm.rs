@@ -171,14 +171,11 @@ fn empty_group_exports_all() {
 version = 1
 workspace.root = "b.cm"
 "#;
-  let b = r#"
-val _ = S.x + 2
-"#;
   check_multi([
     ("a.cm", "Group is a.sml"),
     ("a.sml", "structure S = struct val x = 3 end"),
     ("b.cm", "Group is a.cm b.sml"),
-    ("b.sml", b),
+    ("b.sml", "val _ = S.x + 2"),
     (config::file::PATH, config),
   ]);
 }
