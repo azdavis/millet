@@ -111,8 +111,8 @@ pub struct CmFile {
 /// A kind of cm file.
 #[derive(Debug)]
 pub enum CmFileKind {
-  /// A group file.
-  Group,
+  /// A group file. Contains the range of the `Group` token.
+  Group(TextRange),
   /// A library file.
   Library,
 }
