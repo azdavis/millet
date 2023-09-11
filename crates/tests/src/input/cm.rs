@@ -165,16 +165,14 @@ fn empty_library_err() {
   );
 }
 
-// TODO should export all
 #[test]
-fn empty_group_exports_none() {
+fn empty_group_exports_all() {
   let config = r#"
 version = 1
 workspace.root = "b.cm"
 "#;
   let b = r#"
 val _ = S.x + 2
-(**     ^^^ undefined structure: `S` *)
 "#;
   check_multi([
     ("a.cm", "Group is a.sml"),

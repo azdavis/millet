@@ -152,7 +152,10 @@ fn get_one_cm_file<F>(
   };
   if is_empty {
     match cm.kind {
-      cm_syntax::CmFileKind::Group => {}
+      cm_syntax::CmFileKind::Group => {
+        all_sources(st, cx, cm.first_token_range, &mut ret.exports);
+        all_groups(st, cx, cm.first_token_range, &mut ret.exports);
+      }
       cm_syntax::CmFileKind::Library => {
         st.errors.push(Error::new(
           ErrorSource { path: None, range: cx.group.pos_db.range_utf16(cm.first_token_range) },
