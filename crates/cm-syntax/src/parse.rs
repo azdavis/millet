@@ -60,19 +60,14 @@ impl<'a> Parser<'a> {
 
 fn root(p: &mut Parser<'_>) -> Result<ParseRoot> {
   let Some(tok) = p.cur_tok() else { return p.err(ErrorKind::ExpectedDesc) };
-  let ret = match tok.val {
-    Token::Group => {
-      p.bump();
-      let (export, members) = exports_and_members(p)?;
-      ParseRoot { kind: CmFileKind::Group, first_token_range: tok.range, export, members }
-    }
-    Token::Library => {
-      p.bump();
-      let (export, members) = exports_and_members(p)?;
-      ParseRoot { kind: CmFileKind::Library, first_token_range: tok.range, export, members }
-    }
+  let kind = match tok.val {
+    Token::Group => CmFileKind::Group,
+    Token::Library => CmFileKind::Library,
     _ => return p.err(ErrorKind::ExpectedDesc),
   };
+  p.bump();
+  let (export, members) = exports_and_members(p)?;
+  let ret = ParseRoot { kind, first_token_range: tok.range, export, members };
   Ok(ret)
 }
 
