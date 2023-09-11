@@ -64,29 +64,16 @@ fn root(p: &mut Parser<'_>) -> Result<ParseRoot> {
     Token::Group => {
       p.bump();
       let (export, members) = exports_and_members(p)?;
-      ParseRoot { kind: CmFileKind::Group(tok.range), export, members }
+      ParseRoot { kind: CmFileKind::Group, first_token_range: tok.range, export, members }
     }
     Token::Library => {
       p.bump();
       let (export, members) = exports_and_members(p)?;
-      if export_is_empty(&export) {
-        return p.err(ErrorKind::EmptyExportList);
-      }
-      ParseRoot { kind: CmFileKind::Library, export, members }
+      ParseRoot { kind: CmFileKind::Library, first_token_range: tok.range, export, members }
     }
     _ => return p.err(ErrorKind::ExpectedDesc),
   };
   Ok(ret)
-}
-
-fn export_is_empty(e: &Export) -> bool {
-  match e {
-    Export::Name(_, _) | Export::Library(_) | Export::Source(_) | Export::Group(_) => false,
-    Export::Union(es) => es.iter().all(export_is_empty),
-    Export::Difference(e1, e2) | Export::Intersection(e1, e2) => {
-      export_is_empty(e1) && export_is_empty(e2)
-    }
-  }
 }
 
 /// iff not at the beginning of an export, return Ok(None) and consume no tokens

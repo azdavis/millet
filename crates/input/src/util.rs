@@ -25,6 +25,7 @@ pub(crate) enum ErrorKind {
   FunSig,
   NonUtf8Path,
   EmptyStrInPath(str_util::SmolStr),
+  LibraryEmptyExport,
 }
 
 #[derive(Debug)]
@@ -73,6 +74,7 @@ impl fmt::Display for ErrorDisplay<'_> {
       ErrorKind::FunSig => f.write_str("unsupported export kind: `funsig`"),
       ErrorKind::NonUtf8Path => f.write_str("invalid UTF-8 found in path"),
       ErrorKind::EmptyStrInPath(p) => write!(f, "empty string in dot-separated path: `{p}`"),
+      ErrorKind::LibraryEmptyExport => f.write_str("invalid empty export for `Library` CM file"),
     }
   }
 }
@@ -151,6 +153,7 @@ impl Error {
       // other errors not here have 1017-1019
       ErrorKind::NonUtf8Path => Code::n(1020),
       ErrorKind::EmptyStrInPath(_) => Code::n(1021),
+      ErrorKind::LibraryEmptyExport => Code::n(1022),
     }
   }
 

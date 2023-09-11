@@ -11,7 +11,6 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
   UnclosedComment,
-  EmptyExportList,
   Expected(Token<'static>),
   ExpectedString,
   ExpectedDesc,
@@ -42,7 +41,6 @@ impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match &self.0.val {
       ErrorKind::UnclosedComment => f.write_str("unclosed block comment"),
-      ErrorKind::EmptyExportList => f.write_str("invalid empty export list"),
       ErrorKind::Expected(tok) => write!(f, "expected `{tok}`"),
       ErrorKind::ExpectedString => f.write_str("expected a string"),
       ErrorKind::ExpectedDesc => f.write_str("expected `Group` or `Library`"),
@@ -102,6 +100,8 @@ impl fmt::Display for Token<'_> {
 pub struct CmFile {
   /// The kind of file.
   pub kind: CmFileKind,
+  /// The range of the first token.
+  pub first_token_range: TextRange,
   /// The export.
   pub export: Export,
   /// The path.
@@ -111,8 +111,8 @@ pub struct CmFile {
 /// A kind of cm file.
 #[derive(Debug)]
 pub enum CmFileKind {
-  /// A group file. Contains the range of the `Group` token.
-  Group(TextRange),
+  /// A group file.
+  Group,
   /// A library file.
   Library,
 }
@@ -147,6 +147,7 @@ impl ParsedPath {
 
 pub(crate) struct ParseRoot {
   pub(crate) kind: CmFileKind,
+  pub(crate) first_token_range: TextRange,
   pub(crate) export: Export,
   pub(crate) members: Vec<Member>,
 }

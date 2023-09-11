@@ -27,5 +27,10 @@ pub(crate) fn get(root: ParseRoot) -> Result<CmFile> {
     };
     paths.push(WithRange { val: ParsedPath { kind, path }, range: member.pathname.range });
   }
-  Ok(CmFile { kind: root.kind, export: root.export, paths })
+  Ok(CmFile {
+    kind: root.kind,
+    first_token_range: root.first_token_range,
+    export: root.export,
+    paths,
+  })
 }
