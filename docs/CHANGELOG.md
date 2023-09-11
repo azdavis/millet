@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Fix `Group is` for CM files to export everything instead of nothing.
+
 ## v0.13.1
 
 - Avoid UNC paths where possible on Windows.

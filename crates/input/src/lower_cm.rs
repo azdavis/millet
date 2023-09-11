@@ -152,6 +152,12 @@ fn get_one_cm_file<F>(
   };
   if is_empty {
     match cm.kind {
+      // from the spec https://www.smlnj.org/doc/CM/new.pdf, page 8, describing "Group":
+      //
+      // > The export list can be left empty, in which case CM will provide a default export list:
+      // > all exports from ML source files plus all exports from subcomponents of the component.
+      // > from other libraries will not be re-exported in this case. This default can be spelled
+      // > out as source(-) group(-).
       cm_syntax::CmFileKind::Group => {
         get_all_sources(st, cx, cm.first_token_range, &mut ret.exports);
         get_all_groups(st, cx, cm.first_token_range, &mut ret.exports);
@@ -262,6 +268,7 @@ fn get_export<F>(
   }
 }
 
+/// aka `source(-)`
 fn get_all_sources<F>(st: &mut St<'_, F>, cx: ExportCx<'_>, range: TextRange, ac: &mut NameExports)
 where
   F: paths::FileSystem,
@@ -272,6 +279,7 @@ where
   }
 }
 
+/// aka `group(-)`
 fn get_all_groups<F>(st: &mut St<'_, F>, cx: ExportCx<'_>, range: TextRange, ac: &mut NameExports)
 where
   F: paths::FileSystem,
