@@ -146,21 +146,24 @@ fn get_one_cm_file<F>(
     }
   }
   let cx = ExportCx { group, cm_paths: &ret.cm_paths, sml_paths: &ret.sml_paths, cur_path_id };
-  if let cm_syntax::Export::Union(es) = &cm.export {
-    if es.is_empty() {
-      match cm.kind {
-        cm_syntax::CmFileKind::Group => {}
-        cm_syntax::CmFileKind::Library => {
-          st.errors.push(Error::new(
-            ErrorSource { path: None, range: cx.group.pos_db.range_utf16(cm.first_token_range) },
-            cx.group.path.as_path().to_owned(),
-            ErrorKind::LibraryEmptyExport,
-          ));
-        }
+  let is_empty = match &cm.export {
+    cm_syntax::Export::Union(es) => es.is_empty(),
+    _ => false,
+  };
+  if is_empty {
+    match cm.kind {
+      cm_syntax::CmFileKind::Group => {}
+      cm_syntax::CmFileKind::Library => {
+        st.errors.push(Error::new(
+          ErrorSource { path: None, range: cx.group.pos_db.range_utf16(cm.first_token_range) },
+          cx.group.path.as_path().to_owned(),
+          ErrorKind::LibraryEmptyExport,
+        ));
       }
     }
+  } else {
+    get_export(st, cx, &mut ret.exports, cm.export);
   }
-  get_export(st, cx, &mut ret.exports, cm.export);
 }
 
 #[derive(Clone, Copy)]
