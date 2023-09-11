@@ -155,3 +155,23 @@ workspace.root = "a.cm"
 fn no_path() {
   check_bad_input("s.cm", "couldn't perform file I/O", [("s.cm", "Group is no.cm")]);
 }
+
+// TODO should export all
+#[test]
+fn empty_group_exports_none() {
+  let config = r#"
+version = 1
+workspace.root = "b.cm"
+"#;
+  let b = r#"
+val _ = S.x + 2
+(**     ^^^ undefined structure: `S` *)
+"#;
+  check_multi([
+    ("a.cm", "Group is a.sml"),
+    ("a.sml", "structure S = struct val x = 3 end"),
+    ("b.cm", "Group is a.cm b.sml"),
+    ("b.sml", b),
+    (config::file::PATH, config),
+  ]);
+}
