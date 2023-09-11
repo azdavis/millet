@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.13.2
 
 - Fix `Group is` for CM files to export everything instead of nothing.
 
