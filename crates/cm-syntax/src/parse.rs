@@ -1,8 +1,8 @@
 //! Parsing CM tokens into a syntax tree.
 
 use crate::types::{
-  Class, Error, ErrorKind, Export, Member, Namespace, ParseRoot, PathOrMinus, PathOrStdBasis,
-  Result, Token,
+  Class, CmFileKind, Error, ErrorKind, Export, Member, Namespace, ParseRoot, PathOrMinus,
+  PathOrStdBasis, Result, Token,
 };
 use text_size_util::{TextRange, WithRange};
 
@@ -63,7 +63,7 @@ fn root(p: &mut Parser<'_>) -> Result<ParseRoot> {
     Some(Token::Group) => {
       p.bump();
       let (export, members) = exports_and_members(p)?;
-      ParseRoot { export, members }
+      ParseRoot { kind: CmFileKind::Group, export, members }
     }
     Some(Token::Library) => {
       p.bump();
@@ -71,7 +71,7 @@ fn root(p: &mut Parser<'_>) -> Result<ParseRoot> {
       if export_is_empty(&export) {
         return p.err(ErrorKind::EmptyExportList);
       }
-      ParseRoot { export, members }
+      ParseRoot { kind: CmFileKind::Library, export, members }
     }
     _ => return p.err(ErrorKind::ExpectedDesc),
   };

@@ -12,7 +12,8 @@ mod parse;
 mod types;
 
 pub use types::{
-  Class, CmFile, Error, Export, Namespace, PathKind, PathOrMinus, PathOrStdBasis, Result,
+  Class, CmFile, CmFileKind, Error, Export, Namespace, PathKind, PathOrMinus, PathOrStdBasis,
+  Result,
 };
 
 /// Turn the contents of a CM file into exports and members.

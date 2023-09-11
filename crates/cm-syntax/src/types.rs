@@ -100,10 +100,21 @@ impl fmt::Display for Token<'_> {
 /// A processed CM file.
 #[derive(Debug)]
 pub struct CmFile {
+  /// The kind of file.
+  pub kind: CmFileKind,
   /// The export.
   pub export: Export,
   /// The path.
   pub paths: Vec<WithRange<ParsedPath>>,
+}
+
+/// A kind of cm file.
+#[derive(Debug)]
+pub enum CmFileKind {
+  /// A group file.
+  Group,
+  /// A library file.
+  Library,
 }
 
 /// A kind of path.
@@ -135,6 +146,7 @@ impl ParsedPath {
 }
 
 pub(crate) struct ParseRoot {
+  pub(crate) kind: CmFileKind,
   pub(crate) export: Export,
   pub(crate) members: Vec<Member>,
 }
