@@ -156,6 +156,15 @@ fn no_path() {
   check_bad_input("s.cm", "couldn't perform file I/O", [("s.cm", "Group is no.cm")]);
 }
 
+#[test]
+fn empty_library_err() {
+  check_bad_input(
+    "a.cm",
+    "invalid empty export for `Library`",
+    [("a.cm", "Library is a.sml"), ("a.sml", "structure S = struct end")],
+  );
+}
+
 // TODO should export all
 #[test]
 fn empty_group_exports_none() {
