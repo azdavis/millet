@@ -153,8 +153,8 @@ fn get_one_cm_file<F>(
   if is_empty {
     match cm.kind {
       cm_syntax::CmFileKind::Group => {
-        all_sources(st, cx, cm.first_token_range, &mut ret.exports);
-        all_groups(st, cx, cm.first_token_range, &mut ret.exports);
+        get_all_sources(st, cx, cm.first_token_range, &mut ret.exports);
+        get_all_groups(st, cx, cm.first_token_range, &mut ret.exports);
       }
       cm_syntax::CmFileKind::Library => {
         st.errors.push(Error::new(
@@ -228,13 +228,13 @@ fn get_export<F>(
           )),
         }
       }
-      cm_syntax::PathOrMinus::Minus => all_sources(st, cx, path.range, ac),
+      cm_syntax::PathOrMinus::Minus => get_all_sources(st, cx, path.range, ac),
     },
     cm_syntax::Export::Group(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
         get_one_and_extend_with(st, cx.group, cx.cur_path_id, p.as_path(), path.range, ac);
       }
-      cm_syntax::PathOrMinus::Minus => all_groups(st, cx, path.range, ac),
+      cm_syntax::PathOrMinus::Minus => get_all_groups(st, cx, path.range, ac),
     },
     cm_syntax::Export::Union(exports) => {
       for export in exports {
@@ -262,7 +262,7 @@ fn get_export<F>(
   }
 }
 
-fn all_sources<F>(st: &mut St<'_, F>, cx: ExportCx<'_>, range: TextRange, ac: &mut NameExports)
+fn get_all_sources<F>(st: &mut St<'_, F>, cx: ExportCx<'_>, range: TextRange, ac: &mut NameExports)
 where
   F: paths::FileSystem,
 {
@@ -272,7 +272,7 @@ where
   }
 }
 
-fn all_groups<F>(st: &mut St<'_, F>, cx: ExportCx<'_>, range: TextRange, ac: &mut NameExports)
+fn get_all_groups<F>(st: &mut St<'_, F>, cx: ExportCx<'_>, range: TextRange, ac: &mut NameExports)
 where
   F: paths::FileSystem,
 {
