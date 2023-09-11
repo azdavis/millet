@@ -208,22 +208,13 @@ fn get_export<F>(
           )),
         }
       }
-      cm_syntax::PathOrMinus::Minus => {
-        for path_id in cx.sml_paths {
-          let contents = st.sources.get(path_id).expect("sml file should be set").as_str();
-          get_top_defs(contents, ac, path.range);
-        }
-      }
+      cm_syntax::PathOrMinus::Minus => all_sources(st, cx, path.range, ac),
     },
     cm_syntax::Export::Group(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
         get_one_and_extend_with(st, cx.group, cx.cur_path_id, p.as_path(), path.range, ac);
       }
-      cm_syntax::PathOrMinus::Minus => {
-        for &path_id in cx.cm_paths {
-          extend_with(st, path_id, path.range, ac);
-        }
-      }
+      cm_syntax::PathOrMinus::Minus => all_groups(st, cx, path.range, ac),
     },
     cm_syntax::Export::Union(exports) => {
       for export in exports {
@@ -248,6 +239,25 @@ fn get_export<F>(
       lhs_ac.retain(|k, _| rhs_ac.contains_key(k));
       ac.extend(lhs_ac);
     }
+  }
+}
+
+fn all_sources<F>(st: &mut St<'_, F>, cx: ExportCx<'_>, range: TextRange, ac: &mut NameExports)
+where
+  F: paths::FileSystem,
+{
+  for path_id in cx.sml_paths {
+    let contents = st.sources.get(path_id).expect("sml file should be set").as_str();
+    get_top_defs(contents, ac, range);
+  }
+}
+
+fn all_groups<F>(st: &mut St<'_, F>, cx: ExportCx<'_>, range: TextRange, ac: &mut NameExports)
+where
+  F: paths::FileSystem,
+{
+  for &path_id in cx.cm_paths {
+    extend_with(st, path_id, range, ac);
   }
 }
 
