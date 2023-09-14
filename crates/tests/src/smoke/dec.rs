@@ -159,7 +159,7 @@ fn mutual_datatype_forward() {
   check(
     r#"
 datatype foo = Foo of bar
-and bar = Bar of int
+and bar = Bar
 "#,
   );
 }
@@ -168,7 +168,7 @@ and bar = Bar of int
 fn mutual_datatype_backward() {
   check(
     r#"
-datatype bar = Bar of int
+datatype bar = Bar
 and foo = Foo of bar
 "#,
   );

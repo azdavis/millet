@@ -1142,7 +1142,7 @@ fn mutual_datatype_forward() {
     r#"
 signature SIG = sig
   datatype foo = Foo of bar
-  and bar = Bar of int
+  and bar = Bar
 end
 "#,
   );
@@ -1153,7 +1153,7 @@ fn mutual_datatype_backward() {
   check(
     r#"
 signature SIG = sig
-  datatype bar = Bar of int
+  datatype bar = Bar
   and foo = Foo of bar
 end
 "#,
