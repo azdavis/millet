@@ -12,7 +12,7 @@ In general, it should be possible to use Millet with any editor that supports la
 
 We provide an official [VS Code][vs-code] extension in the [marketplace][].
 
-Some Millet featuers are provided by the VS Code extension, not the language server. These featuers are thus not available in other editors.
+Some Millet features are provided by the VS Code extension, not the language server. These features are thus not available in other editors.
 
 ### VSCodium and similar
 
