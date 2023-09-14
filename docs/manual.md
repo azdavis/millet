@@ -4,28 +4,29 @@ This is a manual for how to use Millet.
 
 See also the [blog post](https://azdavis.net/posts/millet/) for an overview.
 
-## A note about VS Code
+## A note about editors
 
-We provide an official [VS Code][vs-code] extension, but it should be possible to use the compiled language server binary with any editor that supports language servers.
-
-Some features are provided by the VS Code extension, not the language server.
-
-Note also that when we say "VS Code", we really mean "VS Code or any similar compatible editor". VS Code is technically Microsoft's custom distribution of the open-source "Code - OSS" project, upon which things like [VSCodium][] are built.
-
-Only Microsoft's VS Code is allowed to use the extension marketplace, so Millet is also available on [Open VSX][ovsx] for VS Code-compatible editors like VSCodium.
-
-## Setup
+In general, it should be possible to use Millet with any editor that supports language servers, but VS Code is the most well-supported editor.
 
 ### VS Code
 
-Install the extension from the [VS Code marketplace][marketplace].
+We provide an official [VS Code][vs-code] extension in the [marketplace][].
+
+Some Millet featuers are provided by the VS Code extension, not the language server. These featuers are thus not available in other editors.
+
+### VSCodium and similar
+
+In the above, when we say "VS Code", we really mean "VS Code or any similar compatible editor", like [VSCodium][]. This means you can use the official Millet extension in VSCodium.
+
+Because only Microsoft's VS Code is allowed to use the Microsoft extension marketplace, Millet is also available on [Open VSX][ovsx] for other VS Code-compatible editors.
 
 ### Other editors
 
-1. Clone or download the repository.
-2. Build from source with `cargo build --release --bin millet-ls`.
-3. Put the compiled `target/release/millet-ls` binary somewhere your editor can find it.
-4. Set up your editor to use that binary to process SML files.
+When using other editors, you will likely need to
+
+1. Put the `millet-ls` binary on your `$PATH`. You can either [download a pre-built binary for your platform][releases], or clone/download the repository and [build from source][build-from-source].
+2. Write your own "glue code" to get your editor to use Millet for SML, ML Basis, and CM files.
+3. Arrange for your editor to pass Millet the appropriate [initialization options](#language-server-initialization).
 
 ## Usage
 
@@ -800,3 +801,5 @@ The formatter does, however, respect the editor-configured tab size.
 [mlb-ann]: http://mlton.org/MLBasisAnnotations
 [bike-shed]: https://en.wikipedia.org/wiki/Law_of_triviality
 [succ-ml]: http://mlton.org/SuccessorML
+[releases]: https://github.com/azdavis/millet/releases
+[build-from-source]: /README.md#development
