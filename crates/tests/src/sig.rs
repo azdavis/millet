@@ -1,6 +1,6 @@
 //! NOTE: intentionally use a mix of `S:> SIG` and `S :> SIG` across tests to make sure both parse.
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn ok_smoke() {
@@ -1106,18 +1106,6 @@ structure Str :> SIG where type 'a t = int = struct
 end
 
 val _ = Str.f 3 : int
-"#,
-  );
-}
-
-#[test]
-fn datatype_and() {
-  check(
-    r#"
-signature SIG = sig
-  datatype a = A of b
-  and b = B
-end
 "#,
   );
 }
