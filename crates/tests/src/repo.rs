@@ -182,7 +182,7 @@ fn docs_readme() {
       let entry = entry.ok()?;
       let fname = entry.file_name();
       let fname = fname.to_str()?;
-      let ignore = matches!(fname, "README.md" | "diagnostics.md");
+      let ignore = matches!(fname, "README.md" | "diagnostics.md" | "errors.md");
       (!ignore).then(|| fname.to_owned())
     })
     .collect();
