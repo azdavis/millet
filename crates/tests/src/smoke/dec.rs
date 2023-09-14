@@ -153,3 +153,23 @@ functor F() = struct ... end
 "#,
   );
 }
+
+#[test]
+fn mutual_datatype_forward() {
+  check(
+    r#"
+datatype foo = Foo of bar
+and bar = Bar of int
+"#,
+  );
+}
+
+#[test]
+fn mutual_datatype_backward() {
+  check(
+    r#"
+datatype bar = Bar of int
+and foo = Foo of bar
+"#,
+  );
+}

@@ -1147,3 +1147,27 @@ end
 "#,
   );
 }
+
+#[test]
+fn mutual_datatype_forward() {
+  fail(
+    r#"
+signature SIG = sig
+  datatype foo = Foo of bar
+  and bar = Bar of int
+end
+"#,
+  );
+}
+
+#[test]
+fn mutual_datatype_backward() {
+  check(
+    r#"
+signature SIG = sig
+  datatype bar = Bar of int
+  and foo = Foo of bar
+end
+"#,
+  );
+}
