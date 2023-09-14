@@ -22,7 +22,7 @@ Because only Microsoft's VS Code is allowed to use the Microsoft extension marke
 
 ### Other editors
 
-When using other editors, you will likely need to
+When using other editors, you will likely need to:
 
 1. Put the `millet-ls` binary on your `$PATH`. You can either [download a pre-built binary for your platform][releases], or clone/download the repository and [build from source][build-from-source].
 2. Write your own "glue code" to get your editor to use Millet for SML, ML Basis, and CM files.
