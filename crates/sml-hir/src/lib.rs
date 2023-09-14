@@ -142,7 +142,7 @@ pub enum Spec {
   Val(Vec<TyVar>, Vec<ValDesc>),
   Ty(TyDesc),
   EqTy(TyDesc),
-  Datatype(DatDesc),
+  Datatype(Vec<DatDesc>),
   DatatypeCopy(Name, Path),
   Exception(ExDesc),
   Str(StrDesc),

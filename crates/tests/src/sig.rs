@@ -1112,7 +1112,7 @@ val _ = Str.f 3 : int
 
 #[test]
 fn datatype_and() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   datatype a = A of b
@@ -1150,7 +1150,7 @@ end
 
 #[test]
 fn mutual_datatype_forward() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   datatype foo = Foo of bar

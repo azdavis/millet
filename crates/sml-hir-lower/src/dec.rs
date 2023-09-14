@@ -355,7 +355,8 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
         st.err(with_type.syntax(), e);
       }
       let binds = dat_binds(st, dec.dat_binds());
-      binds.into_iter().map(|x| st.spec(sml_hir::Spec::Datatype(x), ptr.clone())).collect()
+      let dat = sml_hir::Spec::Datatype(binds);
+      vec![st.spec(dat, ptr.clone())]
     }
     ast::DecOne::DatCopyDec(dec) => {
       if !st.lang().dec.datatype_copy {

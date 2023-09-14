@@ -478,8 +478,7 @@ fn get_spec_one(
       get_ty_desc(st, spec.into(), &mut ac.ty_env, ty_descs, Equality::Sometimes);
     }
     // @def(71)
-    sml_hir::Spec::Datatype(dat_desc) => {
-      let dat_descs = std::slice::from_ref(dat_desc);
+    sml_hir::Spec::Datatype(dat_descs) => {
       let (ty_env, big_val_env) =
         dec::get_dat_binds(st, spec.into(), bs.as_cx(), ars, dat_descs, &[]);
       for (name, val) in ty_env {
