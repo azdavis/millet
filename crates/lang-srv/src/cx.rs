@@ -5,7 +5,7 @@ use diagnostic::Code;
 use lsp_server::{Message, Notification, ReqQueue, Response};
 use lsp_types::Url;
 
-pub(crate) const LEARN_MORE: &str = "Learn more";
+pub(crate) const HELP_FIX: &str = "Learn how to fix";
 
 /// The context, kind of like "semi-permanent" state.
 ///
@@ -62,7 +62,7 @@ impl Cx {
         typ: lsp_types::MessageType::ERROR,
         message,
         actions: Some(vec![lsp_types::MessageActionItem {
-          title: LEARN_MORE.to_owned(),
+          title: HELP_FIX.to_owned(),
           properties: std::collections::HashMap::new(),
         }]),
       },

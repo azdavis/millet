@@ -1,6 +1,6 @@
 //! Respond to requests.
 
-use crate::{convert, cx::LEARN_MORE, state::St};
+use crate::{convert, cx, state::St};
 use lsp_server::Response;
 
 pub(crate) fn handle(st: &mut St, res: Response) {
@@ -24,7 +24,7 @@ pub(crate) fn handle(st: &mut St, res: Response) {
       return;
     }
   };
-  if item.title != LEARN_MORE {
+  if item.title != cx::HELP_FIX {
     log::warn!("unknown item.title: {}", item.title);
     return;
   }
