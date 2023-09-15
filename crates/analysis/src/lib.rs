@@ -405,7 +405,7 @@ impl Analysis {
           _ => Some((exp, fst_arm_body)),
         }
       });
-    // need to do two iters here because the FunCase tuple case yields many pats,but the Fn and
+    // need to do two iters here because the FunCase tuple case yields many pats, but the Fn and
     // FunCase non-tuple case yield only one.
     let fun_case_tuple_pats = arenas
       .exp
@@ -426,7 +426,7 @@ impl Analysis {
       }
       _ => None,
     });
-    let ty_hints = val_bind_pats.filter_map(|pat| {
+    let val_bind_hints = val_bind_pats.filter_map(|pat| {
       let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
       Some(InlayHint { position: range.end, label: ty_annot, kind: InlayHintKind::Ty })
     });
@@ -458,7 +458,8 @@ impl Analysis {
       let label = file.info.show_ty_annot(&self.syms_tys, exp)?;
       Some(InlayHint { position, label, kind: InlayHintKind::Ty })
     });
-    let hints = std::iter::empty().chain(param_hints).chain(ty_hints).chain(fun_return_ty_hints);
+    let hints =
+      std::iter::empty().chain(val_bind_hints).chain(param_hints).chain(fun_return_ty_hints);
     Some(hints.collect())
   }
 }
