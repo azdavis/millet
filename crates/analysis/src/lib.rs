@@ -373,16 +373,16 @@ impl Analysis {
     let file = self.source_files.get(&range.path)?;
     let arenas = &file.syntax.lower.arenas;
     let mut hints = Vec::<InlayHint>::new();
-    let val_bind_pats = arenas
+    let val_binds = arenas
       .dec
       .iter()
       .filter_map(|(_, dec)| match dec {
         sml_hir::Dec::Val(_, val_binds, sml_hir::ValFlavor::Val) => Some(val_binds),
         _ => None,
       })
-      .flat_map(|xs| xs.iter().filter_map(|x| x.pat));
-    for pat in val_bind_pats {
-      inlay_hint_pat(&mut hints, &self.syms_tys, file, pat, false);
+      .flatten();
+    for val_bind in val_binds {
+      inlay_hint_pat(&mut hints, &self.syms_tys, file, val_bind.pat, false);
     }
     let param_pats = {
       // need to do two iters here because the FunCase tuple case yields many pats, but the Fn and
@@ -393,14 +393,14 @@ impl Analysis {
         .filter_map(|(_, exp)| match exp {
           sml_hir::Exp::Fn(cs, sml_hir::FnFlavor::FunCase { tuple: true }) => {
             match &arenas.pat[cs.first()?.pat?] {
-              sml_hir::Pat::Record { rows, .. } => Some(rows.iter().filter_map(|&(_, pat)| pat)),
+              sml_hir::Pat::Record { rows, .. } => Some(rows.iter().map(|&(_, pat)| pat)),
               _ => unreachable!("non-Record pat for FunCase with tuple: true"),
             }
           }
           _ => None,
         })
         .flatten();
-      let fn_and_fun_case_non_tuple_pats = arenas.exp.iter().filter_map(|(_, exp)| match exp {
+      let fn_and_fun_case_non_tuple_pats = arenas.exp.iter().map(|(_, exp)| match exp {
         sml_hir::Exp::Fn(
           cs,
           sml_hir::FnFlavor::Fn | sml_hir::FnFlavor::FunCase { tuple: false },
@@ -459,25 +459,40 @@ fn inlay_hint_pat(
   ac: &mut Vec<InlayHint>,
   st: &sml_statics_types::St,
   file: &mlb_statics::SourceFile,
-  pat: sml_hir::la_arena::Idx<sml_hir::Pat>,
+  pat: sml_hir::PatIdx,
   parens: bool,
 ) {
-  let want = match &file.syntax.lower.arenas.pat[pat] {
-    sml_hir::Pat::Typed(_, _) => false,
-    sml_hir::Pat::Record { rows, allows_other } => rows.len() > 1 || *allows_other,
-    _ => true,
-  };
-  if !want {
-    return;
-  }
-  let Some(ty_annot) = file.info.show_pat_ty_annot(st, pat) else { return };
-  let Some(ptr) = file.syntax.lower.ptrs.hir_to_ast(pat.into()) else { return };
-  let Some(range) = file.syntax.pos_db.range_utf16(ptr.text_range()) else { return };
-  if parens {
-    ac.push(InlayHint { position: range.start, label: "(".to_owned() });
-    ac.push(InlayHint { position: range.end, label: format!("{ty_annot})") });
-  } else {
-    ac.push(InlayHint { position: range.end, label: ty_annot });
+  let Some(pat) = pat else { return };
+  match &file.syntax.lower.arenas.pat[pat] {
+    // - the type of SCons should be quite clear.
+    // - if a pattern is explicitly typed, don't show any inlay hint types in that pattern at all.
+    sml_hir::Pat::SCon(_) | sml_hir::Pat::Typed(_, _) => {}
+    // stop on wildcards, constructors (i.e. both variables and "actual" constructors), and vectors
+    // (which are like lists, which are handled by the constructor case).
+    sml_hir::Pat::Wild | sml_hir::Pat::Con(_, _) | sml_hir::Pat::Vector(_) => {
+      let Some(ty_annot) = file.info.show_pat_ty_annot(st, pat) else { return };
+      let Some(ptr) = file.syntax.lower.ptrs.hir_to_ast(pat.into()) else { return };
+      let Some(range) = file.syntax.pos_db.range_utf16(ptr.text_range()) else { return };
+      if parens {
+        ac.push(InlayHint { position: range.start, label: "(".to_owned() });
+        ac.push(InlayHint { position: range.end, label: format!("{ty_annot})") });
+      } else {
+        ac.push(InlayHint { position: range.end, label: ty_annot });
+      }
+    }
+    // recursive cases.
+    sml_hir::Pat::Record { rows, .. } => {
+      for &(_, pat) in rows {
+        inlay_hint_pat(ac, st, file, pat, false);
+      }
+    }
+    sml_hir::Pat::As(_, pat) => inlay_hint_pat(ac, st, file, *pat, true),
+    sml_hir::Pat::Or(or_pat) => {
+      inlay_hint_pat(ac, st, file, or_pat.first, true);
+      for pat in &or_pat.rest {
+        inlay_hint_pat(ac, st, file, *pat, true);
+      }
+    }
   }
 }
 
