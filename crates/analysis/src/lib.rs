@@ -373,20 +373,18 @@ impl Analysis {
     let file = self.source_files.get(&range.path)?;
     let arenas = &file.syntax.lower.arenas;
     let mut hints = Vec::<InlayHint>::new();
-    let val_bind_hints = arenas
+    let val_bind_pats = arenas
       .dec
       .iter()
       .filter_map(|(_, dec)| match dec {
         sml_hir::Dec::Val(_, val_binds, sml_hir::ValFlavor::Val) => Some(val_binds),
         _ => None,
       })
-      .flat_map(|xs| xs.iter().filter_map(|x| x.pat))
-      .filter_map(|pat| {
-        let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
-        Some(InlayHint { position: range.end, label: ty_annot })
-      });
-    hints.extend(val_bind_hints);
-    let param_hints = {
+      .flat_map(|xs| xs.iter().filter_map(|x| x.pat));
+    for pat in val_bind_pats {
+      inlay_hint_pat(&mut hints, &self.syms_tys, file, pat, false);
+    }
+    let param_pats = {
       // need to do two iters here because the FunCase tuple case yields many pats, but the Fn and
       // FunCase non-tuple case yield only one.
       let fun_case_tuple_pats = arenas
@@ -409,19 +407,11 @@ impl Analysis {
         ) => cs.first()?.pat,
         _ => None,
       });
-      std::iter::empty()
-        .chain(fun_case_tuple_pats)
-        .chain(fn_and_fun_case_non_tuple_pats)
-        .filter_map(|pat| {
-          let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
-          Some([
-            InlayHint { position: range.start, label: "(".to_owned() },
-            InlayHint { position: range.end, label: format!("{ty_annot})") },
-          ])
-        })
-        .flatten()
+      std::iter::empty().chain(fun_case_tuple_pats).chain(fn_and_fun_case_non_tuple_pats)
     };
-    hints.extend(param_hints);
+    for pat in param_pats {
+      inlay_hint_pat(&mut hints, &self.syms_tys, file, pat, true);
+    }
     let fun_return_ty_hints = arenas
       .dec
       .iter()
@@ -466,22 +456,29 @@ impl Analysis {
 }
 
 fn inlay_hint_pat(
+  ac: &mut Vec<InlayHint>,
   st: &sml_statics_types::St,
   file: &mlb_statics::SourceFile,
   pat: sml_hir::la_arena::Idx<sml_hir::Pat>,
-) -> Option<(RangeUtf16, String)> {
+  parens: bool,
+) {
   let want = match &file.syntax.lower.arenas.pat[pat] {
     sml_hir::Pat::Typed(_, _) => false,
     sml_hir::Pat::Record { rows, allows_other } => rows.len() > 1 || *allows_other,
     _ => true,
   };
   if !want {
-    return None;
+    return;
   }
-  let ty_annot = file.info.show_pat_ty_annot(st, pat)?;
-  let ptr = file.syntax.lower.ptrs.hir_to_ast(pat.into())?;
-  let range = file.syntax.pos_db.range_utf16(ptr.text_range())?;
-  Some((range, ty_annot))
+  let Some(ty_annot) = file.info.show_pat_ty_annot(st, pat) else { return };
+  let Some(ptr) = file.syntax.lower.ptrs.hir_to_ast(pat.into()) else { return };
+  let Some(range) = file.syntax.pos_db.range_utf16(ptr.text_range()) else { return };
+  if parens {
+    ac.push(InlayHint { position: range.start, label: "(".to_owned() });
+    ac.push(InlayHint { position: range.end, label: format!("{ty_annot})") });
+  } else {
+    ac.push(InlayHint { position: range.end, label: ty_annot });
+  }
 }
 
 /// An error when formatting a file.
