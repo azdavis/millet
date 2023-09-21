@@ -372,27 +372,6 @@ impl Analysis {
   pub fn inlay_hints(&self, range: WithPath<RangeUtf16>) -> Option<Vec<InlayHint>> {
     let file = self.source_files.get(&range.path)?;
     let arenas = &file.syntax.lower.arenas;
-    // need to do two iters here because the FunCase tuple case yields many pats, but the Fn and
-    // FunCase non-tuple case yield only one.
-    let fun_case_tuple_pats = arenas
-      .exp
-      .iter()
-      .filter_map(|(_, exp)| match exp {
-        sml_hir::Exp::Fn(cs, sml_hir::FnFlavor::FunCase { tuple: true }) => {
-          match &arenas.pat[cs.first()?.pat?] {
-            sml_hir::Pat::Record { rows, .. } => Some(rows.iter().filter_map(|&(_, pat)| pat)),
-            _ => unreachable!("non-Record pat for FunCase with tuple: true"),
-          }
-        }
-        _ => None,
-      })
-      .flatten();
-    let fn_and_fun_case_non_tuple_pats = arenas.exp.iter().filter_map(|(_, exp)| match exp {
-      sml_hir::Exp::Fn(cs, sml_hir::FnFlavor::Fn | sml_hir::FnFlavor::FunCase { tuple: false }) => {
-        cs.first()?.pat
-      }
-      _ => None,
-    });
     let val_bind_hints = arenas
       .dec
       .iter()
@@ -405,17 +384,41 @@ impl Analysis {
         let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
         Some(InlayHint { position: range.end, label: ty_annot })
       });
-    let param_hints = std::iter::empty()
-      .chain(fun_case_tuple_pats)
-      .chain(fn_and_fun_case_non_tuple_pats)
-      .filter_map(|pat| {
-        let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
-        Some([
-          InlayHint { position: range.start, label: "(".to_owned() },
-          InlayHint { position: range.end, label: format!("{ty_annot})") },
-        ])
-      })
-      .flatten();
+    let param_hints = {
+      // need to do two iters here because the FunCase tuple case yields many pats, but the Fn and
+      // FunCase non-tuple case yield only one.
+      let fun_case_tuple_pats = arenas
+        .exp
+        .iter()
+        .filter_map(|(_, exp)| match exp {
+          sml_hir::Exp::Fn(cs, sml_hir::FnFlavor::FunCase { tuple: true }) => {
+            match &arenas.pat[cs.first()?.pat?] {
+              sml_hir::Pat::Record { rows, .. } => Some(rows.iter().filter_map(|&(_, pat)| pat)),
+              _ => unreachable!("non-Record pat for FunCase with tuple: true"),
+            }
+          }
+          _ => None,
+        })
+        .flatten();
+      let fn_and_fun_case_non_tuple_pats = arenas.exp.iter().filter_map(|(_, exp)| match exp {
+        sml_hir::Exp::Fn(
+          cs,
+          sml_hir::FnFlavor::Fn | sml_hir::FnFlavor::FunCase { tuple: false },
+        ) => cs.first()?.pat,
+        _ => None,
+      });
+      std::iter::empty()
+        .chain(fun_case_tuple_pats)
+        .chain(fn_and_fun_case_non_tuple_pats)
+        .filter_map(|pat| {
+          let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
+          Some([
+            InlayHint { position: range.start, label: "(".to_owned() },
+            InlayHint { position: range.end, label: format!("{ty_annot})") },
+          ])
+        })
+        .flatten()
+    };
     let fun_return_ty_hints = arenas
       .dec
       .iter()
