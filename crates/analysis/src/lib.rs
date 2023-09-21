@@ -372,15 +372,51 @@ impl Analysis {
   pub fn inlay_hints(&self, range: WithPath<RangeUtf16>) -> Option<Vec<InlayHint>> {
     let file = self.source_files.get(&range.path)?;
     let arenas = &file.syntax.lower.arenas;
-    let val_bind_pats = arenas
+    // need to do two iters here because the FunCase tuple case yields many pats, but the Fn and
+    // FunCase non-tuple case yield only one.
+    let fun_case_tuple_pats = arenas
+      .exp
+      .iter()
+      .filter_map(|(_, exp)| match exp {
+        sml_hir::Exp::Fn(cs, sml_hir::FnFlavor::FunCase { tuple: true }) => {
+          match &arenas.pat[cs.first()?.pat?] {
+            sml_hir::Pat::Record { rows, .. } => Some(rows.iter().filter_map(|&(_, pat)| pat)),
+            _ => unreachable!("non-Record pat for FunCase with tuple: true"),
+          }
+        }
+        _ => None,
+      })
+      .flatten();
+    let fn_and_fun_case_non_tuple_pats = arenas.exp.iter().filter_map(|(_, exp)| match exp {
+      sml_hir::Exp::Fn(cs, sml_hir::FnFlavor::Fn | sml_hir::FnFlavor::FunCase { tuple: false }) => {
+        cs.first()?.pat
+      }
+      _ => None,
+    });
+    let val_bind_hints = arenas
       .dec
       .iter()
       .filter_map(|(_, dec)| match dec {
         sml_hir::Dec::Val(_, val_binds, sml_hir::ValFlavor::Val) => Some(val_binds),
         _ => None,
       })
-      .flat_map(|xs| xs.iter().filter_map(|x| x.pat));
-    let fun_case_bodies = arenas
+      .flat_map(|xs| xs.iter().filter_map(|x| x.pat))
+      .filter_map(|pat| {
+        let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
+        Some(InlayHint { position: range.end, label: ty_annot })
+      });
+    let param_hints = std::iter::empty()
+      .chain(fun_case_tuple_pats)
+      .chain(fn_and_fun_case_non_tuple_pats)
+      .filter_map(|pat| {
+        let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
+        Some([
+          InlayHint { position: range.start, label: "(".to_owned() },
+          InlayHint { position: range.end, label: format!("{ty_annot})") },
+        ])
+      })
+      .flatten();
+    let fun_return_ty_hints = arenas
       .dec
       .iter()
       .filter_map(|(_, dec)| match dec {
@@ -404,56 +440,20 @@ impl Analysis {
           sml_hir::Exp::Typed(_, _, sml_hir::TypedFlavor::Fun) => None,
           _ => Some((exp, fst_arm_body)),
         }
-      });
-    // need to do two iters here because the FunCase tuple case yields many pats, but the Fn and
-    // FunCase non-tuple case yield only one.
-    let fun_case_tuple_pats = arenas
-      .exp
-      .iter()
-      .filter_map(|(_, exp)| match exp {
-        sml_hir::Exp::Fn(cs, sml_hir::FnFlavor::FunCase { tuple: true }) => {
-          match &arenas.pat[cs.first()?.pat?] {
-            sml_hir::Pat::Record { rows, .. } => Some(rows.iter().filter_map(|&(_, pat)| pat)),
-            _ => unreachable!("non-Record pat for FunCase with tuple: true"),
-          }
+      })
+      .filter_map(|(ptr_exp, exp)| {
+        let ptr = file.syntax.lower.ptrs.hir_to_ast(ptr_exp.into())?;
+        let fun_bind_ptr = ptr.cast::<sml_syntax::ast::FunBind>()?;
+        let fun_bind = fun_bind_ptr.to_node(file.syntax.parse.root.syntax());
+        let case = fun_bind.fun_bind_cases().next()?;
+        if case.ty_annotation().is_some() {
+          return None;
         }
-        _ => None,
-      })
-      .flatten();
-    let fn_and_fun_case_non_tuple_pats = arenas.exp.iter().filter_map(|(_, exp)| match exp {
-      sml_hir::Exp::Fn(cs, sml_hir::FnFlavor::Fn | sml_hir::FnFlavor::FunCase { tuple: false }) => {
-        cs.first()?.pat
-      }
-      _ => None,
-    });
-    let val_bind_hints = val_bind_pats.filter_map(|pat| {
-      let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
-      Some(InlayHint { position: range.end, label: ty_annot })
-    });
-    let param_hints = std::iter::empty()
-      .chain(fun_case_tuple_pats)
-      .chain(fn_and_fun_case_non_tuple_pats)
-      .filter_map(|pat| {
-        let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
-        Some([
-          InlayHint { position: range.start, label: "(".to_owned() },
-          InlayHint { position: range.end, label: format!("{ty_annot})") },
-        ])
-      })
-      .flatten();
-    let fun_return_ty_hints = fun_case_bodies.filter_map(|(ptr_exp, exp)| {
-      let ptr = file.syntax.lower.ptrs.hir_to_ast(ptr_exp.into())?;
-      let fun_bind_ptr = ptr.cast::<sml_syntax::ast::FunBind>()?;
-      let fun_bind = fun_bind_ptr.to_node(file.syntax.parse.root.syntax());
-      let case = fun_bind.fun_bind_cases().next()?;
-      if case.ty_annotation().is_some() {
-        return None;
-      }
-      let end = case.pats().last()?.syntax().text_range().end();
-      let position = file.syntax.pos_db.position_utf16(end)?;
-      let label = file.info.show_ty_annot(&self.syms_tys, exp)?;
-      Some(InlayHint { position, label })
-    });
+        let end = case.pats().last()?.syntax().text_range().end();
+        let position = file.syntax.pos_db.position_utf16(end)?;
+        let label = file.info.show_ty_annot(&self.syms_tys, exp)?;
+        Some(InlayHint { position, label })
+      });
     let hints =
       std::iter::empty().chain(val_bind_hints).chain(param_hints).chain(fun_return_ty_hints);
     Some(hints.collect())
