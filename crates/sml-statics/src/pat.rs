@@ -295,9 +295,7 @@ pub(crate) fn maybe_refutable(ars: &sml_hir::Arenas, pat: sml_hir::PatIdx) -> bo
     sml_hir::Pat::SCon(_) | sml_hir::Pat::Con(_, _) => true,
     sml_hir::Pat::Record { rows, .. } => rows.iter().any(|&(_, pat)| maybe_refutable(ars, pat)),
     sml_hir::Pat::Typed(pat, _) | sml_hir::Pat::As(_, pat) => maybe_refutable(ars, *pat),
-    sml_hir::Pat::Or(or) => {
-      maybe_refutable(ars, or.first) || or.rest.iter().any(|&pat| maybe_refutable(ars, pat))
-    }
+    sml_hir::Pat::Or(or_pat) => or_pat.all_pats().any(|pat| maybe_refutable(ars, pat)),
     sml_hir::Pat::Vector(pats) => pats.iter().any(|&pat| maybe_refutable(ars, pat)),
   }
 }

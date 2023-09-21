@@ -488,9 +488,8 @@ fn inlay_hint_pat(
     }
     sml_hir::Pat::As(_, pat) => inlay_hint_pat(ac, st, file, *pat, true),
     sml_hir::Pat::Or(or_pat) => {
-      inlay_hint_pat(ac, st, file, or_pat.first, true);
-      for pat in &or_pat.rest {
-        inlay_hint_pat(ac, st, file, *pat, true);
+      for pat in or_pat.all_pats() {
+        inlay_hint_pat(ac, st, file, pat, true);
       }
     }
   }

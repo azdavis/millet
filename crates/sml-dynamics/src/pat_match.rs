@@ -48,7 +48,7 @@ pub(crate) fn get(ac: &mut ValEnv, cx: Cx<'_>, pat: sml_hir::PatIdx, val: &Val) 
     }
     (sml_hir::Pat::Or(or_pat), val) => {
       let mut or_ac = ValEnv::default();
-      for &pat in std::iter::once(&or_pat.first).chain(or_pat.rest.iter()) {
+      for pat in or_pat.all_pats() {
         if !get(&mut or_ac, cx, pat, val) {
           or_ac.clear();
           continue;
