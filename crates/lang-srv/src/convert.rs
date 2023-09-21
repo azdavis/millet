@@ -240,10 +240,7 @@ pub(crate) fn inlay_hint(hint: analysis::InlayHint) -> lsp_types::InlayHint {
   lsp_types::InlayHint {
     position: lsp_position(hint.position),
     label: lsp_types::InlayHintLabel::String(hint.label),
-    kind: Some(match hint.kind {
-      analysis::InlayHintKind::Param => lsp_types::InlayHintKind::PARAMETER,
-      analysis::InlayHintKind::Ty => lsp_types::InlayHintKind::TYPE,
-    }),
+    kind: Some(lsp_types::InlayHintKind::TYPE),
     text_edits: None,
     tooltip: None,
     padding_left: None,

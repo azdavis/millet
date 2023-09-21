@@ -428,7 +428,7 @@ impl Analysis {
     });
     let val_bind_hints = val_bind_pats.filter_map(|pat| {
       let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
-      Some(InlayHint { position: range.end, label: ty_annot, kind: InlayHintKind::Ty })
+      Some(InlayHint { position: range.end, label: ty_annot })
     });
     let param_hints = std::iter::empty()
       .chain(fun_case_tuple_pats)
@@ -436,12 +436,8 @@ impl Analysis {
       .filter_map(|pat| {
         let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
         Some([
-          InlayHint { position: range.start, label: "(".to_owned(), kind: InlayHintKind::Param },
-          InlayHint {
-            position: range.end,
-            label: format!("{ty_annot})"),
-            kind: InlayHintKind::Param,
-          },
+          InlayHint { position: range.start, label: "(".to_owned() },
+          InlayHint { position: range.end, label: format!("{ty_annot})") },
         ])
       })
       .flatten();
@@ -456,7 +452,7 @@ impl Analysis {
       let end = case.pats().last()?.syntax().text_range().end();
       let position = file.syntax.pos_db.position_utf16(end)?;
       let label = file.info.show_ty_annot(&self.syms_tys, exp)?;
-      Some(InlayHint { position, label, kind: InlayHintKind::Ty })
+      Some(InlayHint { position, label })
     });
     let hints =
       std::iter::empty().chain(val_bind_hints).chain(param_hints).chain(fun_return_ty_hints);
@@ -581,24 +577,13 @@ fn symbol(
   })
 }
 
-/// An inlay hint.
+/// An inlay hint. The kind is always "type".
 #[derive(Debug)]
 pub struct InlayHint {
   /// The position.
   pub position: text_pos::PositionUtf16,
   /// The label.
   pub label: String,
-  /// The kind.
-  pub kind: InlayHintKind,
-}
-
-/// An inlay hint kind.
-#[derive(Debug, Clone, Copy)]
-pub enum InlayHintKind {
-  /// A parameter.
-  Param,
-  /// A type.
-  Ty,
 }
 
 /// A completion item.
