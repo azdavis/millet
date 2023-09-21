@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.13.4
+
+- Improve inlay hint locations.
+
 ## v0.13.3
 
 - Fix mutual recursion for datatypes in signatures.
