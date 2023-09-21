@@ -372,6 +372,7 @@ impl Analysis {
   pub fn inlay_hints(&self, range: WithPath<RangeUtf16>) -> Option<Vec<InlayHint>> {
     let file = self.source_files.get(&range.path)?;
     let arenas = &file.syntax.lower.arenas;
+    let mut hints = Vec::<InlayHint>::new();
     let val_bind_hints = arenas
       .dec
       .iter()
@@ -384,6 +385,7 @@ impl Analysis {
         let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
         Some(InlayHint { position: range.end, label: ty_annot })
       });
+    hints.extend(val_bind_hints);
     let param_hints = {
       // need to do two iters here because the FunCase tuple case yields many pats, but the Fn and
       // FunCase non-tuple case yield only one.
@@ -419,6 +421,7 @@ impl Analysis {
         })
         .flatten()
     };
+    hints.extend(param_hints);
     let fun_return_ty_hints = arenas
       .dec
       .iter()
@@ -457,9 +460,8 @@ impl Analysis {
         let label = file.info.show_ty_annot(&self.syms_tys, exp)?;
         Some(InlayHint { position, label })
       });
-    let hints =
-      std::iter::empty().chain(val_bind_hints).chain(param_hints).chain(fun_return_ty_hints);
-    Some(hints.collect())
+    hints.extend(fun_return_ty_hints);
+    Some(hints)
   }
 }
 
