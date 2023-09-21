@@ -165,8 +165,8 @@ fn pop_path_buf(p: &mut PathBuf) -> Result<()> {
 }
 
 fn exe(s: &str) -> String {
-  let suff = env::consts::EXE_SUFFIX;
-  format!("{s}{suff}")
+  let suffix = env::consts::EXE_SUFFIX;
+  format!("{s}{suffix}")
 }
 
 fn dist(args: &DistArgs) -> Result<()> {
