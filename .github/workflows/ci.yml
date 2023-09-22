@@ -119,8 +119,7 @@ jobs:
       - name: Make GitHub release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            binary/*
+          files: binary/*
       - name: Publish to VS Code Marketplace
         run: npx --no-install vsce publish --pat ${{ secrets.AZURE_MARKETPLACE_TOKEN }} --packagePath vsix/*
         working-directory: editors/vscode
