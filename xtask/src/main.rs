@@ -212,6 +212,10 @@ fn dist(args: &DistArgs) -> Result<()> {
     let mit = include_str!("../../LICENSE-MIT.md");
     format!("{header}\n\n{apache}\n{mit}")
   };
+  dst.push("CHANGELOG.md");
+  let changelog = include_str!("../../docs/CHANGELOG.md");
+  fs::write(&dst, changelog)?;
+  pop_path_buf(&mut dst)?;
   dst.push("LICENSE.md");
   fs::write(&dst, license_text).with_context(|| format!("write {}", dst.display()))?;
   pop_path_buf(&mut dst)?;
