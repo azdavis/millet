@@ -470,15 +470,14 @@ fn inlay_hint_pat(
     // stop on wildcards, constructors (i.e. both variables and "actual" constructors), and vectors
     // (which are like lists, which are handled by the constructor case).
     sml_hir::Pat::Wild | sml_hir::Pat::Con(_, _) | sml_hir::Pat::Vector(_) => {
-      let Some(ty_annot) = file.info.show_pat_ty_annot(st, pat) else { return };
+      let Some(mut ty_annot) = file.info.show_pat_ty_annot(st, pat) else { return };
       let Some(ptr) = file.syntax.lower.ptrs.hir_to_ast(pat.into()) else { return };
       let Some(range) = file.syntax.pos_db.range_utf16(ptr.text_range()) else { return };
       if parens {
         ac.push(InlayHint { position: range.start, label: "(".to_owned() });
-        ac.push(InlayHint { position: range.end, label: format!("{ty_annot})") });
-      } else {
-        ac.push(InlayHint { position: range.end, label: ty_annot });
+        ty_annot.push(')');
       }
+      ac.push(InlayHint { position: range.end, label: ty_annot });
     }
     // recursive cases.
     sml_hir::Pat::Record { rows, .. } => {
