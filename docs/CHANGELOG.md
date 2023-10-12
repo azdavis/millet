@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.13.5
+
+- Tweak inlay hint parentheses around `as` patterns.
+
 ## v0.13.4
 
 - Improve inlay hint locations.
