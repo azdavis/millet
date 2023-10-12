@@ -335,7 +335,7 @@ fn get_sig_exp(
   ac: &mut Env,
   sig_exp: sml_hir::SigExpIdx,
 ) -> Option<overload::Basic> {
-  let Some(sig_exp) = sig_exp else { return None };
+  let sig_exp = sig_exp?;
   match &ars.sig_exp[sig_exp] {
     // @def(62)
     sml_hir::SigExp::Spec(spec) => {

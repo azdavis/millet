@@ -463,10 +463,10 @@ fn rs_file_comments() {
   let out = output(root_cmd("git").args(["ls-files", "**/*.rs"]));
   let no_doc: BTreeSet<_> = out
     .lines()
-    .filter_map(|file| {
+    .filter(|file| {
       let out = fs::read_to_string(root_dir().join(file)).unwrap();
       let fst = out.lines().next().unwrap();
-      (!fst.starts_with("//! ")).then_some(file)
+      !fst.starts_with("//! ")
     })
     .collect();
   empty_set(&no_doc, "rust files without doc comment at top");

@@ -174,7 +174,7 @@ fn lint_eta_reduce(
     (sml_hir::FnFlavor::Fn, [x]) => *x,
     _ => return None,
   };
-  let Some(pat) = fst.pat else { return None };
+  let pat = fst.pat?;
   let name = match &ars.pat[pat] {
     sml_hir::Pat::Con(path, None) => {
       if path.prefix().is_empty() {
@@ -188,7 +188,7 @@ fn lint_eta_reduce(
   if !pat::val_info_for_var(cx.env.val_env.get(name)) {
     return None;
   }
-  let Some(exp) = fst.exp else { return None };
+  let exp = fst.exp?;
   let sml_hir::Exp::App(func, Some(argument)) = ars.exp[exp] else { return None };
   match &ars.exp[argument] {
     sml_hir::Exp::Path(path) => {
