@@ -1,5 +1,7 @@
 //! Generating Rust code from the ungrammar.
 
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
+
 use fast_hash::{map, FxHashMap};
 
 fn main() {
