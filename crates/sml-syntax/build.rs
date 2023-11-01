@@ -18,6 +18,13 @@ fn main() {
     ("CharLit", "a character literal"),
     ("StringLit", "a string literal"),
   ]);
-  let trivia = ["Whitespace", "BlockComment", "Invalid"];
-  syntax_gen::gen("SML", &trivia, include_str!("syntax.ungram"), &doc, &special);
+  let options = syntax_gen::Options {
+    lang: "SML",
+    trivia: &["Whitespace", "BlockComment", "Invalid"],
+    grammar: include_str!("syntax.ungram"),
+    doc: &doc,
+    special: &special,
+    file: file!(),
+  };
+  syntax_gen::gen(&options);
 }
