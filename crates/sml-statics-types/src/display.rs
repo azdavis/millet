@@ -59,7 +59,7 @@ impl Pretty {
   const RECORD_ROW_COUNT: usize = 3;
   const RECORD_ROW_INDENT: usize = 2;
   const FN_ARROW_COUNT: usize = 2;
-  const FN_ARROW: &str = "-> ";
+  const FN_ARROW: &'static str = "-> ";
 
   fn from_diagnostic_lines(lines: config::DiagnosticLines) -> Option<Pretty> {
     match lines {
