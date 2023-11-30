@@ -1,6 +1,6 @@
 # Primitives
 
-This is documentation for various SML primitive functions and types.
+This is documentation for various SML primitive values and types.
 
 ## `type int`
 

@@ -28,6 +28,22 @@ When using other editors, you will likely need to:
 2. Write your own "glue code" to get your editor to use Millet for SML, ML Basis, and CM files.
 3. Arrange for your editor to pass Millet the appropriate [initialization options](#language-server-initialization).
 
+## Known issues
+
+- Some features like `abstype` are not supported.
+- Paths with certain 'default' path variables are ignored. (This is because Millet includes the std basis and other definitions.)
+  - In MLB files, paths with the variable `SML_LIB` are ignored.
+  - In CM files, paths with the variable `$` and `$SMLNJ-LIB` are ignored.
+- CM support is incomplete.
+  - The preprocessor is ignored.
+  - Tool options are not supported.
+  - String paths (wrapped in quotes) are not supported.
+- ML Basis support is incomplete.
+  - Most annotations are ignored.
+  - String paths (wrapped in quotes) are not supported.
+- The standard basis is made available to all files, regardless of whether files ask for it.
+- Every file is entirely re-analyzed upon a single file change. This can make the server slow.
+
 ## Usage
 
 ### On a file
