@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.14.0
 
 - Warn when a `.sig` file doesn't contain 1 `signature`.
 - Warn when a `.fun` file doesn't contain 1 `functor`.
