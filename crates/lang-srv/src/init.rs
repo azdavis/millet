@@ -60,12 +60,12 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
       .unwrap_or_default();
   if want_file_ops {
     if let Mode::Root(root) = &ret.mode {
-      // we'd like to only listen to millet.toml, not all toml, but "nested alternate groups are
-      // not allowed" at time of writing.
+      // we'd like to activate on millet.toml, but "nested alternate groups are not allowed" at time
+      // of writing, and we'd rather not activate on all toml.
       let watchers = vec![lsp_types::FileSystemWatcher {
         glob_pattern: lsp_types::GlobPattern::Relative(lsp_types::RelativePattern {
           base_uri: lsp_types::OneOf::Right(convert::file_url(root.path.as_path()).unwrap()),
-          pattern: "**/*.{sml,sig,fun,cm,mlb,toml}".to_owned(),
+          pattern: "**/*.{sml,sig,fun,cm,mlb}".to_owned(),
         }),
         kind: None,
       }];
