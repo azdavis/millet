@@ -210,7 +210,7 @@ Then the given variable, when referenced inside the given file, has the given va
   - `"warning"`: the diagnostic is reported as a warning.
   - `"error"`: the diagnostic is reported as an error.
 
-Overrides the default severity for this [diagnostic](#inline-diagnostics). The acceptable values are:
+Overrides the default severity for this [diagnostic](#inline-diagnostics).
 
 The `<code>` must be a positive integer.
 
