@@ -57,11 +57,10 @@ We encourage contributions of all kinds. Please read the [contributing][] guide.
 
 ### Dependencies
 
-| What                | Version       | Why                      | Required |
-| ------------------- | ------------- | ------------------------ | -------- |
-| [Rust][rust]        | Latest stable | Build Rust code          | Yes      |
-| [Node.js][node]     | 18            | Build TypeScript code    | No       |
-| [Rust Analyzer][ra] | Latest        | Good Rust dev experience | No       |
+| What            | Version       | Why                   | Required |
+| --------------- | ------------- | --------------------- | -------- |
+| [Rust][rust]    | Latest stable | Build Rust code       | Yes      |
+| [Node.js][node] | 18            | Build TypeScript code | No       |
 
 The project is mostly written in Rust, so you will need a Rust installation. It should include:
 
@@ -74,7 +73,7 @@ The minimum supported Rust version (MSRV) is the latest stable.
 
 If you want to build the VS Code extension in TypeScript as well, you should also install Node.js.
 
-If your editor supports it, we also recommend installing Rust Analyzer, a language server for Rust.
+If your editor supports it, we also recommend installing [Rust Analyzer][ra], a language server for Rust.
 
 ### Building/testing
 
