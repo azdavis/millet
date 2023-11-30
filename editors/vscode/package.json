@@ -28,12 +28,12 @@
     "check": "tsc"
   },
   "dependencies": {
-    "vscode-languageclient": "^8.1.0"
+    "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
     "@types/node": "^18.16.19",
     "@types/vscode": "^1.79.0",
-    "esbuild": "^0.18.12",
+    "esbuild": "^0.19.8",
     "ovsx": "^0.8.2",
     "typescript": "^5.1.6",
     "@vscode/vsce": "^2.19.0"
