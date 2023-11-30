@@ -353,3 +353,24 @@ end
 ",
   );
 }
+
+/// witness we don't have this [issue](https://github.com/smlnj/smlnj/issues/273)
+#[test]
+fn return_opaque() {
+  check(
+    r"
+signature FOO = sig
+  type t
+end
+
+functor MkFoo () :> FOO = struct
+  type t = int
+end
+
+structure Foo = MkFoo ()
+
+val no : Foo.t = 5
+(** + expected `Foo.t`, found `int` *)
+",
+  );
+}
