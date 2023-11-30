@@ -5,13 +5,13 @@ use crate::check::{check, raw};
 #[test]
 fn smoke() {
   check(
-    r#"
+    r"
 val foo = 3
 
 (**     vv undefined *)
 val _ = aa
 (**     ^ completions(with-std): foo *)
-"#,
+",
   );
 }
 
@@ -34,7 +34,7 @@ val _ = Foo. val
 #[test]
 fn nested() {
   check(
-    r#"
+    r"
 structure A = struct
   val x = 3
   structure B = struct
@@ -45,16 +45,16 @@ end
 (**          vvv expected a name *)
 val _ = A.B. val
 (**         ^ completions: y *)
-"#,
+",
   );
 }
 
 #[test]
 fn eof() {
-  let sml = r#"
+  let sml = r"
 val a = 1 and b = 2 and c = 3
 (**     v completions(with-std): a, b, c *)
-val _ = x"#;
+val _ = x";
   let opts = raw::Opts {
     std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
@@ -69,7 +69,7 @@ val _ = x"#;
 fn in_path() {
   // the completions should be auto-narrowed to just `foo` by the editor
   check(
-    r#"
+    r"
 structure S = struct
   val foo = ()
   val bar = ()
@@ -78,6 +78,6 @@ end
 (**     vvv undefined value: `f` *)
 val _ = S.f
 (**       ^ completions: foo, bar *)
-"#,
+",
   );
 }

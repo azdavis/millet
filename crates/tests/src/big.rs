@@ -19,29 +19,29 @@ shiina = { workspace-path = "mayuri" }
     ),
     (
       "rintarou.sml",
-      r#"
+      r"
 structure R = struct
   val date = 20100728
 end
-"#,
+",
     ),
     (
       "hw1/mayuri.sml",
-      r#"
+      r"
 structure M = struct
   val idx = 2
 end
-"#,
+",
     ),
     (
       "hw1/sources.cm",
-      r#"
+      r"
 Group is
   a.sml
   b.sml
   $shiina.sml
   $okabe.sml
-"#,
+",
     ),
     (
       "hw1/a.sml",
@@ -53,11 +53,11 @@ end
     ),
     (
       "hw1/b.sml",
-      r#"
+      r"
 val _ = A.bird
 
 val _ = M.idx + 1 + R.date
-"#,
+",
     ),
     (
       "hw2/mayuri.sml",
@@ -69,13 +69,13 @@ end
     ),
     (
       "hw2/sources.cm",
-      r#"
+      r"
 Group is
   c.sml
   $shiina.sml
   $okabe.sml
   d.sml
-"#,
+",
     ),
     (
       "hw2/d.sml",
@@ -89,9 +89,9 @@ val _ = (if M.msg = "E" then 1 else 2) + R.date
     ),
     (
       "hw2/c.sml",
-      r#"
+      r"
 val _ = D.sound
-"#,
+",
     ),
   ];
   check_multi(files);

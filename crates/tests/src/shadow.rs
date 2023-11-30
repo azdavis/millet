@@ -16,22 +16,22 @@ val _: int = x
 #[test]
 fn type_() {
   check(
-    r#"
+    r"
 type t = string
 type t = int
 val _: t = 3
-"#,
+",
   );
 }
 
 #[test]
 fn datatype() {
   check(
-    r#"
+    r"
 datatype t = One
 datatype t = Two
 val _: t = Two
-"#,
+",
   );
 }
 
@@ -49,37 +49,37 @@ val _: int = S.x
 #[test]
 fn exception() {
   check(
-    r#"
+    r"
 exception E
 exception E of int
 val _ = E: unit
 (**     ^^^^^^^ expected `unit`, found `int -> exn` *)
-"#,
+",
   );
 }
 
 #[test]
 fn signature() {
   check(
-    r#"
+    r"
 signature SIG = sig end
 signature SIG = sig type t end
 
 structure S: SIG = struct type t = int end
 val _ = 3 : S.t
-"#,
+",
   );
 }
 
 #[test]
 fn functor() {
   check(
-    r#"
+    r"
 functor F() = struct end
 functor F() = struct type t = int end
 
 structure S = F()
 val _ = 3 : S.t
-"#,
+",
   );
 }

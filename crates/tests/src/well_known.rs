@@ -10,35 +10,35 @@ use crate::check::check_with_std_basis;
 #[test]
 fn option() {
   check_with_std_basis(
-    r#"
+    r"
 val () = SOME ()
 (** + expected `unit`, found `unit option` *)
 
 type 'a witness = 'a option
-"#,
+",
   );
 }
 
 #[test]
 fn array() {
   check_with_std_basis(
-    r#"
+    r"
 val () = Array.fromList [()]
 (** + expected `unit`, found `unit array` *)
 
 type 'a witness = 'a array
-"#,
+",
   );
 }
 
 #[test]
 fn vector() {
   check_with_std_basis(
-    r#"
+    r"
 val () = Vector.fromList [()]
 (** + expected `unit`, found `unit vector` *)
 
 type 'a witness = 'a vector
-"#,
+",
   );
 }

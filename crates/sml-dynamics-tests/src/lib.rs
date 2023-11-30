@@ -98,30 +98,30 @@ fn rm_whitespace(s: &str) -> String {
 #[test]
 fn builtin_add() {
   check(
-    r#"
+    r"
 val inc = fn x => 1 + x
 val three = inc 2
-"#,
+",
     &[
-      r#"
+      r"
 val inc = fn x => + (1, x)
 val three = inc 2
-"#,
-      r#"
+",
+      r"
 val three = inc 2
-"#,
-      r#"
+",
+      r"
 val three = (fn x => + (1, x)) 2
-"#,
-      r#"
+",
+      r"
 val three = + (1, x)
-"#,
-      r#"
+",
+      r"
 val three = + (1, 2)
-"#,
-      r#"
+",
+      r"
 val three = 3
-"#,
+",
     ],
   );
 }
@@ -129,7 +129,7 @@ val three = 3
 #[test]
 fn nat_add() {
   check(
-    r#"
+    r"
 datatype nat = Z | S of nat
 
 fun add a b =
@@ -138,9 +138,9 @@ fun add a b =
   | S x => S (add x b)
 
 val four = add (S Z) (S (S (S Z)))
-"#,
+",
     &[
-      r#"
+      r"
 datatype ...
 
 val rec add = fn '0 => fn '1 =>
@@ -154,8 +154,8 @@ val rec add = fn '0 => fn '1 =>
 val four = add
   (S Z)
   (S (S (S Z)))
-"#,
-      r#"
+",
+      r"
 val rec add = fn '0 => fn '1 =>
   (fn (a, b) =>
     (fn
@@ -167,13 +167,13 @@ val rec add = fn '0 => fn '1 =>
 val four = add
   (S Z)
   (S (S (S Z)))
-"#,
-      r#"
+",
+      r"
 val four = add
   (S Z)
   (S (S (S Z)))
-"#,
-      r#"
+",
+      r"
 val four =
   (
     fn '0 => fn '1 =>
@@ -186,9 +186,9 @@ val four =
   )
   (S Z)
   (S (S (S Z)))
-"#,
+",
       // lazy substitution
-      r#"
+      r"
 val four =
   (
     fn '1 =>
@@ -200,8 +200,8 @@ val four =
     ) ('0, '1)
   )
   (S (S (S Z)))
-"#,
-      r#"
+",
+      r"
 val four =
   (fn (a, b) =>
     (fn
@@ -209,8 +209,8 @@ val four =
     | S x => S (add x b)
     ) a
   ) ('0, '1)
-"#,
-      r#"
+",
+      r"
 val four =
   (fn (a, b) =>
     (fn
@@ -218,8 +218,8 @@ val four =
     | S x => S (add x b)
     ) a
   ) (S Z, '1)
-"#,
-      r#"
+",
+      r"
 val four =
   (fn (a, b) =>
     (fn
@@ -227,26 +227,26 @@ val four =
     | S x => S (add x b)
     ) a
   ) (S Z, S (S (S Z)))
-"#,
-      r#"
+",
+      r"
 val four =
   (fn
     Z => b
   | S x => S (add x b)
   ) a
-"#,
-      r#"
+",
+      r"
 val four =
   (fn
     Z => b
   | S x => S (add x b)
   ) (S Z)
-"#,
-      r#"
+",
+      r"
 val four =
   S (add x b)
-"#,
-      r#"
+",
+      r"
 val four =
   S (
       (
@@ -261,8 +261,8 @@ val four =
     x
     b
   )
-"#,
-      r#"
+",
+      r"
 val four =
   S (
       (
@@ -277,8 +277,8 @@ val four =
     Z
     b
   )
-"#,
-      r#"
+",
+      r"
 val four =
   S (
       (
@@ -292,8 +292,8 @@ val four =
     )
     b
   )
-"#,
-      r#"
+",
+      r"
 val four =
   S (
       (
@@ -307,8 +307,8 @@ val four =
     )
     (S (S (S Z)))
   )
-"#,
-      r#"
+",
+      r"
 val four =
   S (
     (fn (a, b) =>
@@ -318,8 +318,8 @@ val four =
       ) a
     ) ('0, '1)
   )
-"#,
-      r#"
+",
+      r"
 val four =
   S (
     (fn (a, b) =>
@@ -329,8 +329,8 @@ val four =
       ) a
     ) (Z, '1)
   )
-"#,
-      r#"
+",
+      r"
 val four =
   S (
     (fn (a, b) =>
@@ -340,8 +340,8 @@ val four =
       ) a
     ) (Z, S (S (S Z)))
   )
-"#,
-      r#"
+",
+      r"
 val four =
   S (
     (fn
@@ -349,8 +349,8 @@ val four =
     | S x => S (add x b)
     ) a
   )
-"#,
-      r#"
+",
+      r"
 val four =
   S (
     (fn
@@ -358,15 +358,15 @@ val four =
     | S x => S (add x b)
     ) Z
   )
-"#,
-      r#"
+",
+      r"
 val four =
   S b
-"#,
-      r#"
+",
+      r"
 val four =
   S (S (S (S Z)))
-"#,
+",
     ],
   );
 }

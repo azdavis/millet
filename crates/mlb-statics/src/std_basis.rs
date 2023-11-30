@@ -57,11 +57,11 @@ impl StdBasis {
 }
 
 const STREAM_IO_REGULAR: &str = "  structure StreamIO : STREAM_IO";
-const STREAM_IO_TEXT: &str = r#"  structure StreamIO : TEXT_STREAM_IO
+const STREAM_IO_TEXT: &str = r"  structure StreamIO : TEXT_STREAM_IO
     where type reader = TextPrimIO.reader
     where type writer = TextPrimIO.writer
     where type pos = TextPrimIO.pos
-"#;
+";
 const INCLUDE_IMPERATIVE_IO_HACK: &str = "  include IMPERATIVE_IO_HACK";
 
 fn get_std_basis<I>(files: I) -> StdBasis

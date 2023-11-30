@@ -5,7 +5,7 @@ use crate::check::check;
 #[test]
 fn use_later_dec() {
   check(
-    r#"
+    r"
 val _ =
   let
     local
@@ -17,14 +17,14 @@ val _ =
   in
     y + z
   end
-"#,
+",
   );
 }
 
 #[test]
 fn does_not_escape_dec() {
   check(
-    r#"
+    r"
 val _ =
   let
     local
@@ -35,14 +35,14 @@ val _ =
     x
 (** ^ undefined value: `x` *)
   end
-"#,
+",
   );
 }
 
 #[test]
 fn use_later_str_dec() {
   check(
-    r#"
+    r"
 local
   val x = 3
 in
@@ -50,20 +50,20 @@ in
   val z = y + x
 end
 val _ = y + z
-"#,
+",
   );
 }
 
 #[test]
 fn does_not_escape_str_dec() {
   check(
-    r#"
+    r"
 local
   val x = 3
 in
 end
 val _ = x
 (**     ^ undefined value: `x` *)
-"#,
+",
   );
 }

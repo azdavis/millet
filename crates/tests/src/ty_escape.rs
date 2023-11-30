@@ -5,29 +5,29 @@ use crate::check::check;
 #[test]
 fn smoke() {
   check(
-    r#"
+    r"
 val _ = let datatype bad = guh in guh end
 (**     ^^^ type escapes its scope: `bad` *)
-"#,
+",
   );
 }
 
 #[test]
 fn seq() {
   check(
-    r#"
+    r"
 val _ = let datatype foo = bar val quz = bar in (bar; 3 + 3; quz) end
 (**     ^^^ type escapes its scope: `foo` *)
-"#,
+",
   );
 }
 
 #[test]
 fn does_not_escape() {
   check(
-    r#"
+    r"
 val _ = let datatype foo = bar val quz = bar in (bar; 3 + 3; quz; 123) end
-"#,
+",
   );
 }
 
@@ -44,42 +44,42 @@ val _ = let datatype d = D in if 3 < 4 then [] else [(3, D, "hi")] end
 #[test]
 fn shadow() {
   check(
-    r#"
+    r"
 datatype t = One
 val _ = let datatype t = Two in Two end
 (**     ^^^ type escapes its scope: `t` *)
-"#,
+",
   );
 }
 
 #[test]
 fn ok() {
   check(
-    r#"
+    r"
 datatype t = One
 val _ = let datatype t = Two in One end
-"#,
+",
   );
 }
 
 #[test]
 fn exn_ctor() {
   check(
-    r#"
+    r"
 val ex =
   let
     exception E
   in
     E
   end
-"#,
+",
   );
 }
 
 #[test]
 fn raise_datatype() {
   check(
-    r#"
+    r"
 val _ =
   let
     datatype d = D
@@ -88,6 +88,6 @@ val _ =
     (* cannot be specifically matched against *)
     fn () => raise E D
   end
-"#,
+",
   );
 }

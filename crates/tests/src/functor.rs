@@ -5,37 +5,37 @@ use crate::check::check;
 #[test]
 fn empty() {
   check(
-    r#"
+    r"
 functor F (A: sig end) = struct end
 structure S = F (struct type t = int end)
-"#,
+",
   );
 }
 
 #[test]
 fn missing_type() {
   check(
-    r#"
+    r"
 functor F (A: sig
   type t
 end) = struct end
 structure S = F (struct end)
 (**              ^^^^^^ undefined type: `t` *)
-"#,
+",
   );
 }
 
 #[test]
 fn wrong_id_status() {
   check(
-    r#"
+    r"
 exception Bar
 functor F (A: sig
   exception Foo
 end) = struct end
 structure S = F (struct val Foo = Bar end)
 (**              ^^^^^^ incompatible identifier statuses: `Foo` *)
-"#,
+",
   );
 }
 
@@ -97,7 +97,7 @@ val done: string list = [guh, Impl.foo, S.what, "why"]
 #[test]
 fn id_uses_param_sig() {
   check(
-    r#"
+    r"
 functor Id (S: sig end) = S
 
 structure Guy = Id (struct
@@ -106,14 +106,14 @@ end)
 
 val _: int = Guy.x
 (**          ^^^^^ undefined value: `x` *)
-"#,
+",
   );
 }
 
 #[test]
 fn output_uses_output_sig() {
   check(
-    r#"
+    r"
 signature SIG = sig
   val x: int
 end
@@ -126,14 +126,14 @@ end)
 
 val _ = S.x
 (**     ^^^ undefined value: `x` *)
-"#,
+",
   );
 }
 
 #[test]
 fn datatype_generate() {
   check(
-    r#"
+    r"
 functor F (A: sig end) = struct
   datatype t = C
   fun f C = ()
@@ -146,14 +146,14 @@ structure Two = F (S)
 
 val _ = One.f Two.C
 (**           ^^^^^ expected `One.t`, found `Two.t` *)
-"#,
+",
   );
 }
 
 #[test]
 fn transparent_id() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
 end
@@ -168,14 +168,14 @@ structure B = Id (A)
 
 val _: A.t = 3
 val _: B.t = 3
-"#,
+",
   );
 }
 
 #[test]
 fn transparent_id_big() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val x: t
@@ -213,14 +213,14 @@ val _ = B.f (A.f D.x)
 val _ = C.f (B.f D.x)
 val _ = D.f (C.f D.x)
 val _ = A.f (D.f D.x)
-"#,
+",
   );
 }
 
 #[test]
 fn open_datatype_ctors_not_in_sig() {
   check(
-    r#"
+    r"
 structure A = struct
   datatype t = T
 end
@@ -238,14 +238,14 @@ structure R = F (A)
 val _ = A.T
 val _ = R.T
 (**     ^^^ undefined value: `T` *)
-"#,
+",
   );
 }
 
 #[test]
 fn open_datatype_ctors_in_sig() {
   check(
-    r#"
+    r"
 structure A = struct
   datatype t = B | C
 end
@@ -264,20 +264,20 @@ val _ =
   case A.B of
     R.B => 1
   | R.C => 2
-"#,
+",
   );
 }
 
 #[test]
 fn arg_shorthand() {
   check(
-    r#"
+    r"
 functor F (A: sig end) = struct end
 structure A = F ()
 structure B = F (val x = 3)
 structure C = F (type t = int)
 structure D = F (val a = 1 val b = 2)
-"#,
+",
   );
 }
 
@@ -299,7 +299,7 @@ structure D = F (type t = bool)
 #[test]
 fn functor_from_monad() {
   check(
-    r#"
+    r"
 signature MONAD = sig
   type 'a m
   val return : 'a -> 'a m
@@ -316,7 +316,7 @@ functor MonadIsFunctor (M : MONAD) : FUNCTOR = struct
   type 'a f = 'a M.m
   val map = fn x => fn f => M.bind x (fn y => M.return (f y))
 end
-"#,
+",
   );
 }
 
@@ -343,13 +343,13 @@ val x = S.toString ()
 #[test]
 fn match_opaque_smoke() {
   check(
-    r#"
+    r"
 functor F (type t) = struct
   fun hm (xs : t list) =
     case xs of
       nil => 1
     | _ :: ys => hm ys
 end
-"#,
+",
   );
 }

@@ -55,9 +55,9 @@ version = 1
 [diagnostics]
 4014.severity = "error"
 "#;
-  let sml = r#"
+  let sml = r"
 val _ = (1)
 (**     ^^^ unnecessary parentheses *)
-"#;
+";
   check_multi([(config::file::PATH, config), ("a.mlb", "a.sml"), ("a.sml", sml)]);
 }

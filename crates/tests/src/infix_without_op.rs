@@ -32,23 +32,23 @@ val D _ = 3 D "hi"
 fn fun_head() {
   // with some effort, this could be the actual infix without op error
   check(
-    r#"
+    r"
 fun f (_, _) = 1
 fun _ g _ = 2
 (** ^ expected a name *)
 infix h
 fun _ h _ = 3
-"#,
+",
   );
 }
 
 #[test]
 fn cons_not_atomic() {
   check(
-    r#"
+    r"
 fun map f [] = []
   | map f x::xs = f x :: map f xs
 (**        ^^ infix name used as non-infix without `op` *)
-"#,
+",
   );
 }

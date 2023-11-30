@@ -5,47 +5,47 @@ use crate::check::check;
 #[test]
 fn ok_smoke() {
   check(
-    r#"
+    r"
 structure S: sig
   val x: int
 end = struct
   val x = 3
 end
 val _: int = S.x
-"#,
+",
   );
 }
 
 #[test]
 fn not_in_sig() {
   check(
-    r#"
+    r"
 structure S: sig
 end = struct
   val x = 3
 end
 val _: int = S.x
 (**          ^^^ undefined value: `x` *)
-"#,
+",
   );
 }
 
 #[test]
 fn not_in_struct() {
   check(
-    r#"
+    r"
 structure S: sig
   val x: int
 end = struct end
 (**   ^^^^^^ missing value required by signature: `x` *)
-"#,
+",
   );
 }
 
 #[test]
 fn wrong_id_status() {
   check(
-    r#"
+    r"
 exception Foo
 
 structure S: sig
@@ -54,7 +54,7 @@ end = struct
 (**   ^^^^^^ incompatible identifier statuses: `E` *)
   val E = Foo
 end
-"#,
+",
   );
 }
 
@@ -79,62 +79,62 @@ val _ = S.y
 #[test]
 fn datatype_ok() {
   check(
-    r#"
+    r"
 structure S: sig
   datatype d = A | B
 end = struct
   datatype d = A | B
 end
-"#,
+",
   );
 }
 
 #[test]
 fn datatype_missing_ctor() {
   check(
-    r#"
+    r"
 structure S: sig
   datatype d = A | B
 end = struct
 (**   ^^^^^^ missing value required by signature: `B` *)
   datatype d = A
 end
-"#,
+",
   );
 }
 
 #[test]
 fn datatype_extra_ctor() {
   check(
-    r#"
+    r"
 structure S: sig
   datatype d = A
 end = struct
 (**   ^^^^^^ extra value not present in signature: `B` *)
   datatype d = A | B
 end
-"#,
+",
   );
 }
 
 #[test]
 fn type_ok() {
   check(
-    r#"
+    r"
 structure S: sig
   type t
 end = struct
   type t = int
 end
 val _: S.t = 3
-"#,
+",
   );
 }
 
 #[test]
 fn monoid_transparent() {
   check(
-    r#"
+    r"
 structure S: sig
   type t
   val zero: t
@@ -152,28 +152,28 @@ val _ = S.add 1 2
 fun inc (x: int): int = x + 1
 val _ = inc S.zero
 val _ = S.add (S.add (inc S.zero) (inc S.zero))
-"#,
+",
   );
 }
 
 #[test]
 fn sig_bind_smoke() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
 end
 structure S: SIG = struct
   type t = int
 end
-"#,
+",
   );
 }
 
 #[test]
 fn monoid_add_mul_transparent() {
   check(
-    r#"
+    r"
 signature MONOID = sig
   type t
   val zero: t
@@ -215,14 +215,14 @@ val _ = Mul.add Mul.zero Mul.zero
 
 (* should pass, since transparent *)
 val _ = Mul.add Mul.zero Add.zero
-"#,
+",
   );
 }
 
 #[test]
 fn monoid_opaque() {
   check(
-    r#"
+    r"
 signature MONOID = sig
   type t
   val zero: t
@@ -248,14 +248,14 @@ val _ = Mul.add Mul.zero Mul.zero
 
 val _ = Mul.add Mul.zero Add.zero
 (**                      ^^^^^^^^ expected `Mul.t`, found `Add.t` *)
-"#,
+",
   );
 }
 
 #[test]
 fn textually_identical_but_not_same() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val foo: t
@@ -278,14 +278,14 @@ val _ = A.bar A.foo = B.bar B.foo
 
 val _ = A.bar B.foo
 (**           ^^^^^ expected `A.t`, found `B.t` *)
-"#,
+",
   );
 }
 
 #[test]
 fn same_identifier_opaque_1() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val foo: t
@@ -309,14 +309,14 @@ val _ = inc S.foo
 val _ = A.bar A.foo
 val _ = A.bar 123
 (**           ^^^ expected `A.t`, found `int` *)
-"#,
+",
   );
 }
 
 #[test]
 fn same_identifier_opaque_2() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val foo: t
@@ -342,14 +342,14 @@ val _ = A.bar A.foo
 val _ = B.bar B.foo
 val _ = B.bar A.foo
 (**           ^^^^^ expected `B.t`, found `A.t` *)
-"#,
+",
   );
 }
 
 #[test]
 fn same_identifier_opaque_3() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val x: t
@@ -370,14 +370,14 @@ structure D:> SIG = Str
 
 val _ = D.x: C.t
 (**     ^^^^^^^^ expected `C.t`, found `D.t` *)
-"#,
+",
   );
 }
 
 #[test]
 fn opaque_hides_type() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val x: t
@@ -391,14 +391,14 @@ end
 val _: S.t = S.x
 val _ = S.x: int
 (**     ^^^^^^^^ expected `int`, found `S.t` *)
-"#,
+",
   );
 }
 
 #[test]
 fn transparent_shows_type() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val x: t
@@ -411,14 +411,14 @@ end
 
 val _: S.t = S.x
 val _: int = S.x
-"#,
+",
   );
 }
 
 #[test]
 fn functor_sig() {
   check(
-    r#"
+    r"
 signature FUNCTOR = sig
   type 'a f
   val map: ('a -> 'b) -> 'a f -> 'b f
@@ -441,35 +441,35 @@ structure OptionFunctor: FUNCTOR = struct
       NONE => NONE
     | SOME x => SOME (f x)
 end
-"#,
+",
   );
 }
 
 #[test]
 fn where_in_functor() {
   check(
-    r#"
+    r"
 signature T = sig type t end
 functor Id (X : T) :> T where type t = int = X
 (**                                          ^ expected `int`, found `t` *)
-"#,
+",
   );
 }
 
 #[test]
 fn where_with_self() {
   check(
-    r#"
+    r"
 signature T = sig type t end
 functor Id (X : T) :> T where type t = X.t = X
-"#,
+",
   );
 }
 
 #[test]
 fn where_opaque() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val x : t
@@ -481,14 +481,14 @@ structure S :> SIG where type t = int = struct
 end
 
 val _ = S.x : int
-"#,
+",
   );
 }
 
 #[test]
 fn exn() {
   check(
-    r#"
+    r"
 signature SIG = sig
   exception E
 end
@@ -496,14 +496,14 @@ end
 structure Str :> SIG = struct
   exception E
 end
-"#,
+",
   );
 }
 
 #[test]
 fn structure_spec() {
   check(
-    r#"
+    r"
 signature INNER = sig
   type t
   val x : t
@@ -515,14 +515,14 @@ signature OUTER = sig
 end
 
 functor Id (X : OUTER) :> OUTER = X
-"#,
+",
   );
 }
 
 #[test]
 fn sig_ty_alias_1() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type 'a t
   type 'a u = (unit * 'a) t
@@ -533,7 +533,7 @@ structure Str :> SIG = struct
   type 'a u = (unit * 'a) t
   val no = fn ((), _) => ()
 end
-"#,
+",
   );
 }
 
@@ -542,7 +542,7 @@ end
 #[test]
 fn sig_ty_alias_2() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type 'a u
   type 'a t = (unit * 'a) u
@@ -553,14 +553,14 @@ structure Str :> SIG = struct
   type 'a t = (unit * 'a) u
   val no = fn ((), _) => ()
 end
-"#,
+",
   );
 }
 
 #[test]
 fn where_poly_multi_diff_order_ok() {
   check(
-    r#"
+    r"
 datatype ('a, 'b) either = A of 'a | B of 'b
 
 signature SIG = sig
@@ -570,14 +570,14 @@ end
 structure Str :> SIG where type ('a, 'b) t = ('b, 'a) either = struct
   type ('a, 'b) t = ('b, 'a) either
 end
-"#,
+",
   );
 }
 
 #[test]
 fn where_poly_multi_where_diff_order_err() {
   check(
-    r#"
+    r"
 datatype ('a, 'b) either = A of 'a | B of 'b
 
 signature SIG = sig
@@ -587,14 +587,14 @@ end
 structure Str :> SIG where type ('a, 'b) t = ('b, 'a) either =
     struct type ('a, 'b) t = ('a, 'b) either end
 (** ^^^^^^ expected `(?b, ?a) either`, found `(?a, ?b) either` *)
-"#,
+",
   );
 }
 
 #[test]
 fn where_poly_multi_str_diff_order_err() {
   check(
-    r#"
+    r"
 datatype ('a, 'b) either = A of 'a | B of 'b
 
 signature SIG = sig
@@ -604,75 +604,75 @@ end
 structure Str :> SIG where type ('a, 'b) t = ('a, 'b) either =
     struct type ('a, 'b) t = ('b, 'a) either end
 (** ^^^^^^ expected `(?a, ?b) either`, found `(?b, ?a) either` *)
-"#,
+",
   );
 }
 
 #[test]
 fn sig_where_str_more_poly() {
   check(
-    r#"
+    r"
 signature SIG = sig type 'a t end
 structure Str :> SIG where type 'a t = unit = struct
 (**                                           ^^^^^^ expected 1 type argument, found 2 *)
   type ('a, 'b) t = unit
 end
-"#,
+",
   );
 }
 
 #[test]
 fn sig_where_sig_more_poly() {
   check(
-    r#"
+    r"
 signature SIG = sig type ('a, 'b) t end
 structure Str :> SIG where type 'a t = unit = struct type 'a t = unit end
 (**              ^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 2 type arguments, found 1 *)
-"#,
+",
   );
 }
 
 #[test]
 fn sig_where_where_more_poly() {
   check(
-    r#"
+    r"
 signature SIG = sig type 'a t end
 structure Str :> SIG where type ('a, 'b) t = unit = struct type 'a t = unit end
 (**              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 1 type argument, found 2 *)
-"#,
+",
   );
 }
 
 #[test]
 fn sig_more_poly() {
   check(
-    r#"
+    r"
 signature SIG = sig type 'a t end
 structure Str :> SIG = struct
 (**                    ^^^^^^ expected 1 type argument, found 0 *)
   type t = unit
 end
-"#,
+",
   );
 }
 
 #[test]
 fn str_less_poly() {
   check(
-    r#"
+    r"
 signature SIG = sig type 'a t end
 structure Str :> SIG = struct
 (**                    ^^^^^^ expected 1 type argument, found 2 *)
   type ('a, 'b) t = unit
 end
-"#,
+",
   );
 }
 
 #[test]
 fn ty_eq_ty_var_wrong_order() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type ('a, 'b) t = 'a * 'b
 end
@@ -681,14 +681,14 @@ structure Str :> SIG = struct
 (**                    ^^^^^^ expected `?a * ?b`, found `?b * ?a` *)
   type ('a, 'b) t = 'b * 'a
 end
-"#,
+",
   );
 }
 
 #[test]
 fn datatype_ty_var_wrong_order() {
   check(
-    r#"
+    r"
 signature SIG = sig
   datatype ('a, 'b) t = T of 'a * 'b
 end
@@ -696,14 +696,14 @@ structure Str :> SIG = struct
 (**                    ^^^^^^ expected `?a * ?b -> (?a, ?b) Str.t`, found `?b * ?a -> (?a, ?b) Str.t` *)
   datatype ('a, 'b) t = T of 'b * 'a
 end
-"#,
+",
   );
 }
 
 #[test]
 fn where_not_con() {
   check(
-    r#"
+    r"
 signature FOO = sig
   type t
 end
@@ -727,7 +727,7 @@ functor MkThing (
 struct
   structure HasFoo = Arg
 end
-"#,
+",
   );
   cov_mark::check("where_not_con");
 }
@@ -735,12 +735,12 @@ end
 #[test]
 fn where_con_not_gen_after() {
   check(
-    r#"
+    r"
 signature HAS_T = sig type t end
 signature HAS_INT = HAS_T where type t = int
 signature BAD = HAS_INT where type t = string
 (**             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type `t` as `int` *)
-"#,
+",
   );
   cov_mark::check("where_con_not_gen_after");
 }
@@ -748,12 +748,12 @@ signature BAD = HAS_INT where type t = string
 #[test]
 fn no_path_to_sym() {
   check(
-    r#"
+    r"
 signature FOO = sig type t end
 signature BAR = sig type t val x : t include FOO end
 (**                                  ^^^^^^^^^^^ duplicate type: `t` *)
 structure Bar :> BAR = struct type t = unit val x = () end
-"#,
+",
   );
   cov_mark::check("no_path_to_sym");
 }
@@ -761,7 +761,7 @@ structure Bar :> BAR = struct type t = unit val x = () end
 #[test]
 fn where_pair_sharing_same() {
   check(
-    r#"
+    r"
 datatype d = D
 
 structure Foo = struct type foo = d end
@@ -781,14 +781,14 @@ structure Quz : QUZ
   structure F = Foo
   structure B = Bar
 end
-"#,
+",
   );
 }
 
 #[test]
 fn where_pair_eq_rhs_same() {
   check(
-    r#"
+    r"
 datatype d = D
 
 structure Foo = struct type foo = d end
@@ -807,14 +807,14 @@ structure Quz : QUZ
   structure F = Foo
   structure B = Bar
 end
-"#,
+",
   );
 }
 
 #[test]
 fn realize_no_sharing_opaque_unit() {
   check(
-    r#"
+    r"
 signature FOO = sig type foo end
 signature BAR = sig type bar end
 
@@ -829,14 +829,14 @@ end
 structure Quz
   :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
   =  struct structure F = Foo structure B = Bar end
-"#,
+",
   );
 }
 
 #[test]
 fn realize_sharing_opaque_unit() {
   check(
-    r#"
+    r"
 signature FOO = sig type foo end
 signature BAR = sig type bar end
 
@@ -853,14 +853,14 @@ structure Quz
   :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
 (**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type `B.bar` as `Foo.foo` *)
   =  struct structure F = Foo structure B = Bar end
-"#,
+",
   );
 }
 
 #[test]
 fn realize_sharing_transparent_unit() {
   check(
-    r#"
+    r"
 signature FOO = sig type foo end
 signature BAR = sig type bar end
 
@@ -877,14 +877,14 @@ structure Quz
   :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
 (**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type `B.bar` as `unit` *)
   =  struct structure F = Foo structure B = Bar end
-"#,
+",
   );
 }
 
 #[test]
 fn realize_sharing_transparent_int() {
   check(
-    r#"
+    r"
 signature FOO = sig type foo end
 signature BAR = sig type bar end
 
@@ -901,14 +901,14 @@ structure Quz
   :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
 (**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type `B.bar` as `int` *)
   =  struct structure F = Foo structure B = Bar end
-"#,
+",
   );
 }
 
 #[test]
 fn sharing_matched_arity() {
   check(
-    r#"
+    r"
 signature FOO = sig type t end
 signature BAR = sig type t end
 
@@ -917,14 +917,14 @@ signature QUZ = sig
   structure Bar : BAR
   sharing type Foo.t = Bar.t
 end
-"#,
+",
   );
 }
 
 #[test]
 fn sharing_mismatched_arity() {
   check(
-    r#"
+    r"
 signature FOO = sig type    t end
 signature BAR = sig type 'a t end
 
@@ -934,14 +934,14 @@ signature QUZ = sig
   structure Bar : BAR
   sharing type Foo.t = Bar.t
 end
-"#,
+",
   );
 }
 
 #[test]
 fn sharing_eqtype() {
   check(
-    r#"
+    r"
 signature FOO = sig type   t val x : t end
 signature BAR = sig eqtype t val x : t end
 
@@ -954,40 +954,40 @@ end
 functor F (Quz : QUZ) = struct
   val _ = Quz.Foo.x = Quz.Bar.x
 end
-"#,
+",
   );
 }
 
 #[test]
 fn sig_type_less_poly() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val x : int t
 (**       ^^^^^ expected 0 type arguments, found 1 *)
 end
-"#,
+",
   );
 }
 
 #[test]
 fn sig_type_more_poly() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type 'a t
   val x : t
 (**       ^ expected 1 type argument, found 0 *)
 end
-"#,
+",
   );
 }
 
 #[test]
 fn symbol_ident() {
   check(
-    r#"
+    r"
 signature INT = sig
   val ~ : int -> int
   val + : int * int -> int
@@ -1002,7 +1002,7 @@ signature INT = sig
   val <  : int * int -> bool
   val <= : int * int -> bool
 end
-"#,
+",
   );
 }
 
@@ -1032,19 +1032,19 @@ end
 #[test]
 fn poly_exn() {
   check(
-    r#"
+    r"
 signature S = sig
   exception E of 'a
 (**              ^^ undefined type variable: `'a` *)
 end
-"#,
+",
   );
 }
 
 #[test]
 fn sharing_in_seq() {
   check(
-    r#"
+    r"
 signature FOO = sig type t structure S: sig type t end end
 signature BAR = sig structure Foo : FOO end
 signature QUZ = sig structure Foo : FOO end
@@ -1064,37 +1064,37 @@ functor F (
   sharing Foo = Bar.Foo = Quz.Foo
   val x : Foo.S.t
 ) = struct end
-"#,
+",
   );
 }
 
 #[test]
 fn ty_eq_undef() {
   check(
-    r#"
+    r"
 signature S = sig
   type 'a t = 'a uh
 (**           ^^^^^ undefined type: `uh` *)
-end"#,
+end",
   );
 }
 
 #[test]
 fn ty_eq_wrong_num_ty_args() {
   check(
-    r#"
+    r"
 signature S = sig
   datatype uh = Uh
   type 'a t = 'a uh
 (**           ^^^^^ expected 0 type arguments, found 1 *)
-end"#,
+end",
   );
 }
 
 #[test]
 fn where_not_all_ty_vars() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type 'a t
   val f : 'a t -> 'a t
@@ -1106,56 +1106,56 @@ structure Str :> SIG where type 'a t = int = struct
 end
 
 val _ = Str.f 3 : int
-"#,
+",
   );
 }
 
 #[test]
 fn structure_and_sharing() {
   check(
-    r#"
+    r"
 signature SIG = sig
   structure A : sig type a end
   and B : sig type b end
   sharing type A.a = B.b
 end
-"#,
+",
   );
 }
 
 #[test]
 fn structure_and_where() {
   check(
-    r#"
+    r"
 signature SIG = sig
   structure A : sig type a end
   and B : sig type b end
   where type b = A.a
 end
-"#,
+",
   );
 }
 
 #[test]
 fn mutual_datatype_forward() {
   check(
-    r#"
+    r"
 signature SIG = sig
   datatype foo = Foo of bar
   and bar = Bar
 end
-"#,
+",
   );
 }
 
 #[test]
 fn mutual_datatype_backward() {
   check(
-    r#"
+    r"
 signature SIG = sig
   datatype bar = Bar
   and foo = Foo of bar
 end
-"#,
+",
   );
 }

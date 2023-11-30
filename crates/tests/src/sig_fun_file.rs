@@ -10,10 +10,10 @@ const OPTS: raw::Opts<'_> = raw::Opts {
   expected_input: raw::ExpectedInput::Good,
 };
 
-const CONFIG: &str = r#"
+const CONFIG: &str = r"
 version = 1
 language.successor-ml.do-dec = true
-"#;
+";
 
 #[track_caller]
 fn check_sig(s: &str) {
@@ -40,7 +40,7 @@ fn fun_zero() {
 #[test]
 fn sig_one() {
   check_sig(
-    r#"
+    r"
 signature S = sig
   type t
   val x: t
@@ -49,14 +49,14 @@ signature S = sig
     val z: a
   end
 end
-"#,
+",
   );
 }
 
 #[test]
 fn fun_one() {
   check_fun(
-    r#"
+    r"
 functor F() = struct
   val x = 3
   fun f() = ()
@@ -69,49 +69,49 @@ functor F() = struct
   local val z = 3 in val a = z + 1 end
   structure S = struct val a = x end
 end
-"#,
+",
   );
 }
 
 #[test]
 fn sig_two() {
   check_sig(
-    r#"
+    r"
 signature S1 = sig end
 signature S2 = sig end
 (** + files usually contain exactly one *)
-"#,
+",
   );
 }
 
 #[test]
 fn fun_two() {
   check_fun(
-    r#"
+    r"
 functor F1() = struct end
 functor F2() = struct end
 (** + files usually contain exactly one *)
-"#,
+",
   );
 }
 
 #[test]
 fn sig_in_fun() {
   check_fun(
-    r#"
+    r"
 signature S = sig end
 (** + files usually contain exactly one *)
-"#,
+",
   );
 }
 
 #[test]
 fn fun_in_sig() {
   check_sig(
-    r#"
+    r"
 functor F() = struct end
 (** + files usually contain exactly one *)
-"#,
+",
   );
 }
 

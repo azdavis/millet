@@ -25,19 +25,19 @@ val _ = #""
 #[test]
 fn int_big() {
   check(
-    r#"
+    r"
 val _ = 123123123123123123123123132131
-"#,
+",
   );
 }
 
 #[test]
 fn real_missing_digits() {
   check(
-    r#"
+    r"
 val _ = 123.
 (**     ^^^^ missing digits in number literal *)
-"#,
+",
   );
 }
 
@@ -54,10 +54,10 @@ val _ = "bad \ bad \ bad"
 #[test]
 fn negative_word() {
   check(
-    r#"
+    r"
 val _ = ~0w1
 (**     ^^^^ negative word literal *)
-"#,
+",
   );
 }
 

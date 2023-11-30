@@ -59,7 +59,7 @@ fn mk_path_buf(s: &str) -> PathBuf {
 #[test]
 fn group() {
   check(
-    r#"
+    r"
 Group is
   ; comment
   hi.sml
@@ -67,7 +67,7 @@ Group is
   uh.sml
   *)
   support.fun
-"#,
+",
     vec![],
     &[
       ("hi.sml", PathKind::Sml(sml_file::Kind::Sml)),
@@ -79,7 +79,7 @@ Group is
 #[test]
 fn library() {
   check(
-    r#"
+    r"
 Library
   structure A
   functor B
@@ -91,7 +91,7 @@ is
   seq.cm
   f.sig
   uh:sml
-"#,
+",
     vec![
       mk_name(Namespace::Structure, "A"),
       mk_name(Namespace::Functor, "B"),
@@ -111,7 +111,7 @@ is
 #[test]
 fn library_export() {
   check(
-    r#"
+    r"
 Library
   structure Foo
   library(quz/baz.cm)
@@ -120,7 +120,7 @@ is
   Foo.sml
   Bar/sources.cm
   quz/baz.cm
-"#,
+",
     vec![
       mk_name(Namespace::Structure, "Foo"),
       mk_library("quz/baz.cm"),
@@ -137,6 +137,6 @@ is
 #[test]
 fn unknown_class() {
   let e =
-    cm_syntax::get(r#"Group is foo.sml : succ-ml"#, &slash_var_path::Env::default()).unwrap_err();
+    cm_syntax::get(r"Group is foo.sml : succ-ml", &slash_var_path::Env::default()).unwrap_err();
   assert!(e.to_string().contains("unsupported class: `succ-ml`"));
 }

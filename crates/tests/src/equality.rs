@@ -18,26 +18,26 @@ val _ = #"a" = #"b"
 #[test]
 fn real_no() {
   check(
-    r#"
+    r"
 val _ = 2.2 = 3.3
 (**     ^^^^^^^^^ not an equality type *)
-"#,
+",
   );
 }
 
 #[test]
 fn ref_yes() {
   check(
-    r#"
+    r"
 val _ = (ref 2.2) = (ref 3.3)
-"#,
+",
   );
 }
 
 #[test]
 fn sig_type_no() {
   check(
-    r#"
+    r"
 structure S = struct
   type t = int
   val x = 3
@@ -49,14 +49,14 @@ end :> sig
 end
 val _ = S.x = S.y
 (**     ^^^^^^^^^ not an equality type *)
-"#,
+",
   );
 }
 
 #[test]
 fn sig_eqtype_yes() {
   check(
-    r#"
+    r"
 structure S = struct
   type t = int
   val x = 3
@@ -67,7 +67,7 @@ end :> sig
   val y : t
 end
 val _ = S.x = S.y
-"#,
+",
   );
 }
 
@@ -87,56 +87,56 @@ val _ = A 3.3 = D
 #[test]
 fn datatype_sometimes_2() {
   check(
-    r#"
+    r"
 datatype 'a t = A of 'a | B of int | C of string | D
 fun ''a eq (x : ''a t) (y : ''a t) : bool = x = y
 fun 'a eq (x : 'a t) (y : 'a t) : bool = x = y
 (** + contains a fixed non-equality type variable *)
-"#,
+",
   );
 }
 
 #[test]
 fn datatype_eq_ty_var_1() {
   check(
-    r#"
+    r"
 datatype ''a t = A of ''a | B
 fun ''a eq (x : ''a t) (y : ''a t) : bool = x = y
 fun 'a yes (x : 'a t) : unit = ()
-"#,
+",
   );
 }
 
 #[test]
 fn datatype_eq_ty_var_2() {
   check(
-    r#"
+    r"
 datatype ''a t = A of ''a | B
 fun 'a no (x : 'a) : 'a t = A x
 (** + not an equality type *)
-"#,
+",
   );
 }
 
 #[test]
 fn datatype_eq_ty_var_3() {
   check(
-    r#"
+    r"
 datatype ''a t = A of ''a | B
 fun 'a no (x : 'a) : 'a t = B
 (** + not an equality type *)
-"#,
+",
   );
 }
 
 #[test]
 fn datatype_eq_ty_var_4() {
   check(
-    r#"
+    r"
 datatype ''a t = A of ''a | B
 exception E
 fun 'a yes (x : 'a) : 'a t = raise E
-"#,
+",
   );
 }
 
@@ -154,8 +154,8 @@ val _ = C "hi" = D
 #[test]
 fn cmp_eq() {
   check(
-    r#"
+    r"
 fun f x y = (x < y, x = 0)
-"#,
+",
   );
 }

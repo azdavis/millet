@@ -5,10 +5,10 @@ use crate::check::{check, fail};
 #[test]
 fn smoke() {
   check(
-    r#"
+    r"
 val _ = 123
 (**     ^ hover: int *)
-"#,
+",
   );
 }
 
@@ -26,51 +26,51 @@ val _ = (   3, "hi", Uh false)
 #[test]
 fn fully_qualified() {
   check(
-    r#"
+    r"
 structure Foo = struct datatype bar = baz end
 val _ = Foo.baz
 (**     ^ hover: Foo.bar *)
-"#,
+",
   );
 }
 
 #[test]
 fn fun() {
   check(
-    r#"
+    r"
 fun foo x y = x + (if y then 3 else 4)
 (** ^^^ hover: int -> bool -> int *)
-"#,
+",
   );
 }
 
 #[test]
 fn ty_var_regular() {
   check(
-    r#"
+    r"
 fun id x = x
 (**        ^ hover: ?a *)
-"#,
+",
   );
 }
 
 #[test]
 fn ty_var_equality() {
   check(
-    r#"
+    r"
 fun eq x y = x = y
 (**          ^ hover: ??a *)
-"#,
+",
   );
 }
 
 #[test]
 fn ty_var_overload() {
   check(
-    r#"
+    r"
 fun add x y = x + y
 (**           ^ hover: int *)
-"#,
+",
   );
 }
 
@@ -78,29 +78,29 @@ fun add x y = x + y
 #[test]
 fn unsolved_record() {
   check(
-    r#"
+    r"
 (**               vvvv cannot resolve `...` in record type: `{ foo : bool, ... }` *)
 fun getFoo x = if #foo x then 3 else 4
 (**                    ^ hover: { foo : bool, ... } *)
-"#,
+",
   );
 }
 
 #[test]
 fn swap() {
   check(
-    r#"
+    r"
 (**          v hover: ?b *)
 fun swap (a, b) = (b, a)
 (**       ^ hover: ?a *)
-"#,
+",
   );
 }
 
 #[test]
 fn transparent_alias() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val x : t
@@ -113,14 +113,14 @@ end
 
 val _ = Str.x
 (**         ^ hover: unit *)
-"#,
+",
   );
 }
 
 #[test]
 fn transparent_datatype() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val x : t
@@ -133,14 +133,14 @@ end
 
 val _ = Str.x
 (**         ^ hover: Str.t *)
-"#,
+",
   );
 }
 
 #[test]
 fn opaque_alias() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val x : t
@@ -153,14 +153,14 @@ end
 
 val _ = Str.x
 (**         ^ hover: Str.t *)
-"#,
+",
   );
 }
 
 #[test]
 fn opaque_datatype() {
   check(
-    r#"
+    r"
 signature SIG = sig
   type t
   val x : t
@@ -173,14 +173,14 @@ end
 
 val _ = Str.x
 (**         ^ hover: Str.t *)
-"#,
+",
   );
 }
 
 #[test]
 fn fixed_not_generalized() {
   check(
-    r#"
+    r"
 fun foo (x : 'a) =
   let
     fun bar y = (x, y)
@@ -188,14 +188,14 @@ fun foo (x : 'a) =
     bar
 (** ^^^ hover: ?b -> 'a * ?b *)
   end
-"#,
+",
   );
 }
 
 #[test]
 fn nested_generalize() {
   fail(
-    r#"
+    r"
 fun foo x =
 (**     ^ hover: ?a *)
   let
@@ -207,18 +207,18 @@ fun foo x =
   in
     bar
   end
-"#,
+",
   );
 }
 
 #[test]
 fn mutual() {
   check(
-    r#"
+    r"
 fun f x = g x
 (** ^ hover: ?a -> ?b *)
 and g x = f x
 (** ^ hover: ?a -> ?b *)
-"#,
+",
   );
 }

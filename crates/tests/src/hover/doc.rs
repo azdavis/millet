@@ -5,7 +5,7 @@ use crate::check::{check, check_with_std_basis, fail};
 #[test]
 fn val() {
   check(
-    r#"
+    r"
 (*!
  * Some docs.
  *)
@@ -14,14 +14,14 @@ val foo = 3
 
 val f = foo
 (**     ^^^ hover: Some docs. *)
-"#,
+",
   );
 }
 
 #[test]
 fn fun() {
   check(
-    r#"
+    r"
 (*!
  * Some docs.
  *)
@@ -30,14 +30,14 @@ fun foo () = ()
 
 val f = foo
 (**     ^^^ hover: Some docs. *)
-"#,
+",
   );
 }
 
 #[test]
 fn typ() {
   check(
-    r#"
+    r"
 (*!
  * Some docs.
  *)
@@ -46,14 +46,14 @@ type t = int
 
 type u = t
 (**      ^ hover: Some docs. *)
-"#,
+",
   );
 }
 
 #[test]
 fn datatype() {
   check(
-    r#"
+    r"
 (*!
  * Some docs.
  *)
@@ -62,14 +62,14 @@ datatype d = D
 
 type u = d
 (**      ^ hover: Some docs. *)
-"#,
+",
   );
 }
 
 #[test]
 fn exception() {
   check(
-    r#"
+    r"
 (*!
  * Some docs.
  *)
@@ -78,14 +78,14 @@ exception E
 
 val e = E
 (**     ^ hover: Some docs. *)
-"#,
+",
   );
 }
 
 #[test]
 fn exception_copy() {
   fail(
-    r#"
+    r"
 (*!
  * Some docs.
  *)
@@ -94,17 +94,17 @@ exception E
 
 exception e = E
 (**           ^ hover: Some docs. *)
-"#,
+",
   );
 }
 
 #[test]
 fn primitive() {
   check(
-    r#"
+    r"
 val _ = false
 (**     ^^^^^ hover: represents logical falsity *)
-"#,
+",
   );
   cov_mark::check("primitive_doc");
 }
@@ -112,19 +112,19 @@ val _ = false
 #[test]
 fn std_basis() {
   check_with_std_basis(
-    r#"
+    r"
 val _ = List.Empty
 (**          ^^^^^ hover: indicates that an empty list was given as an argument *)
-"#,
+",
   );
 }
 
 #[test]
 fn std_basis_structure() {
   check_with_std_basis(
-    r#"
+    r"
 structure L = List
 (**           ^^^^ hover: a collection of utility functions for manipulating polymorphic lists *)
-"#,
+",
   );
 }

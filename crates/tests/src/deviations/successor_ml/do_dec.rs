@@ -15,10 +15,10 @@ fn default_disallow() {
 
 #[test]
 fn config_allow() {
-  let config = r#"
+  let config = r"
 version = 1
 language.successor-ml.do-dec = true
-"#;
+";
   let sml = r#"
 fun print _ = ()
 do print "hi"
@@ -40,10 +40,10 @@ do ()
 
 #[test]
 fn exp_unit_ty() {
-  let config = r#"
+  let config = r"
 version = 1
 language.successor-ml.do-dec = true
-"#;
+";
   let sml = r#"
 do "hi"
 (** + expected `unit`, found `string` *)

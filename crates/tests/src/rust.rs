@@ -5,7 +5,7 @@ use crate::check::check;
 #[test]
 fn option() {
   check(
-    r#"
+    r"
 (* Rust's Option<T> *)
 
 datatype 't option = None | Some of 't
@@ -52,14 +52,14 @@ fun 't flatten (self: 't option option): 't option =
     None => None
   | Some None => None
   | Some (Some x) => Some x
-"#,
+",
   );
 }
 
 #[test]
 fn result() {
   check(
-    r#"
+    r"
 (* Rust's Result<T, E> *)
 
 datatype ('t, 'e) result = Ok of 't | Err of 'e
@@ -106,6 +106,6 @@ fun ('t, 'e) flatten (self: (('t, 'e) result, 'e) result): ('t, 'e) result =
     Ok (Ok x) => Ok x
   | Ok (Err e) => Err e
   | Err e => Err e
-"#,
+",
   );
 }

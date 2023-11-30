@@ -5,7 +5,7 @@ use crate::check::check;
 #[test]
 fn many() {
   check(
-    r#"
+    r"
 exception Uh
 exception Foo
 and Bar of int
@@ -19,14 +19,14 @@ val _ =
 fun bar x = raise Bar x
 val _ = 1 + bar 2 + (raise Foo) + 3
 val _ = bar 3 andalso raise Guh
-"#,
+",
   );
 }
 
 #[test]
 fn alias_same() {
   check(
-    r#"
+    r"
 exception A
 exception B = A
 val _ =
@@ -35,25 +35,25 @@ val _ =
   | A => 2
 (** ^ unreachable pattern *)
   | _ => 3
-"#,
+",
   );
 }
 
 #[test]
 fn alias_not_exn() {
   check(
-    r#"
+    r"
 val x = 3
     exception Bad = x
 (** ^^^^^^^^^^^^^^^^^ not an exception: `x` *)
-"#,
+",
   );
 }
 
 #[test]
 fn poly() {
   check(
-    r#"
+    r"
 fun 'a foo (x: 'a) =
   let
     exception Poly of 'a
@@ -61,42 +61,42 @@ fun 'a foo (x: 'a) =
     raise Poly x; raise Poly 3; ()
 (**                          ^ expected `'a`, found `int` *)
   end
-"#,
+",
   );
 }
 
 #[test]
 fn raise_forall_a_a() {
   check(
-    r#"
+    r"
 exception E
 val x = raise E
 (**     ^^^^^^^ cannot bind expansive polymorphic expression *)
 val y = x x
-"#,
+",
   );
 }
 
 #[test]
 fn raise_prec() {
   check(
-    r#"
+    r"
 exception A and B and C
 fun f () = raise if 3 < 4 then A else B
 fun g n = raise case n of 1 => A | 2 => B | _ => C
-"#,
+",
   );
 }
 
 #[test]
 fn handle_prec() {
   check(
-    r#"
+    r"
 infix &&
 fun (b && ()) = if b then 1 else 2
 val _ = (false && ()) handle _ => 3
 val _ = false && (() handle _ => ())
 val _ = false && () handle _ => 3
-"#,
+",
   );
 }

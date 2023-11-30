@@ -8,123 +8,123 @@ use crate::check::check;
 #[test]
 fn op_in_val() {
   check(
-    r#"
+    r"
 signature FOO = sig
   val op + : int * int -> int
 (**   ^^ specification uses declaration syntax not allowed here *)
 end
-"#,
+",
   );
 }
 
 #[test]
 fn op_star() {
   check(
-    r#"
+    r"
 val f = (op *)
 val _ : int = f (2, 3)
-"#,
+",
   );
 }
 
 #[test]
 fn rebind_eq() {
   check(
-    r#"
+    r"
 val op = = 13
 (** ^^^^ cannot re-bind name: `=` *)
-"#,
+",
   );
 }
 
 #[test]
 fn rebind_true() {
   check(
-    r#"
+    r"
 fun true () = ()
 (** ^^^^^^^^^^^^ cannot re-bind name: `true` *)
-"#,
+",
   );
 }
 
 #[test]
 fn rebind_false() {
   check(
-    r#"
+    r"
 fun false () = ()
 (** ^^^^^^^^^^^^^ cannot re-bind name: `false` *)
-"#,
+",
   );
 }
 
 #[test]
 fn rebind_nil() {
   check(
-    r#"
+    r"
 fun nil () = ()
 (** ^^^^^^^^^^^ cannot re-bind name: `nil` *)
-"#,
+",
   );
 }
 
 #[test]
 fn rebind_cons() {
   check(
-    r#"
+    r"
 fun op :: () = ()
 (** ^^^^^^^^^^^^^ cannot re-bind name: `::` *)
-"#,
+",
   );
 }
 
 #[test]
 fn rebind_ref() {
   check(
-    r#"
+    r"
 fun ref () = ()
 (** ^^^^^^^^^^^ cannot re-bind name: `ref` *)
-"#,
+",
   );
 }
 
 #[test]
 fn or_pat() {
   check(
-    r#"
+    r"
 datatype foo = Foo of int | Bar of int
 val (Foo x | Bar x) = Foo 13
-"#,
+",
   );
 }
 
 #[test]
 fn signature_in_struct_end() {
   check(
-    r#"
+    r"
 structure A = struct
     signature B = sig end
 (** ^^^^^^^^^^^^^^^^^^^^^ `signature` or `functor` not allowed here *)
 end
-"#,
+",
   );
 }
 
 #[test]
 fn functor_in_struct_end() {
   check(
-    r#"
+    r"
 structure A = struct
     functor F() = struct end
 (** ^^^^^^^^^^^^^^^^^^^^^^^^ `signature` or `functor` not allowed here *)
 end
-"#,
+",
   );
 }
 
 #[test]
 fn signature_in_local() {
   check(
-    r#"
+    r"
 local
   signature SIG = sig val y : int end
 in
@@ -136,14 +136,14 @@ structure A = S4
 structure B = S7
 signature C = SIG
 (**           ^^^ undefined signature: `SIG` *)
-"#,
+",
   );
 }
 
 #[test]
 fn functor_in_local() {
   check(
-    r#"
+    r"
 local
   functor Func(val x : int) = struct val y = x + 2 end
 in
@@ -155,14 +155,14 @@ structure A = S4
 structure B = S7
 structure C = Func(val x = 8)
 (**           ^^^^^^^^^^^^^^^ undefined functor: `Func` *)
-"#,
+",
   );
 }
 
 #[test]
 fn dupe_via_includes() {
   check(
-    r#"
+    r"
 signature SIG1 = sig
   type t
   type u
@@ -178,17 +178,17 @@ signature SIG = sig
     include SIG2
 (** ^^^^^^^^^^^^ duplicate type: `t` *)
 end
-"#,
+",
   );
 }
 
 #[test]
 fn sharing_via_abbreviation_short() {
   check(
-    r#"
+    r"
 signature SIG = sig type a = int type b = int sharing type a = b end
 (**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type `a` as `int` *)
-"#,
+",
   );
   cov_mark::hit("sharing_via_abbreviation_short");
 }
@@ -196,49 +196,49 @@ signature SIG = sig type a = int type b = int sharing type a = b end
 #[test]
 fn sharing_via_abbreviation_long() {
   check(
-    r#"
+    r"
 signature SIG = sig type a = int * int type b = int * int sharing type a = b end
 (**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type `a` as `int * int` *)
-"#,
+",
   );
 }
 
 #[test]
 fn sharing_via_abbreviation_fst() {
   check(
-    r#"
+    r"
 signature S = sig type a = int * int type b sharing type a = b end
 (**               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type `a` as `int * int` *)
-"#,
+",
   );
 }
 
 #[test]
 fn sharing_via_abbreviation_snd() {
   check(
-    r#"
+    r"
 signature S = sig type a type b = int * int sharing type a = b end
 (**               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type `b` as `int * int` *)
-"#,
+",
   );
 }
 
 #[test]
 fn multi_where() {
   check(
-    r#"
+    r"
 signature S = sig
   type t
   type u = t
 end where type u = int
-"#,
+",
   );
 }
 
 #[test]
 fn sharing_and() {
   check(
-    r#"
+    r"
 signature S = sig
   type t
   type u
@@ -246,58 +246,58 @@ signature S = sig
   sharing type t = u and type u = v
 (**                  ^^^ expected `end` *)
 end
-"#,
+",
   );
 }
 
 #[test]
 fn with_type_expand() {
   check(
-    r#"
+    r"
 type u = real
 datatype a = A of t | B of u
 withtype u = int and t = u
 val _ = A 1.2
-"#,
+",
   );
 }
 
 #[test]
 fn where_structure_1() {
   check(
-    r#"
+    r"
 structure S = struct type t = int end
 signature SIG = sig structure T : sig type t end end where T = S
-"#,
+",
   );
 }
 
 #[test]
 fn where_structure_2() {
   check(
-    r#"
+    r"
 signature FOO = sig type t end
 signature BAR = sig structure Foo : FOO end
 signature QUZ = sig structure Foo : FOO end
 functor F (Bar : BAR) :> QUZ where Foo = Bar.Foo = struct structure Foo = Bar.Foo end
-"#,
+",
   );
 }
 
 #[test]
 fn datatype_copy_non_datatype() {
   check(
-    r#"
+    r"
 type ('a, 'b) t = 'a * 'b
 datatype u = datatype t
-"#,
+",
   );
 }
 
 #[test]
 fn share_substructure() {
   check(
-    r#"
+    r"
 signature SIG = sig
   structure S: sig
     type t
@@ -307,39 +307,39 @@ signature SIG = sig
   end
   sharing S = S.T
 end
-"#,
+",
   );
 }
 
 #[test]
 fn type_inf_context_1() {
   check(
-    r#"
+    r"
 structure S = struct
   val z = (fn x => x) []
 (**       ^^^^^^^^^^^^^^ cannot bind expansive polymorphic expression *)
   val y = z :: [true] :: nil
 end
-"#,
+",
   );
 }
 
 #[test]
 fn type_inf_context_2() {
   check(
-    r#"
+    r"
 structure S : sig val z : bool list end = struct
   val z = (fn x => x) []
 (**       ^^^^^^^^^^^^^^ cannot bind expansive polymorphic expression *)
 end
-"#,
+",
   );
 }
 
 #[test]
 fn where_structure_poly() {
   check(
-    r#"
+    r"
 signature FOO = sig
   type 'a foo
 end
@@ -351,14 +351,14 @@ end
 functor Func (Arg : FOO) :> BAR where Foo = Arg = struct
   structure Foo = Arg
 end
-"#,
+",
   );
 }
 
 #[test]
 fn where_structure_ty_already_def() {
   check(
-    r#"
+    r"
 signature FOO = sig
   type t
   type foo = t
@@ -376,6 +376,6 @@ end
 structure UnitBar : BAR where Foo = UnitFoo = struct
   structure Foo = UnitFoo
 end
-"#,
+",
   );
 }

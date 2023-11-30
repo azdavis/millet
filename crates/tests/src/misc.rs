@@ -5,7 +5,7 @@ use crate::check::check;
 #[test]
 fn arrow_ty_arg() {
   check(
-    r#"
+    r"
 val _ = fn f => fn x =>
   (
     f x x;
@@ -16,68 +16,68 @@ val _ = fn f => fn x =>
     f: unit;
     false
   )
-"#,
+",
   );
 }
 
 #[test]
 fn exhaustive_binding() {
   check(
-    r#"
+    r"
 datatype t = C of int * bool
 val C (a, b) = C (1, false)
 val _ = if b then a + 2 else a - 4
-"#,
+",
   );
 }
 
 #[test]
 fn fun_dec_name_mismatch() {
   check(
-    r#"
+    r"
 fun f 1 = 1
   | g _ = 2
 (** ^ expected a function clause for `f`, found one for `g` *)
-"#,
+",
   );
 }
 
 #[test]
 fn fun_dec_wrong_num_pats() {
   check(
-    r#"
+    r"
 fun f 1 = 2
   | f 3 4 = 5
 (**   ^^^ expected 1 pattern, found 2 *)
-"#,
+",
   );
 }
 
 #[test]
 fn match_record_non_record_ty() {
   check(
-    r#"
+    r"
 val _ =
   case 0 of
     1 => 1
   | (2, 2) => 2
 (** ^^^^^^ expected `int`, found `int * int` *)
   | _ => 3
-"#,
+",
   );
 }
 
 #[test]
 fn non_var_in_as() {
   check(
-    r#"
+    r"
 exception Bad
 val _ =
   case 3 of
     Bad as _ => 1
 (** ^^^^^^^^ invalid `as` pat name: `Bad` *)
   | _ => 2
-"#,
+",
   );
 }
 
@@ -104,38 +104,38 @@ val _ = fn id => (id 3; id "nope")
 #[test]
 fn useless_ty_var() {
   check(
-    r#"
+    r"
 fun 'a f () = 3
 val _ = f: unit
 (**     ^^^^^^^ expected `unit`, found `unit -> int` *)
-"#,
+",
   );
 }
 
 #[test]
 fn value_restriction() {
   check(
-    r#"
+    r"
 val id = (fn x => x) (fn x => x)
 (**      ^^^^^^^^^^^^^^^^^^^^^^^ cannot bind expansive polymorphic expression *)
-"#,
+",
   );
 }
 
 #[test]
 fn wrong_num_ty_args() {
   check(
-    r#"
+    r"
 val _: (int, bool) list = []
 (**    ^^^^^^^^^^^^^^^^ expected 1 type argument, found 2 *)
-"#,
+",
   );
 }
 
 #[test]
 fn paren() {
   check(
-    r#"
+    r"
 structure S = struct
   type i = (int)
   type bl = ((bool) list)
@@ -146,47 +146,47 @@ structure S = struct
   val (d) = (4)
   val (e, f) = (5, 6)
 end
-"#,
+",
   );
 }
 
 #[test]
 fn prec() {
   check(
-    r#"
+    r"
 val _ = 1 = 2 andalso 3 > 4 orelse 5 < 6
-"#,
+",
   );
 }
 
 #[test]
 fn phantom_datatype() {
   check(
-    r#"
+    r"
 datatype 'a phantom = p
 type t = string phantom
 val _ = p: unit phantom
 val _ = p: real phantom
-"#,
+",
   );
 }
 
 #[test]
 fn phantom_type() {
   check(
-    r#"
+    r"
 type 'a phantom = int
 type t = string phantom
 val _ = 3: unit phantom
 val _ = 3: real phantom
-"#,
+",
   );
 }
 
 #[test]
 fn subst_inside() {
   check(
-    r#"
+    r"
 signature SIG = sig
   datatype 'a d = D of 'a
   val join : 'a d d -> 'a
@@ -196,7 +196,7 @@ structure Str :> SIG = struct
   datatype 'a d = D of 'a
   fun join (D (D x)) = x
 end
-"#,
+",
   );
 }
 
@@ -215,21 +215,21 @@ val _ = inc a : int;
 #[test]
 fn circular_datatype() {
   check(
-    r#"
+    r"
 datatype foo = Foo of bar
 and bar = Bar of foo | Quz
-"#,
+",
   );
 }
 
 #[test]
 fn datatype_ty_vars_scope() {
   check(
-    r#"
+    r"
 datatype 'a foo = Foo of 'a
 and 'a bar = Bar of 'a
 val _ = Bar (Foo 3) : int foo bar
-"#,
+",
   );
 }
 
@@ -270,7 +270,7 @@ val _ = pair 1 "hi" : string * int
 #[test]
 fn str_dec_in_regular_dec() {
   check(
-    r#"
+    r"
 val () =
   let
     structure S = struct end
@@ -278,34 +278,34 @@ val () =
   in
     ()
   end
-"#,
+",
   );
 }
 
 #[test]
 fn suggest_kw() {
   check(
-    r#"
+    r"
 val lam = lambda x: x + 1
 (**       ^^^^^^ undefined value: `lambda` (did you mean `fn`?) *)
-"#,
+",
   );
 }
 
 #[test]
 fn op_bool_op() {
   check(
-    r#"
+    r"
 val _ = op andalso
 (**     ^^^^^^^^^^ `andalso` and `orelse` not allowed with `op` *)
-"#,
+",
   );
 }
 
 #[test]
 fn top_exp() {
   check(
-    r#"
+    r"
 fun foo () = ();
 foo ();
 foo ();
@@ -313,14 +313,14 @@ val x = foo ()
 val y = 1 + 2;
 foo ()
 val z = 3 + 4
-"#,
+",
   );
 }
 
 #[test]
 fn invalid_exp_expected_dec() {
   check(
-    r#"
+    r"
 fun foo x =
   let
     val y = 3
@@ -329,17 +329,17 @@ fun foo x =
   in
     y + x
   end
-"#,
+",
   );
 }
 
 #[test]
 fn num_suffix() {
   check(
-    r#"
+    r"
 val _ = 3and _ = 4
 (**     ^^^^ invalid literal: invalid digit found in string *)
-"#,
+",
   );
   cov_mark::hit("num_suffix");
 }
@@ -347,20 +347,20 @@ val _ = 3and _ = 4
 #[test]
 fn sharing_type_tail() {
   check(
-    r#"
+    r"
 val _ = () sharing type a = b
 (**        ^^^^^^^^^^^^^^^^^^ `sharing type` not allowed here *)
-"#,
+",
   );
 }
 
 #[test]
 fn eqtype_dec() {
   check(
-    r#"
+    r"
     eqtype n = int
 (** ^^^^^^ `eqtype` not allowed here *)
-"#,
+",
   );
 }
 
@@ -370,39 +370,39 @@ fn eqtype_dec() {
 #[test]
 fn old_rowan_panic() {
   check(
-    r#"
+    r"
 (** - expected `(` *)
-functor MkThing"#,
+functor MkThing",
   );
 }
 
 #[test]
 fn op_plus_reduce() {
   check(
-    r#"
+    r"
 datatype 'a tree = Empty | Node of 'a tree * 'a * 'a tree
 fun reduce (op +) z t =
   case t of
     Empty => z
   | Node (l, x, r) => reduce (op +) z l + x + reduce (op +) z r
-"#,
+",
   );
 }
 
 #[test]
 fn op_false() {
   check(
-    r#"
+    r"
 fun wot (op false) = ()
 (** + missing `true` *)
-"#,
+",
   );
 }
 
 #[test]
 fn infix_scope() {
   check(
-    r#"
+    r"
 fun add (a, b) = a + b
 
 val _ = add (1, 2)
@@ -414,16 +414,16 @@ structure S = struct
 end
 
 val _ = add (7, 8)
-"#,
+",
   );
 }
 
 #[test]
 fn missing_rhs_int_lab() {
   check(
-    r#"
+    r"
 val _ = { 1 }
 (**       ^ missing right-hand side of record expression row *)
-"#,
+",
   );
 }

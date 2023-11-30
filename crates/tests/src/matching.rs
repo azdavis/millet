@@ -5,33 +5,33 @@ use crate::check::check;
 #[test]
 fn smoke_case() {
   check(
-    r#"
+    r"
 val _ =
     case 3 of
 (** ^^^^^^^^^ non-exhaustive case: missing `_` *)
     4 => 5
-"#,
+",
   );
 }
 
 #[test]
 fn smoke_binding_int() {
   check(
-    r#"
+    r"
 val 3 = 1 + 2
 (** ^ non-exhaustive binding: missing `_` *)
-"#,
+",
   );
 }
 
 #[test]
 fn smoke_binding_datatype() {
   check(
-    r#"
+    r"
 datatype bin = Zero | One
 val One = One
 (** ^^^ non-exhaustive binding: missing `Zero` *)
-"#,
+",
   );
 }
 
@@ -65,13 +65,13 @@ val _ =
 #[test]
 fn int_tuple() {
   check(
-    r#"
+    r"
 val _ =
     case (1, 2) of
 (** ^^^^^^^^^^^^^^ non-exhaustive case: missing `(_, _)` *)
     (3, 4) => 0
   | (x, 6) => x
-"#,
+",
   );
 }
 
@@ -99,13 +99,13 @@ val _ =
 #[test]
 fn bool_tuple() {
   check(
-    r#"
+    r"
 val _ =
     case (true, false) of
 (** ^^^^^^^^^^^^^^^^^^^^^ non-exhaustive case: missing `(false, true)` *)
     (true, _) => 0
   | (_, false) => 1
-"#,
+",
   );
 }
 
@@ -134,41 +134,41 @@ val _ =
 #[test]
 fn unreachable_tuple() {
   check(
-    r#"
+    r"
 val _ =
   case (true, false) of
     (_, false) => 1
   | (_, false) => 2
 (**  ^ unreachable pattern *)
   | _ => 3
-"#,
+",
   );
 }
 
 #[test]
 fn unreachable_int() {
   check(
-    r#"
+    r"
 val _ =
   case 3 of
     4 => 1
   | 4 => 2
 (** ^ unreachable pattern *)
   | _ => 3
-"#,
+",
   );
 }
 
 #[test]
 fn reachable_tuple() {
   check(
-    r#"
+    r"
 val _ =
   case (9, 7) of
     (3, 8) => 0
   | (3, _) => 5
   | _ => 6
-"#,
+",
   );
 }
 
@@ -203,7 +203,7 @@ val _ =
 #[test]
 fn list_ok() {
   check(
-    r#"
+    r"
 val _ =
   case [3] of
     [] => 1
@@ -213,14 +213,14 @@ val _ =
   | [7, _] => 5
   | [_, _] => 6
   | x :: _ => x
-"#,
+",
   );
 }
 
 #[test]
 fn list_unreachable() {
   check(
-    r#"
+    r"
 val _ =
   case [3] of
     [] => 1
@@ -231,14 +231,14 @@ val _ =
 (**  ^ unreachable pattern *)
   | [_, _] => 6
   | x :: _ => x
-"#,
+",
   );
 }
 
 #[test]
 fn tuple_datatype_missing() {
   check(
-    r#"
+    r"
 datatype ab = A | B
 datatype cd = C | D
 val x =
@@ -247,14 +247,14 @@ val x =
     (A, C, _) => 0
   | (B, _, _) => 1
   | (_, _, A) => 4
-"#,
+",
   );
 }
 
 #[test]
 fn tuple_datatype_ok() {
   check(
-    r#"
+    r"
 datatype ab = A | B
 datatype cd = C | D
 val x =
@@ -263,51 +263,51 @@ val x =
   | (B, C, A) => 1
   | (_, _, B) => 3
   | (_, _, A) => 4
-"#,
+",
   );
 }
 
 #[test]
 fn list_missing_nil() {
   check(
-    r#"
+    r"
 fun f xs =
     case xs of
 (** ^^^^^^^^^^ non-exhaustive case: missing `[]` *)
     _ :: _ => 0
-"#,
+",
   );
 }
 
 #[test]
 fn list_missing_cons_smoke() {
   check(
-    r#"
+    r"
 fun f xs =
     case xs of
 (** ^^^^^^^^^^ non-exhaustive case: missing `_ :: _` *)
     [] => 0
-"#,
+",
   );
 }
 
 #[test]
 fn list_missing_len_1() {
   check(
-    r#"
+    r"
 fun f xs =
     case xs of
 (** ^^^^^^^^^^ non-exhaustive case: missing `[_]` *)
     [] => 0
   | _ :: _ :: _ => 1
-"#,
+",
   );
 }
 
 #[test]
 fn list_missing_len_3() {
   check(
-    r#"
+    r"
 fun f xs =
     case xs of
 (** ^^^^^^^^^^ non-exhaustive case: missing `[_, _, _]` *)
@@ -315,58 +315,58 @@ fun f xs =
   | [_] => 1
   | [_, _] => 2
   | _ :: _ :: _ :: _ :: _ => 3
-"#,
+",
   );
 }
 
 #[test]
 fn list_missing_true_singleton() {
   check(
-    r#"
+    r"
 fun f xs =
     case xs of
 (** ^^^^^^^^^^ non-exhaustive case: missing `[true]` *)
     [] => 0
   | [false] => 1
   | _ :: _ :: _ => 2
-"#,
+",
   );
 }
 
 #[test]
 fn list_missing_cons_prec() {
   check(
-    r#"
+    r"
 fun append xs ys =
     case xs of
 (** ^^^^^^^^^^ non-exhaustive case: missing `(_ :: _) :: _` *)
     [] => ys
   | [] :: ys => ys
-"#,
+",
   );
 }
 
 #[test]
 fn undef_type_datatype() {
   check(
-    r#"
+    r"
 datatype d = D of t
 (**               ^ undefined type: `t` *)
 fun f x =
   case x of
     D (_, _) => 1
-"#,
+",
   );
 }
 
 #[test]
 fn undef_type_exn() {
   check(
-    r#"
+    r"
 exception E of t
 (**            ^ undefined type: `t` *)
 val _ = 3 handle E (_, _) => 2
-"#,
+",
   );
 }
 
@@ -394,19 +394,19 @@ val charToDigit = fn
 #[test]
 fn record() {
   check(
-    r#"
+    r"
 val f = fn {a, b} => a + b
 val g = fn {b, a} => a + b
 val h = fn {b=x, a=y} => x * y
 val _ : int = g { b = f { a = 1, b = 3 }, a = h { a = 4, b = 5 } }
-"#,
+",
   );
 }
 
 #[test]
 fn structure() {
   check(
-    r#"
+    r"
 structure Str = struct
   datatype d = A | B
 end
@@ -415,14 +415,14 @@ fun f (x : Str.d): int =
     case x of
 (** ^^^^^^^^^ non-exhaustive case: missing `B` *)
     Str.A => 1
-"#,
+",
   );
 }
 
 #[test]
 fn signature() {
   check(
-    r#"
+    r"
 signature SIG = sig
   datatype d = A | B
 end
@@ -435,47 +435,47 @@ fun f (x : Str.d): int =
     case x of
 (** ^^^^^^^^^ non-exhaustive case: missing `B` *)
     Str.A => 1
-"#,
+",
   );
 }
 
 #[test]
 fn rest_non_exhaustive() {
   check(
-    r#"
+    r"
 fun f x =
     case x of
 (** ^^^^^^^^^ non-exhaustive case: missing `{a = _, b = _}` *)
     {a = 3, ...} => 1
   | {b = 5, ...} => 2
   | {a = 1, b = 2} => 3
-"#,
+",
   );
 }
 
 #[test]
 fn rest_exhaustive() {
   check(
-    r#"
+    r"
 fun f x =
   case x of
     {a = 3, ...} => 1
   | {b = 5, ...} => 2
   | {a = _, b = _, c} => c
-"#,
+",
   );
 }
 
 #[test]
 fn rest_exhaustive_more_rows() {
   check(
-    r#"
+    r"
 fun f x =
   case x of
     {a = 3, ...} => 1
   | {b = 5, ...} => 2
   | {a = _, b = _, c, d = _, e = _} => c
-"#,
+",
   );
 }
 
@@ -495,7 +495,7 @@ fun f x =
 #[test]
 fn parser() {
   check(
-    r#"
+    r"
 datatype tok =
   A | B | C | D | E | F | G | H | I | J | K | L | M
 | N | O | P | Q | R | S | T | U | V | W | X | Y | Z
@@ -543,6 +543,6 @@ fun parse xs =
   | _ $ Tok G $ Tok F $ Bar $ Tok A $ Tok H $ _ => 3
   | _ $ Tok A $ Tok B $ Bar $ Tok C $ Quz $ _ => 4
   | _ $ Tok F $ Tok D $ Tok A $ Foo $ Quz $ _ => 4
-"#,
+",
   );
 }

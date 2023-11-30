@@ -5,69 +5,69 @@ use crate::check::check;
 #[test]
 fn curry_add() {
   check(
-    r#"
+    r"
 fun add a b = a + b
 val _ = add false
 (**         ^^^^^ expected `int`, found `bool` *)
-"#,
+",
   );
 }
 
 #[test]
 fn op_add_ok() {
   check(
-    r#"
+    r"
 val add = op+
 val _ = add (1, 2)
-"#,
+",
   );
 }
 
 #[test]
 fn op_add_err() {
   check(
-    r#"
+    r"
 val add = op+
 val _ = add (false, true)
 (**         ^^^^^^^^^^^^^ expected `int * int`, found `bool * bool` *)
-"#,
+",
   );
 }
 
 #[test]
 fn immediately_solve_to_default() {
   check(
-    r#"
+    r"
 val add = op+
 val _ = add (1.1, 2.2)
 (**         ^^^^^^^^^^ expected `int * int`, found `real * real` *)
 val _ = add (1, 2)
-"#,
+",
   );
 }
 
 #[test]
 fn explicit_annotate() {
   check(
-    r#"
+    r"
 val add = op+ : real * real -> real
 val _ = add (1.1, 2.2)
 val _ = add (1, 2)
 (**         ^^^^^^ expected `real * real`, found `int * int` *)
-"#,
+",
   );
 }
 
 #[test]
 fn top_level_seq() {
   check(
-    r#"
+    r"
 val add = op+
 (* make this a top-dec level seq *)
 signature S = sig end
 val _ = add (1.1, 2.2)
 (**         ^^^^^^^^^^ expected `int * int`, found `real * real` *)
-"#,
+",
   );
 }
 
@@ -132,70 +132,70 @@ val _: bool = #"e" >= #"e"
 #[test]
 fn must_solve_to_single_overloaded_type() {
   check(
-    r#"
+    r"
 val _ = 1.1 + 1
 (**     ^^^^^^^ expected `real * real`, found `real * int` *)
-"#,
+",
   );
 }
 
 #[test]
 fn overload_err() {
   check(
-    r#"
+    r"
 val  _ = false + true
 (**      ^^^^^^^^^^^^ expected `<num> * <num>`, found `bool * bool` *)
-"#,
+",
   );
 }
 
 #[test]
 fn three_int() {
   check(
-    r#"
+    r"
 fun f a b c = a + b + c
 val _ = f : unit
 (**     ^^^^^^^^ expected `unit`, found `int -> int -> int -> int` *)
-"#,
+",
   );
 }
 
 #[test]
 fn three_real() {
   check(
-    r#"
+    r"
 fun f a b c = a + b + c + 1.1
 val _ = f : unit
 (**     ^^^^^^^^ expected `unit`, found `real -> real -> real -> real` *)
-"#,
+",
   );
 }
 
 #[test]
 fn add_div() {
   check(
-    r#"
+    r"
 fun mid a b = (a + b) div 2
-"#,
+",
   );
 }
 
 #[test]
 fn abs_sub_add() {
   check(
-    r#"
+    r"
 fun hm a b = (abs (a - b), a + b)
-"#,
+",
   );
 }
 
 #[test]
 fn hover() {
   check(
-    r#"
+    r"
 (**       vvv hover: <num> * <num> -> <num> *)
 val add = op+
 (** ^^^ hover: int * int -> int *)
-"#,
+",
   );
 }

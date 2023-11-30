@@ -5,18 +5,18 @@ use crate::check::check;
 #[test]
 fn apply() {
   check(
-    r#"
+    r"
 val apply = fn (f, x) => f x
 val _ = apply: unit
 (**     ^^^^^^^^^^^ expected `unit`, found `(_ -> _) * _ -> _` *)
-"#,
+",
   );
 }
 
 #[test]
 fn cps() {
   check(
-    r#"
+    r"
 datatype 'a tree = Empty | Node of 'a tree * 'a * 'a tree
 fun find t p ok err =
   case t of
@@ -28,24 +28,24 @@ fun find t p ok err =
         find left p ok (fn () => find right p ok err)
     val _ : unit = find
 (** ^^^^^^^^^^^^^^^^^^^ expected `unit`, found `_ tree -> (_ -> bool) -> (_ -> _) -> (unit -> _) -> _` *)
-"#,
+",
   );
 }
 
 #[test]
 fn fact() {
   check(
-    r#"
+    r"
 fun fact (0 : int) : int = 1
   | fact n = n * fact (n - 1)
-"#,
+",
   );
 }
 
 #[test]
 fn list_fns() {
   check(
-    r#"
+    r"
 exception Empty
 fun append [] ys = ys
   | append (x :: xs) ys = x :: append xs ys
@@ -57,14 +57,14 @@ and tail [] = raise Empty
 val x = head [1, 2, 3]
 and y = tail [false, true, false]
 and z = append [1, 2, 3] [7, 8, 9]
-"#,
+",
   );
 }
 
 #[test]
 fn list_map() {
   check(
-    r#"
+    r"
 fun map f xs =
   case xs of
     [] => []
@@ -72,7 +72,7 @@ fun map f xs =
 
 val _ = map: unit
 (**     ^^^^^^^^^ expected `unit`, found `(_ -> _) -> _ list -> _ list` *)
-"#,
+",
   );
 }
 
@@ -125,7 +125,7 @@ and _: int = 3 div 0
 #[test]
 fn curry() {
   check(
-    r#"
+    r"
 fun curry f x y = f (x, y)
 
 val eq : int -> int -> bool = curry op=
@@ -139,17 +139,17 @@ val _: int = mul 5 6
 val f = add 7
 val g = mul 5
 val _: bool = eq (f 3) (g 5)
-"#,
+",
   );
 }
 
 #[test]
 fn either() {
   check(
-    r#"
+    r"
 datatype ('a, 'b) either = INL of 'a | INR of 'b
 val _ = INL 3 : (int, unit) either
 val _ = INR 3 : (unit, int) either
-"#,
+",
   );
 }

@@ -50,11 +50,11 @@ val _ = (1, "hi")
 #[test]
 fn list() {
   check(
-    r#"
+    r"
 val _: int list = []
 val _: int list = [1]
 val _: int list = [2, 3]
-"#,
+",
   );
 }
 
@@ -70,9 +70,9 @@ val _: int = ("no"; false; 4)
 #[test]
 fn let_() {
   check(
-    r#"
+    r"
 val _: int = let val x = 3 in x end
-"#,
+",
   );
 }
 
@@ -92,12 +92,12 @@ val _: int = uh {}
 #[test]
 fn infix_fn() {
   check(
-    r#"
+    r"
 val uh = fn _ => 3
 infix uh
 val _: int = 3 uh 4
 val _: int = () uh ()
-"#,
+",
   );
 }
 
@@ -114,92 +114,92 @@ val _ = "hi": string
 #[test]
 fn andalso() {
   check(
-    r#"
+    r"
 val _ = false andalso true
 val _ = fn (a, b, c) => a andalso b andalso c
-"#,
+",
   );
 }
 
 #[test]
 fn orelse() {
   check(
-    r#"
+    r"
 val _ = false orelse true
 val _ = fn (a, b, c) => a orelse b orelse c
-"#,
+",
   );
 }
 
 #[test]
 fn handle() {
   check(
-    r#"
+    r"
 val _ = 3 handle Match => 4
-"#,
+",
   );
 }
 
 #[test]
 fn raise() {
   check(
-    r#"
+    r"
 exception E
 val _ = fn () => raise E
-"#,
+",
   );
 }
 
 #[test]
 fn if_() {
   check(
-    r#"
+    r"
 val _ = fn (a, b, c) => if a then b 1 else c 2
 val _ = if 1 then 2 else 3
 (**        ^ expected `bool`, found `int` *)
-"#,
+",
   );
 }
 
 #[test]
 fn while_() {
   check(
-    r#"
+    r"
 val _ = fn (a, b) => while a () do b ()
-"#,
+",
   );
 }
 
 #[test]
 fn case() {
   check(
-    r#"
+    r"
 val _ = fn x => case x of 1 => 1 | _ => 2
-"#,
+",
   );
 }
 
 #[test]
 fn l_round_exp_tail() {
   check(
-    r#"
+    r"
 val x = (3 val
 (**        ^^^ expected `)`, `,`, or `;` *)
-"#,
+",
   );
 }
 
 #[test]
 fn ref_() {
   check(
-    r#"
+    r"
 val x = ref 3
 val _: int =
   case x of
     ref y => y
 val ref z = x
 val _: int = z
-"#,
+",
   );
 }
 

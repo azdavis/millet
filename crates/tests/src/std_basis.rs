@@ -24,12 +24,12 @@ val _ = Option.join (SOME (SOME "hey")) : string option
 #[test]
 fn list() {
   check_with_std_basis(
-    r#"
+    r"
 val _ = List.length [1, 2] : int
 val _ = List.null [] : bool
 val _ = List.map (fn x => x = 3) [4, 3, 6] : bool list
 val _: int list = [1, 2] @ [3, 4]
-"#,
+",
   );
 }
 
@@ -128,7 +128,7 @@ val () = TextIO.output (TextIO.stdErr, "oh no")
 #[test]
 fn word_overload() {
   check_with_std_basis(
-    r#"
+    r"
 val _ = 0w0: Word.word
 val _ = 0w0: Word8.word
 val _ = 0w0: Word16.word
@@ -137,39 +137,39 @@ val _ = 0w0: Word32.word
 val _ = 0w0: Word64.word
 val _ = 0w0: LargeWord.word
 val _ = 0w0: SysWord.word
-"#,
+",
   );
 }
 
 #[test]
 fn fn_doc() {
   check_with_std_basis(
-    r#"
+    r"
 val _ = Fn.id
 (**        ^^ hover: `id x` returns `x`. *)
-"#,
+",
   );
 }
 
 #[test]
 fn alias() {
   check_with_std_basis(
-    r#"
+    r"
 val _ = not
 (**     ^^^ hover: Alias for `Bool.not`. *)
-"#,
+",
   );
 }
 
 #[test]
 fn real() {
   check_with_std_basis(
-    r#"
+    r"
 val start = Time.toReal (Time.now ())
 val _ = List.tabulate (1000, Int.toString)
 val finish = Time.toReal (Time.now ())
 val _ = 100.0 * start / finish
-"#,
+",
   );
 }
 

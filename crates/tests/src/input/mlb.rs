@@ -32,18 +32,18 @@ fn empty() {
 
 #[test]
 fn ident() {
-  let mlb = r#"
+  let mlb = r"
 local
   a.sml
 in
   structure FOO_BAR_QUZ
   signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234
 end
-"#;
-  let sml = r#"
+";
+  let sml = r"
 structure FOO_BAR_QUZ = struct end
 signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234 = sig end
-"#;
+";
   check_multi([("sources.mlb", mlb), ("a.sml", sml)]);
 }
 
@@ -68,13 +68,13 @@ ann "milletDiagnosticsIgnore all" in
 end
 c.sml
 "#;
-  let reported = r#"
+  let reported = r"
 val _ = foo
 (**     ^^^ undefined value: `foo` *)
-"#;
-  let ignored = r#"
+";
+  let ignored = r"
 val _ = foo
-"#;
+";
   let files = [("s.mlb", mlb), ("a.sml", reported), ("b.sml", ignored), ("c.sml", reported)];
   let opts = raw::Opts {
     std_basis: raw::StdBasis::Minimal,

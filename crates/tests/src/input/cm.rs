@@ -13,23 +13,23 @@ fn empty() {
 
 #[test]
 fn ident() {
-  let cm = r#"
+  let cm = r"
 Library
   structure FOO_BAR_QUZ
   signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234
 is
   a.sml
-"#;
-  let sml = r#"
+";
+  let sml = r"
 structure FOO_BAR_QUZ = struct end
 signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234 = sig end
-"#;
+";
   check_multi([("a.cm", cm), ("a.sml", sml)]);
 }
 
 #[test]
 fn union() {
-  let cm = r#"
+  let cm = r"
 Library
   structure FOO
   (
@@ -38,99 +38,99 @@ Library
   )
 is
   a.sml
-"#;
-  let sml = r#"
+";
+  let sml = r"
 structure FOO = struct end
 signature BAR = sig end
 signature QUZ = sig end
-"#;
+";
   check_multi([("a.cm", cm), ("a.sml", sml)]);
 }
 
 #[test]
 fn intersection() {
-  let cm = r#"
+  let cm = r"
 Library
   structure FOO * signature BAR
 is
   a.sml
-"#;
-  let sml = r#"
+";
+  let sml = r"
 structure FOO = struct end
 signature BAR = sig end
-"#;
+";
   check_multi([("a.cm", cm), ("a.sml", sml)]);
 }
 
 #[test]
 fn difference() {
-  let cm = r#"
+  let cm = r"
 Library
   structure FOO - signature BAR
 is
   a.sml
-"#;
-  let sml = r#"
+";
+  let sml = r"
 structure FOO = struct end
 signature BAR = sig end
-"#;
+";
   check_multi([("a.cm", cm), ("a.sml", sml)]);
 }
 
 #[test]
 fn source_file() {
-  let cm = r#"
+  let cm = r"
 Library
   source(foo.sml)
 is
   foo.sml
   bar.sml
-"#;
+";
   check_multi([("a.cm", cm), ("foo.sml", ""), ("bar.sml", "")]);
 }
 
 #[test]
 fn source_dash() {
-  let cm = r#"
+  let cm = r"
 Library
   source(-)
 is
   foo.sml
   bar.sml
-"#;
+";
   check_multi([("a.cm", cm), ("foo.sml", ""), ("bar.sml", "")]);
 }
 
 #[test]
 fn source_not_in_files() {
-  let cm = r#"
+  let cm = r"
 Library
   source(foo.sml)
 is
   bar.sml
-"#;
+";
   check_bad_input("a.cm", "not in file list", [("a.cm", cm), ("foo.sml", ""), ("bar.sml", "")]);
 }
 
 #[test]
 fn std_basis_export() {
-  let cm = r#"
+  let cm = r"
 Library
   library($/basis.cm)
 is
   $/basis.cm
-"#;
+";
   check_multi([("a.cm", cm)]);
 }
 
 #[test]
 fn std_basis_group() {
-  let cm = r#"
+  let cm = r"
 Library
   group($/basis.cm)
 is
   $/basis.cm
-"#;
+";
   check_bad_input("a.cm", "expected a regular path or `-`", [("a.cm", cm)]);
 }
 
