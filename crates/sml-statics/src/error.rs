@@ -81,15 +81,15 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: `{name}`"),
       ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: `{name}`"),
       ErrorKind::Circularity(circ) => {
-        let mv = circ.meta_var.display(self.st, self.lines);
-        let ty = circ.ty.display(self.st, self.lines);
+        let mv = circ.meta_var.display(self.st, config::DiagnosticLines::One);
+        let ty = circ.ty.display(self.st, config::DiagnosticLines::One);
         write!(f, "circular type: `{mv}` occurs in `{ty}`")
       }
       ErrorKind::IncompatibleTys(reason, want, got) => {
-        let reason = reason.display(self.st, self.lines);
+        let reason = reason.display(self.st);
         write!(f, "incompatible types: {reason}")?;
-        let want = want.display(self.st, self.lines);
-        let got = got.display(self.st, self.lines);
+        let want = want.display(self.st, config::DiagnosticLines::One);
+        let got = got.display(self.st, config::DiagnosticLines::One);
         match self.lines {
           config::DiagnosticLines::One => {
             write!(f, ": expected `{want}`, found `{got}`")
@@ -112,7 +112,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
       ErrorKind::InvalidAsPatName(name) => write!(f, "invalid `as` pat name: `{name}`"),
       ErrorKind::TyEscape(ty) => {
-        let ty = ty.display(self.st, self.lines);
+        let ty = ty.display(self.st, config::DiagnosticLines::One);
         write!(f, "type escapes its scope: `{ty}`")
       }
       ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
@@ -124,7 +124,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: `{name}`"),
       ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: `{name}`"),
       ErrorKind::UnresolvedRecordTy(rows) => {
-        let ty = record_meta_var(self.st, rows, self.lines);
+        let ty = record_meta_var(self.st, rows, config::DiagnosticLines::One);
         write!(f, "cannot resolve `...` in record type: `{ty}`")
       }
       ErrorKind::OrPatNotSameBindings(name) => {
@@ -132,7 +132,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       }
       ErrorKind::DecNotAllowedHere => f.write_str("`signature` or `functor` not allowed here"),
       ErrorKind::ExpHole(ty) => {
-        let ty = ty.display(self.st, self.lines);
+        let ty = ty.display(self.st, config::DiagnosticLines::One);
         write!(f, "expression hole with type `{ty}`")
       }
       ErrorKind::TyHole => f.write_str("type hole"),
@@ -146,11 +146,11 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         f.write_str("type variable bound at `val` or `fun` not allowed here")
       }
       ErrorKind::CannotShareTy(path, ts) => {
-        let ts = ts.display(self.st, self.lines);
+        let ts = ts.display(self.st, config::DiagnosticLines::One);
         write!(f, "cannot share type `{path}` as `{ts}`")
       }
       ErrorKind::CannotRealizeTy(path, ts) => {
-        let ts = ts.display(self.st, self.lines);
+        let ts = ts.display(self.st, config::DiagnosticLines::One);
         write!(f, "cannot realize type `{path}` as `{ts}`")
       }
       ErrorKind::InvalidEq(name) => write!(f, "calling `=` or `<>` on `{name}`"),
@@ -176,7 +176,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         write!(f, "`fn {name} => f {name}`, can be simplified to `f`")
       }
       ErrorKind::ShadowInCaseWithSameTy(name, ty_scheme) => {
-        let ty_scheme = ty_scheme.display(self.st, self.lines);
+        let ty_scheme = ty_scheme.display(self.st, config::DiagnosticLines::One);
         write!(f, "this pattern, which binds `{name}` with type `{ty_scheme}`, ")?;
         write!(f, "does not check any part of the matched expression for equality with the ")?;
         write!(f, "existing `{name}`, which has the same type, and which was already in scope")

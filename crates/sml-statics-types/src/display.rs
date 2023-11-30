@@ -366,19 +366,14 @@ impl fmt::Display for RecordMetaVarDisplay<'_> {
 impl Incompatible {
   /// Returns a value that displays this.
   #[must_use]
-  pub fn display<'a>(
-    &'a self,
-    st: &'a St,
-    lines: config::DiagnosticLines,
-  ) -> impl fmt::Display + 'a {
-    IncompatibleDisplay { flavor: self, st, lines }
+  pub fn display<'a>(&'a self, st: &'a St) -> impl fmt::Display + 'a {
+    IncompatibleDisplay { flavor: self, st }
   }
 }
 
 struct IncompatibleDisplay<'a> {
   flavor: &'a Incompatible,
   st: &'a St,
-  lines: config::DiagnosticLines,
 }
 
 impl fmt::Display for IncompatibleDisplay<'_> {
@@ -400,8 +395,8 @@ impl fmt::Display for IncompatibleDisplay<'_> {
         write!(f, "`{a}` and `{b}` are different type constructors")
       }
       Incompatible::HeadMismatch(a, b) => {
-        let a_display = a.display(self.st, self.lines);
-        let b_display = b.display(self.st, self.lines);
+        let a_display = a.display(self.st, config::DiagnosticLines::One);
+        let b_display = b.display(self.st, config::DiagnosticLines::One);
         let a_desc = a.desc();
         let b_desc = b.desc();
         write!(f, "`{a_display}` is {a_desc}, but `{b_display}` is {b_desc}")
@@ -417,7 +412,7 @@ impl fmt::Display for IncompatibleDisplay<'_> {
         write!(f, "record types are not compatible with the `{ov}` overload")
       }
       Incompatible::OverloadHeadMismatch(ov, ty) => {
-        let ty_display = ty.display(self.st, self.lines);
+        let ty_display = ty.display(self.st, config::DiagnosticLines::One);
         let ty_desc = ty.desc();
         write!(f, "`{ov}` is an overloaded type, but `{ty_display}` is {ty_desc}")
       }
@@ -425,13 +420,13 @@ impl fmt::Display for IncompatibleDisplay<'_> {
         write!(f, "unresolved record type is missing field: `{lab}`")
       }
       Incompatible::UnresolvedRecordHeadMismatch(rows, ty) => {
-        let ty_display = ty.display(self.st, self.lines);
+        let ty_display = ty.display(self.st, config::DiagnosticLines::One);
         let ty_desc = ty.desc();
-        let rows = record_meta_var(self.st, rows, self.lines);
+        let rows = record_meta_var(self.st, rows, config::DiagnosticLines::One);
         write!(f, "`{rows}` is an unresolved record type, but `{ty_display}` is {ty_desc}")
       }
       Incompatible::NotEqTy(ty, not_eq) => {
-        let ty = ty.display(self.st, self.lines);
+        let ty = ty.display(self.st, config::DiagnosticLines::One);
         write!(f, "not an equality type because it contains {not_eq}: `{ty}`")
       }
     }
