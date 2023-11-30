@@ -97,7 +97,9 @@ where
       contents = &owned_contents;
     }
     let mut fix_env = sml_fixity::STD_BASIS.clone();
-    let started = SourceFileSyntax::new(&mut fix_env, &lang, contents);
+    let ext = std::path::Path::new(name).extension().unwrap().to_str().unwrap();
+    let file_kind: sml_file::Kind = ext.parse().unwrap();
+    let started = SourceFileSyntax::new(&mut fix_env, &lang, file_kind, contents);
     if let Some(e) = started.lex_errors.first() {
       panic!("{name}: lex error: {e}");
     }

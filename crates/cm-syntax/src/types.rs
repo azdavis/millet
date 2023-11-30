@@ -121,7 +121,7 @@ pub enum CmFileKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PathKind {
   /// SML files.
-  Sml,
+  Sml(sml_file::Kind),
   /// CM files.
   Cm,
 }
@@ -220,7 +220,7 @@ impl Member {
 #[derive(Debug, Clone)]
 pub enum Class {
   /// SML files.
-  Sml,
+  Sml(sml_file::Kind),
   /// CM files.
   Cm,
   /// Some other class.
@@ -229,11 +229,8 @@ pub enum Class {
 
 impl Class {
   fn from_path(path: &Path) -> Option<Self> {
-    let ret = match path.extension()?.to_str()? {
-      "sig" | "sml" | "fun" => Self::Sml,
-      "cm" => Self::Cm,
-      _ => return None,
-    };
+    let ext = path.extension()?.to_str()?;
+    let ret = if ext == "cm" { Self::Cm } else { Self::Sml(ext.parse().ok()?) };
     Some(ret)
   }
 }
@@ -243,7 +240,7 @@ impl FromStr for Class {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let ret = match s.to_ascii_lowercase().as_str() {
-      "sml" => Self::Sml,
+      "sml" => Self::Sml(sml_file::Kind::Sml),
       "cm" | "cmfile" => Self::Cm,
       s => Self::Other(s.to_owned()),
     };
@@ -254,7 +251,7 @@ impl FromStr for Class {
 impl fmt::Display for Class {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Class::Sml => f.write_str("sml"),
+      Class::Sml(_) => f.write_str("sml"),
       Class::Cm => f.write_str("cm"),
       Class::Other(s) => f.write_str(s),
     }

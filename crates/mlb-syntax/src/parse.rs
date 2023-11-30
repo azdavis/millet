@@ -171,11 +171,8 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<BasDecOne> {
 }
 
 fn path_kind(path: &Path) -> Option<PathKind> {
-  let ret = match path.extension()?.to_str()? {
-    "sml" | "sig" | "fun" => PathKind::Sml,
-    "mlb" => PathKind::Mlb,
-    _ => return None,
-  };
+  let ext = path.extension()?.to_str()?;
+  let ret = if ext == "mlb" { PathKind::Mlb } else { PathKind::Sml(ext.parse().ok()?) };
   Some(ret)
 }
 

@@ -121,7 +121,7 @@ where
         }
       };
       let kind = match pp.val.kind() {
-        mlb_syntax::PathKind::Sml => {
+        mlb_syntax::PathKind::Sml(file_kind) => {
           let contents = match read_file(st.fs, source, path.as_path()) {
             Ok(x) => x,
             Err(e) => {
@@ -131,7 +131,7 @@ where
             }
           };
           st.sources.insert(path_id, contents);
-          mlb_hir::PathKind::Source
+          mlb_hir::PathKind::Source(file_kind)
         }
         mlb_syntax::PathKind::Mlb => {
           st.stack.push(GroupPathToProcess {

@@ -80,6 +80,7 @@ pub(crate) enum ErrorKind {
   EmptyLocal,
   EmptyRecordPatOrExp,
   EmptyRecordTy,
+  DiscouragedTopDecKindForSigFun,
 }
 
 impl fmt::Display for Error {
@@ -143,6 +144,9 @@ impl fmt::Display for Error {
       ErrorKind::EmptyRecordTy => {
         f.write_str("the empty record/tuple type is usually written as `unit`")
       }
+      ErrorKind::DiscouragedTopDecKindForSigFun => f.write_str(
+        "`.sig` and `.fun` files usually contain exactly one `signature` or `functor` respectively",
+      ),
     }
   }
 }
@@ -268,6 +272,7 @@ impl Error {
       ErrorKind::EmptyLocal => Code::n(4034),
       ErrorKind::EmptyRecordPatOrExp => Code::n(4035),
       ErrorKind::EmptyRecordTy => Code::n(4036),
+      ErrorKind::DiscouragedTopDecKindForSigFun => Code::n(4037),
     }
   }
 
@@ -285,7 +290,8 @@ impl Error {
       | ErrorKind::EmptyLet
       | ErrorKind::EmptyLocal
       | ErrorKind::EmptyRecordPatOrExp
-      | ErrorKind::EmptyRecordTy => Severity::Warning,
+      | ErrorKind::EmptyRecordTy
+      | ErrorKind::DiscouragedTopDecKindForSigFun => Severity::Warning,
       _ => Severity::Error,
     }
   }
@@ -312,12 +318,14 @@ pub(crate) struct St<'a> {
   ptrs: Ptrs,
   fun_names: Vec<str_util::Name>,
   lang: &'a Language,
+  file_kind: sml_file::Kind,
   level: usize,
+  seen_top_level: bool,
 }
 
 #[allow(clippy::unnecessary_wraps)]
 impl<'a> St<'a> {
-  pub(crate) fn new(lang: &'a Language) -> St<'a> {
+  pub(crate) fn new(lang: &'a Language, file_kind: sml_file::Kind) -> St<'a> {
     St {
       fresh_idx: 0,
       errors: Vec::new(),
@@ -325,7 +333,9 @@ impl<'a> St<'a> {
       ptrs: Ptrs::default(),
       fun_names: Vec::new(),
       lang,
+      file_kind,
       level: 0,
+      seen_top_level: false,
     }
   }
 
@@ -425,6 +435,10 @@ impl<'a> St<'a> {
     self.lang
   }
 
+  pub(crate) fn file_kind(&self) -> sml_file::Kind {
+    self.file_kind
+  }
+
   pub(crate) fn inc_level(&mut self) {
     self.level += 1;
   }
@@ -435,6 +449,15 @@ impl<'a> St<'a> {
 
   pub(crate) fn is_top_level(&self) -> bool {
     self.level == 0
+  }
+
+  pub(crate) fn mark_has_seen_top_level(&mut self) {
+    self.seen_top_level = true;
+  }
+
+  /// returns whether we have already seen at least one top level dec
+  pub(crate) fn seen_top_level(&self) -> bool {
+    self.seen_top_level
   }
 }
 

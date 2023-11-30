@@ -22,7 +22,7 @@ pub enum BasDec {
   /// A file path.
   Path(paths::PathId, PathKind),
   /// Used by CM only.
-  SourcePathSet(FxHashSet<paths::PathId>),
+  SourcePathSet(FxHashSet<(paths::PathId, sml_file::Kind)>),
   /// A sequence of declarations.
   Seq(Vec<BasDec>),
 }
@@ -58,7 +58,7 @@ pub enum BasExp {
 #[derive(Debug, Clone, Copy)]
 pub enum PathKind {
   /// An SML source path.
-  Source,
+  Source(sml_file::Kind),
   /// A group path, like MLB or CM.
   Group,
 }

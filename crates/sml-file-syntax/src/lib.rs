@@ -13,16 +13,23 @@ pub struct SourceFileSyntax {
   pub parse: sml_parse::Parse,
   /// The lowered HIR.
   pub lower: sml_hir_lower::Lower,
+  /// The kind of source file this is.
+  pub kind: sml_file::Kind,
 }
 
 impl SourceFileSyntax {
   /// Starts processing a single source file.
-  pub fn new(fix_env: &mut sml_fixity::Env, lang: &config::lang::Language, contents: &str) -> Self {
+  pub fn new(
+    fix_env: &mut sml_fixity::Env,
+    lang: &config::lang::Language,
+    kind: sml_file::Kind,
+    contents: &str,
+  ) -> Self {
     elapsed::log("SourceFileSyntax::new", || {
       let (lex_errors, parse) = Self::lex_and_parse(fix_env, contents);
-      let mut lower = sml_hir_lower::get(lang, &parse.root);
+      let mut lower = sml_hir_lower::get(lang, kind, &parse.root);
       sml_ty_var_scope::get(&mut lower.arenas, &lower.root);
-      Self { pos_db: text_pos::PositionDb::new(contents), lex_errors, parse, lower }
+      Self { pos_db: text_pos::PositionDb::new(contents), lex_errors, parse, lower, kind }
     })
   }
 

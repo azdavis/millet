@@ -42,7 +42,7 @@ pub(crate) fn check(s: &str) {
   check_multi(raw::one_file_fs(s));
 }
 
-/// Like [`check`], but allows multiple files.
+/// Like [`check`], but allows multiple files, provided as pairs of (filename, contents).
 #[track_caller]
 pub(crate) fn check_multi<const N: usize>(files: [(&str, &str); N]) {
   let opts = raw::Opts {

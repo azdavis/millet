@@ -19,7 +19,7 @@ fn check(s: &str, steps: &[&str]) {
   let check_steps = !env_var_enabled("MILLET_NO_CHECK_STEPS");
   let mut fix_env = sml_fixity::STD_BASIS.clone();
   let lang = config::lang::Language::default();
-  let sf = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, &lang, s);
+  let sf = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, &lang, sml_file::Kind::Sml, s);
   if let Some(e) = sf.lex_errors.first() {
     panic!("lex error: {e}");
   }

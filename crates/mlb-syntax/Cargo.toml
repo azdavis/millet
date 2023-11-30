@@ -16,4 +16,5 @@ text-size-util.workspace = true
 
 lex-util.path = "../lex-util"
 slash-var-path.path = "../slash-var-path"
+sml-file.path = "../sml-file"
 sml-namespace.path = "../sml-namespace"

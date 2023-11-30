@@ -245,10 +245,10 @@ fn get_bas_dec(
       }
     },
     mlb_hir::BasDec::Path(path, kind) => match kind {
-      mlb_hir::PathKind::Source => {
+      mlb_hir::PathKind::Source(file_kind) => {
         let contents = cx.source_file_contents.get(path).expect("no source file");
         let mut fix_env = scope.fix_env.clone();
-        let syntax = SourceFileSyntax::new(&mut fix_env, cx.lang, contents);
+        let syntax = SourceFileSyntax::new(&mut fix_env, cx.lang, *file_kind, contents);
         get_source_file(st, cx.lang, *path, scope, ac, fix_env, syntax);
       }
       mlb_hir::PathKind::Group => match st.bases.get(path) {
@@ -259,11 +259,11 @@ fn get_bas_dec(
     mlb_hir::BasDec::SourcePathSet(paths) => {
       let mut syntaxes: paths::PathMap<_> = paths
         .iter()
-        .map(|path| {
-          let contents = cx.source_file_contents.get(path).expect("no source file");
+        .map(|&(path, kind)| {
+          let contents = cx.source_file_contents.get(&path).expect("no source file");
           let mut fix_env = scope.fix_env.clone();
-          let syntax = SourceFileSyntax::new(&mut fix_env, cx.lang, contents);
-          (*path, (fix_env, syntax))
+          let syntax = SourceFileSyntax::new(&mut fix_env, cx.lang, kind, contents);
+          (path, (fix_env, syntax))
         })
         .collect();
       let hir_roots: paths::PathMap<_> = syntaxes
@@ -386,7 +386,7 @@ pub fn update_one(
   contents: &str,
 ) {
   let mut fix_env = sml_fixity::STD_BASIS.clone();
-  sf.syntax = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, lang, contents);
+  sf.syntax = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, lang, sf.syntax.kind, contents);
   let mode = sml_statics_types::mode::Mode::Regular(Some(path));
   let checked =
     sml_statics::get(syms_tys, &sf.scope, mode, &sf.syntax.lower.arenas, &sf.syntax.lower.root);

@@ -38,11 +38,14 @@ pub(crate) fn get_top_dec(st: &mut St<'_>, root: &ast::Root) -> sml_hir::StrDecS
 }
 
 fn get_top_dec_one(st: &mut St<'_>, top_dec: ast::DecOne) -> sml_hir::StrDecIdx {
-  match top_dec {
+  let ret = match top_dec {
     ast::DecOne::ExpDec(top_dec) => {
       let ptr = SyntaxNodePtr::new(top_dec.syntax());
       if !st.lang().dec.exp {
         st.err(top_dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("expression")));
+      }
+      if st.file_kind().is_sig_or_fun() {
+        st.err(top_dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
       }
       let bind = sml_hir::ValBind {
         rec: false,
@@ -68,7 +71,9 @@ fn get_top_dec_one(st: &mut St<'_>, top_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       st.str_dec(sml_hir::StrDec::Dec(vec![dec]), ptr)
     }
     _ => get_str_dec_one(st, top_dec),
-  }
+  };
+  st.mark_has_seen_top_level();
+  ret
 }
 
 fn get_str_dec<I>(st: &mut St<'_>, iter: I) -> sml_hir::StrDecSeq
@@ -84,6 +89,9 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
     ast::DecOne::StructureDec(str_dec) => {
       if !st.lang().dec.structure {
         st.err(str_dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`structure`")));
+      }
+      if st.is_top_level() && st.file_kind().is_sig_or_fun() {
+        st.err(str_dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
       }
       st.inc_level();
       let iter = str_dec.str_binds().filter_map(|str_bind| {
@@ -104,6 +112,11 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       if !st.lang().dec.signature {
         st.err(str_dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`signature`")));
       }
+      if let (true, (true, sml_file::Kind::Sig) | (_, sml_file::Kind::Fun)) =
+        (st.is_top_level(), (st.seen_top_level(), st.file_kind()))
+      {
+        st.err(str_dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
+      }
       let iter = str_dec.sig_binds().filter_map(|sig_bind| {
         Some(sml_hir::SigBind {
           name: get_name(sig_bind.name())?,
@@ -115,6 +128,11 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
     ast::DecOne::FunctorDec(str_dec) => {
       if !st.lang().dec.functor {
         st.err(str_dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`functor`")));
+      }
+      if let (true, (true, sml_file::Kind::Fun) | (_, sml_file::Kind::Sig)) =
+        (st.is_top_level(), (st.seen_top_level(), st.file_kind()))
+      {
+        st.err(str_dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
       }
       st.inc_level();
       let iter = str_dec.functor_binds().filter_map(|fun_bind| {
@@ -150,6 +168,9 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
     ast::DecOne::LocalDec(str_dec) => {
       if !st.lang().dec.local {
         st.err(str_dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`local`")));
+      }
+      if st.is_top_level() && st.file_kind().is_sig_or_fun() {
+        st.err(str_dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
       }
       st.inc_level();
       let fst = get_str_dec(st, str_dec.local_dec_hd().into_iter().flat_map(|x| x.decs()));
@@ -496,6 +517,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
       if !st.lang().dec.val {
         st.err(dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`val`")));
       }
+      if st.is_top_level() && st.file_kind().is_sig_or_fun() {
+        st.err(dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
+      }
       let ty_vars = ty::var_seq(st, dec.ty_var_seq());
       let iter = dec.val_binds().map(|val_bind| {
         let exp = val_bind.eq_exp().and_then(|x| x.exp());
@@ -513,6 +537,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
     ast::DecOne::FunDec(dec) => {
       if !st.lang().dec.fun {
         st.err(dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`fun`")));
+      }
+      if st.is_top_level() && st.file_kind().is_sig_or_fun() {
+        st.err(dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
       }
       let ty_vars = ty::var_seq(st, dec.ty_var_seq());
       let iter = dec.fun_binds().map(|fun_bind| {
@@ -626,6 +653,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
       if !st.lang().dec.type_ {
         st.err(dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`type`")));
       }
+      if st.is_top_level() && st.file_kind().is_sig_or_fun() {
+        st.err(dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
+      }
       let hd = dec.ty_head()?;
       match hd.kind {
         ast::TyHeadKind::TypeKw => {}
@@ -637,6 +667,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
       if !st.lang().dec.datatype {
         st.err(dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`datatype`")));
       }
+      if st.is_top_level() && st.file_kind().is_sig_or_fun() {
+        st.err(dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
+      }
       let d_binds = dat_binds(st, dec.dat_binds());
       let t_binds = ty_binds(st, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
       sml_hir::Dec::Datatype(d_binds, t_binds)
@@ -645,9 +678,15 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
       if !st.lang().dec.datatype_copy {
         st.err(dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`datatype` copy")));
       }
+      if st.is_top_level() && st.file_kind().is_sig_or_fun() {
+        st.err(dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
+      }
       sml_hir::Dec::DatatypeCopy(get_name(dec.name())?, get_path(dec.path()?)?)
     }
     ast::DecOne::AbstypeDec(dec) => {
+      if st.is_top_level() && st.file_kind().is_sig_or_fun() {
+        st.err(dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
+      }
       let d_binds = dat_binds(st, dec.dat_binds());
       let t_binds = ty_binds(st, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
       let inner = get(st, dec.decs());
@@ -656,6 +695,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
     ast::DecOne::ExDec(dec) => {
       if !st.lang().dec.exception {
         st.err(dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`exception`")));
+      }
+      if st.is_top_level() && st.file_kind().is_sig_or_fun() {
+        st.err(dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
       }
       let iter = dec.ex_binds().filter_map(|ex_bind| {
         let name = str_util::Name::new(ex_bind.name_star_eq()?.token.text());
@@ -690,7 +732,8 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
     ast::DecOne::OpenDec(dec) => {
       if !st.lang().dec.open {
         st.err(dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`open`")));
-      } else if st.is_top_level() {
+      }
+      if st.is_top_level() {
         st.err(dec.syntax(), ErrorKind::TopLevelOpen);
       }
       let paths: Vec<_> = dec.paths().filter_map(get_path).collect();
@@ -704,11 +747,17 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
         let e = ErrorKind::Disallowed(Disallowed::Dec("`infix`, `infixr`, or `nonfix`"));
         st.err(dec.syntax(), e);
       }
+      if st.is_top_level() && st.file_kind().is_sig_or_fun() {
+        st.err(dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
+      }
       return None;
     }
     ast::DecOne::DoDec(ref inner) => {
       if !st.lang().successor_ml.do_dec {
         st.err(dec.syntax(), ErrorKind::Disallowed(Disallowed::SuccMl("`do` declarations")));
+      }
+      if st.is_top_level() && st.file_kind().is_sig_or_fun() {
+        st.err(dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
       }
       let bind = sml_hir::ValBind {
         rec: false,

@@ -14,6 +14,7 @@ elapsed.workspace = true
 text-pos.workspace = true
 
 config.path = "../config"
+sml-file.path = "../sml-file"
 sml-fixity.path = "../sml-fixity"
 sml-hir-lower.path = "../sml-hir-lower"
 sml-lex.path = "../sml-lex"

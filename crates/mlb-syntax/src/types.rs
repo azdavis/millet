@@ -131,7 +131,7 @@ pub enum BasExp {
 #[derive(Debug, Clone, Copy)]
 pub enum PathKind {
   /// SML paths.
-  Sml,
+  Sml(sml_file::Kind),
   /// ML Basis paths.
   Mlb,
 }

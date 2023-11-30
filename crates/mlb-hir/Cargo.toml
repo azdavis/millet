@@ -15,4 +15,5 @@ paths.workspace = true
 str-util.workspace = true
 text-size-util.workspace = true
 
+sml-file.path = "../sml-file"
 sml-namespace.path = "../sml-namespace"

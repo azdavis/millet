@@ -44,6 +44,7 @@ mod rust;
 mod sep;
 mod shadow;
 mod sig;
+mod sig_fun_file;
 mod smoke;
 mod std_basis;
 mod symbolic;

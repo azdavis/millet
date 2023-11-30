@@ -4,7 +4,7 @@ use crate::{check::raw, repo::root_dir};
 use diagnostic::Severity;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
 
-const SML: &str = "sml";
+const LANG_NAME: &str = "sml";
 
 fn opts(limit: raw::Limit) -> raw::Opts<'static> {
   raw::Opts {
@@ -27,12 +27,12 @@ fn check_all(contents: &str) {
   for ev in parser {
     match ev {
       Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
-        if lang.as_ref() == SML {
+        if lang.as_ref() == LANG_NAME {
           inside = true;
         }
       }
       Event::End(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
-        if lang.as_ref() == SML {
+        if lang.as_ref() == LANG_NAME {
           if !ignore_next {
             raw::get(raw::one_file_fs(ac.as_ref()), opts(limit));
           }

@@ -66,7 +66,7 @@ struct CmFile {
   /// only optional so this can derive default.
   pos_db: Option<text_pos::PositionDb>,
   cm_paths: Vec<paths::PathId>,
-  sml_paths: FxHashSet<paths::PathId>,
+  sml_paths: FxHashSet<(paths::PathId, sml_file::Kind)>,
   exports: NameExports,
 }
 
@@ -125,7 +125,7 @@ fn get_one_cm_file<F>(
       }
     };
     match pp.val.kind() {
-      cm_syntax::PathKind::Sml => {
+      cm_syntax::PathKind::Sml(kind) => {
         let contents = match read_file(st.fs, source, path.as_path()) {
           Ok(x) => x,
           Err(e) => {
@@ -134,7 +134,7 @@ fn get_one_cm_file<F>(
           }
         };
         st.sources.insert(path_id, contents);
-        ret.sml_paths.insert(path_id);
+        ret.sml_paths.insert((path_id, kind));
       }
       cm_syntax::PathKind::Cm => {
         let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
@@ -179,7 +179,7 @@ fn get_one_cm_file<F>(
 struct ExportCx<'a> {
   group: &'a StartedGroup,
   cm_paths: &'a [paths::PathId],
-  sml_paths: &'a FxHashSet<paths::PathId>,
+  sml_paths: &'a FxHashSet<(paths::PathId, sml_file::Kind)>,
   cur_path_id: paths::PathId,
 }
 
@@ -273,7 +273,7 @@ fn get_all_sources<F>(st: &mut St<'_, F>, cx: ExportCx<'_>, range: TextRange, ac
 where
   F: paths::FileSystem,
 {
-  for path_id in cx.sml_paths {
+  for (path_id, _) in cx.sml_paths {
     let contents = st.sources.get(path_id).expect("sml file should be set").as_str();
     get_top_defs(contents, ac, range);
   }

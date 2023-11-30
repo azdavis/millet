@@ -66,10 +66,13 @@ Group is
   (*
   uh.sml
   *)
-  support.sml
+  support.fun
 "#,
     vec![],
-    &[("hi.sml", PathKind::Sml), ("support.sml", PathKind::Sml)],
+    &[
+      ("hi.sml", PathKind::Sml(sml_file::Kind::Sml)),
+      ("support.fun", PathKind::Sml(sml_file::Kind::Fun)),
+    ],
   );
 }
 
@@ -95,12 +98,12 @@ is
       mk_name(Namespace::Signature, "C"),
     ],
     &[
-      ("a.sml", PathKind::Sml),
-      ("b/c/d.sml", PathKind::Sml),
-      ("e.fun", PathKind::Sml),
+      ("a.sml", PathKind::Sml(sml_file::Kind::Sml)),
+      ("b/c/d.sml", PathKind::Sml(sml_file::Kind::Sml)),
+      ("e.fun", PathKind::Sml(sml_file::Kind::Fun)),
       ("seq.cm", PathKind::Cm),
-      ("f.sig", PathKind::Sml),
-      ("uh", PathKind::Sml),
+      ("f.sig", PathKind::Sml(sml_file::Kind::Sig)),
+      ("uh", PathKind::Sml(sml_file::Kind::Sml)),
     ],
   );
 }
@@ -123,7 +126,11 @@ is
       mk_library("quz/baz.cm"),
       mk_name(Namespace::Signature, "BAR"),
     ],
-    &[("Foo.sml", PathKind::Sml), ("Bar/sources.cm", PathKind::Cm), ("quz/baz.cm", PathKind::Cm)],
+    &[
+      ("Foo.sml", PathKind::Sml(sml_file::Kind::Sml)),
+      ("Bar/sources.cm", PathKind::Cm),
+      ("quz/baz.cm", PathKind::Cm),
+    ],
   );
 }
 

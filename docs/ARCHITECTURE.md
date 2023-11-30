@@ -253,6 +253,10 @@ Because the semantics for MLB files determines when source (SML) files get parse
 
 These crates depend on many other crates to "unite" everything together.
 
+### `crates/sml-file`
+
+Kinds of source files (like signature and functor files).
+
 ### `crates/sml-file-syntax`
 
 Unites all of the purely syntactical SML passes into one single API.
