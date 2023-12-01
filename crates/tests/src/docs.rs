@@ -53,6 +53,8 @@ fn check_all(contents: &str) {
           ignore_next = true;
         } else if s == "<!-- @limit first -->" {
           limit = raw::Limit::First;
+        } else if let Some(x) = s.strip_prefix("!-- @") {
+          panic!("unknown special @ comment: {x}");
         }
       }
       _ => {}

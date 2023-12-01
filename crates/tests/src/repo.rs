@@ -289,6 +289,9 @@ fn diagnostic_header() {
     let contents = std::fs::read_to_string(entry.path()).unwrap();
     let first_line = contents.lines().next().unwrap().strip_prefix("# ").unwrap();
     assert_eq!(num, first_line);
+    let mut iter = contents.lines().filter_map(|line| line.strip_prefix("## "));
+    let last_h2 = iter.next_back();
+    assert_eq!(last_h2, Some("To fix"), "missing final 'to fix' header for {num}");
   }
 }
 
