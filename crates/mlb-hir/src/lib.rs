@@ -1,7 +1,5 @@
 //! HIR for MLB.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 use fast_hash::FxHashSet;
 use sml_namespace::Module;
 use text_size_util::WithRange;

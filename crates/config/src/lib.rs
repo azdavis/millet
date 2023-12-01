@@ -1,7 +1,5 @@
 //! Configuration.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 pub mod file;
 pub mod init;
 pub mod lang;

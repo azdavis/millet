@@ -1,7 +1,5 @@
 //! [`SCon`], a special value constructor.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 use num_bigint::BigInt;
 use num_traits::Num as _;
 use std::fmt;

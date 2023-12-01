@@ -1,10 +1,10 @@
 //! Types for working with SML syntax trees.
 
-#![deny(rust_2018_idioms)]
-
+#[allow(missing_docs)]
 pub mod ast {
   include!(concat!(env!("OUT_DIR"), "/ast.rs"));
 }
+
 mod kind {
   include!(concat!(env!("OUT_DIR"), "/kind.rs"));
 }
@@ -39,6 +39,13 @@ fn custom_node_range(node: SyntaxNode) -> Option<rowan::TextRange> {
   None
 }
 
+/// Returns the node range for the node, which is either a custom node range to allow for better
+/// readability or the whole actual range of the node.
+///
+/// For example, given a node for a `case` expressions, this will return node range that only covers
+/// the `case ... of`. This is so the range is across fewer (usually one) line(s) than if we used
+/// the range of the whole `case` and all of its matcher arms.
+#[must_use]
 pub fn node_range(node: &SyntaxNode) -> rowan::TextRange {
   custom_node_range(node.clone()).unwrap_or_else(|| node.text_range())
 }

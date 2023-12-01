@@ -4,8 +4,6 @@
 //!
 //! [spec]: https://www.smlnj.org/doc/CM/new.pdf
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 mod lex;
 mod lower;
 mod parse;

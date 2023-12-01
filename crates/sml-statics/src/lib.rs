@@ -4,7 +4,6 @@
 //!
 //! [1]: http://dev.stephendiehl.com/fun/006_hindley_milner.html
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::too_many_lines, clippy::single_match_else)]
 
 mod compatible;

@@ -1,7 +1,5 @@
 //! Coverage markers.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 use fast_hash::FxHashSet;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;

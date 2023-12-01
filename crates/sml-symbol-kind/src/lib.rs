@@ -1,7 +1,5 @@
 //! Given a `ValInfo`, return the kind of symbol this val is.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 use sml_statics_types::info::{IdStatus, ValInfo};
 use sml_statics_types::ty::{TyData, Tys};
 

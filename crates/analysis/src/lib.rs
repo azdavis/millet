@@ -1,7 +1,5 @@
 //! The unification of all the passes into a single high-level API.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 mod diagnostic;
 mod matcher;
 mod source_files;

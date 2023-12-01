@@ -2,8 +2,6 @@
 //!
 //! From [the `MLton` docs](http://mlton.org/MLBasis).
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 mod lex;
 mod parse;
 mod types;

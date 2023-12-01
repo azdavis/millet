@@ -1,7 +1,5 @@
 //! Types concerning SML infix operators, precedence, and associativity.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 use fast_hash::{map_with_capacity, FxHashMap};
 use once_cell::sync::Lazy;
 

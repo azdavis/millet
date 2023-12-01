@@ -4,7 +4,6 @@
 //! - If you have many similar tests, put them in an existing or new module.
 
 #![cfg(test)]
-#![deny(clippy::pedantic, rust_2018_idioms)]
 #![allow(clippy::single_match_else)]
 
 mod big;

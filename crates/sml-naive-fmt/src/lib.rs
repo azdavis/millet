@@ -3,7 +3,6 @@
 //! - Only handles certain comments.
 //! - No attempt is made to restrict lines to a reasonable length.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::needless_pass_by_value, clippy::too_many_lines)]
 
 use fast_hash::FxHashSet;

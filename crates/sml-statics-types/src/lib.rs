@@ -1,6 +1,5 @@
 //! Types and fundamental operations for static analysis.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::too_many_lines, clippy::single_match_else)]
 
 mod data;

@@ -1,7 +1,5 @@
 //! A thin CLI front-end for running Millet once over some files.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 use paths::FileSystem as _;
 
 fn usage() {

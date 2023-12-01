@@ -4,7 +4,7 @@
 //! differently based on the flavor. It MUST only be used for "niceties", e.g. to emit better error
 //! messages.
 
-#![deny(clippy::pedantic, missing_debug_implementations, rust_2018_idioms)]
+#![allow(missing_docs)]
 
 use la_arena::Arena;
 use sml_path::Path;

@@ -1,7 +1,6 @@
 //! Tests for the dynamics.
 
 #![cfg(test)]
-#![deny(clippy::pedantic, rust_2018_idioms)]
 #![allow(clippy::too_many_lines)]
 
 use std::io::BufRead as _;

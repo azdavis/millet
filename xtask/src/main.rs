@@ -1,6 +1,5 @@
 //! See the [xtask spec](https://github.com/matklad/cargo-xtask).
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::single_match_else)]
 
 mod cli_test;

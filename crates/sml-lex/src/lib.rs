@@ -1,7 +1,5 @@
 //! Lexing a string into tokens.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 use diagnostic::{Code, Severity};
 use lex_util::{advance_while, block_comment, is_whitespace, string};
 use sml_syntax::rowan::{TextRange, TextSize};

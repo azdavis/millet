@@ -52,6 +52,13 @@ uniq.git = "https://github.com/azdavis/language-util.git"
 # sml-libs
 sml-libs.git = "https://github.com/azdavis/sml-libs.git"
 
+[workspace.lints.rust]
+missing_debug_implementations = "deny"
+missing_docs = "deny"
+rust_2018_idioms = "deny"
+[workspace.lints.clippy]
+pedantic = "deny"
+
 [profile.release]
 codegen-units = 1
 lto = "fat"

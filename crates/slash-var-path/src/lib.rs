@@ -5,8 +5,6 @@
 //! 1. have `/` as the separator
 //! 2. may contain path variables starting with `$`
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 use fast_hash::FxHashMap;
 use std::{fmt, path::PathBuf};
 use str_util::SmolStr;

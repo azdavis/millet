@@ -1,6 +1,5 @@
 //! A language server for Standard ML.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::single_match_else)]
 
 mod capabilities;
