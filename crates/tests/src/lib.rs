@@ -6,6 +6,7 @@
 #![cfg(test)]
 #![allow(clippy::single_match_else)]
 
+mod basis_path_var;
 mod big;
 mod cannot_rebind;
 mod check;
