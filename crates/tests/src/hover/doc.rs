@@ -138,10 +138,13 @@ signature EXAMPLE = sig
    * signature foo docs
    *)
   val foo: unit
+  (** ^^^ hover: signature foo docs *)
+
   (*!
    * signature bar docs
    *)
   val bar: unit
+  (** ^^^ hover: signature bar docs *)
 end
 
 structure Example: EXAMPLE = struct
@@ -149,12 +152,15 @@ structure Example: EXAMPLE = struct
    * structure foo docs
    *)
   val foo = ()
+  (** ^^^ hover: structure foo docs *)
 
   val bar = ()
+  (** ^^^ hover: signature bar docs *)
 end
 
 val foo = Example.foo
 (**       ^^^^^^^^^^^ hover: structure foo docs *)
+
 val bar = Example.bar
 (**       ^^^^^^^^^^^ hover: signature bar docs *)
 ",
