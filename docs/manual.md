@@ -572,6 +572,39 @@ end
 c.sml
 ```
 
+### `milletIgnore`
+
+Whether to ignore all content in the basis declaration.
+
+Possible arguments:
+
+- `true`: Ignore the whole basis declaration inside.
+
+This is basically a subset of `milletDiagnosticsIgnore`, except:
+
+- You cannot enable it and then re-disable it inside itself.
+- The files are not processed at all. That means no definitions from those files will be available.
+
+For instance, given these SML files:
+
+| Filename | Contents        |
+| -------- | --------------- |
+| `a.sml`  | `val a = 3`     |
+| `b.sml`  | `val a = true`  |
+| `c.sml`  | `val _ = a + 1` |
+
+And this MLB file:
+
+```text
+a.sml
+ann "milletIgnore true" in
+  b.sml
+end
+c.sml
+```
+
+There will be no errors, since `b.sml`, which would have shadowed `a` to be a `bool` and caused a type error in `c.sml`, is completely ignored.
+
 ## Features
 
 Millet has a bevy of features to help you read, write, and understand SML code.

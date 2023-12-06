@@ -15,6 +15,7 @@ The versioning system is basically the following:
 
 ## main
 
+- Allow `milletIgnore true` to completely ignore a basis dec.
 - Use multi-line types less often in error messages.
 - Encourage `milletDiagnosticsIgnore true` instead of `milletDiagnosticsIgnore all`.
 

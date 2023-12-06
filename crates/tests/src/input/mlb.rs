@@ -122,6 +122,56 @@ c.sml
 }
 
 #[test]
+fn ann_ignore_diagnostics() {
+  let mlb = r#"
+a.sml
+ann "milletIgnore true" in
+  b.sml
+end
+c.sml
+"#;
+  ann_diagnostics_ignore(mlb, true, false, true);
+}
+
+#[test]
+fn ann_ignore_contents_no_shadow() {
+  let mlb = r#"
+a.sml
+ann "milletIgnore true" in
+  b.sml
+end
+c.sml
+"#;
+  check_multi([
+    ("s.mlb", mlb),
+    ("a.sml", "val a = 3"),
+    ("b.sml", "val a = false"),
+    ("c.sml", "val _ = a + 1"),
+  ]);
+}
+
+#[test]
+fn ann_ignore_contents_no_def() {
+  let mlb = r#"
+ann "milletIgnore true" in
+  a.sml
+end
+b.sml
+"#;
+  check_multi([
+    ("s.mlb", mlb),
+    ("a.sml", "val a = 3"),
+    (
+      "b.sml",
+      r"
+val _ = a
+(**     ^ undefined *)
+",
+    ),
+  ]);
+}
+
+#[test]
 fn no_path() {
   check_bad_input("s.mlb", "couldn't perform file I/O", [("s.mlb", "no.mlb")]);
   cov_mark::check("no_path");

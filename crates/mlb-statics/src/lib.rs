@@ -241,6 +241,7 @@ fn get_bas_dec(
         get_bas_dec(st, cx, path, scope, ac, dec);
         st.report_diagnostics = old;
       }
+      mlb_hir::Annotation::Ignore => {}
     },
     mlb_hir::BasDec::Path(path, kind) => match kind {
       mlb_hir::PathKind::Source(file_kind) => {

@@ -161,6 +161,10 @@ where
             "false" => Some(mlb_hir::Annotation::DiagnosticsIgnore(false)),
             _ => None,
           },
+          "Ignore" => match snd {
+            "true" => Some(mlb_hir::Annotation::Ignore),
+            _ => None,
+          },
           _ => None,
         }
       });

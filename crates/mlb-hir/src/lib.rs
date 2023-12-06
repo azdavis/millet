@@ -66,4 +66,6 @@ pub enum PathKind {
 pub enum Annotation {
   /// Ignore all diagnostics.
   DiagnosticsIgnore(bool),
+  /// Ignore the whole bas dec.
+  Ignore,
 }
