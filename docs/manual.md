@@ -31,9 +31,6 @@ When using other editors, you will likely need to:
 ## Known issues
 
 - Some features like `abstype` are not supported.
-- Paths with certain 'default' path variables are ignored. (This is because Millet includes the std basis and other definitions.)
-  - In MLB files, paths with the variable `SML_LIB` are ignored.
-  - In CM files, paths with the variable `$` and `$SMLNJ-LIB` are ignored.
 - CM support is incomplete.
   - The preprocessor is ignored.
   - Tool options are not supported.
@@ -226,6 +223,23 @@ Note that variables are referenced differently in different kinds of group files
 Variable names should contain ASCII alphanumeric characters and `-`, and not begin with a numeric character.
 
 In SML/NJ CM files **only**, a variable name can be empty or contain `-`.
+
+Certain path variables are used for "basis paths". These tell a SML implementation where the source files that implement the standard basis and other libraries are. The variables are:
+
+- In MLB files:
+  - `SML_LIB`
+- In CM files:
+  - The "empty variable" (written `$` when referenced in a CM file)
+  - `SMLNJ-LIB`
+
+However, Millet already comes with built-in definitions for most of the standard basis. Thus, if these special variables are referenced in a path, but not defined in `millet.toml`, Millet ignores the entire path instead of erroring.
+
+If you do define these special variables in `millet.toml`, then Millet will attempt to process any paths that contain those variables normally, just like any other path. However, this may not always be desirable:
+
+- If your group file references a basis path that Millet already has built-in definitions for, those built-in definitions could clash with the definitions at that basis path.
+- Because the standard basis is special, the files that implement it may not be 100% legal SML. Millet may not be able to properly process these files.
+
+You can use the [`milletIgnore`](#milletignore) ML Basis annotation for these situations. SML/NJ CM does not have a comparable "annotations" feature.
 
 #### `diagnostics.<code>.severity`
 
