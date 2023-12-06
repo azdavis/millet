@@ -62,6 +62,7 @@ struct Cx {
   path_id: PathId,
 }
 
+#[allow(clippy::too_many_lines)]
 fn get_bas_dec<F>(st: &mut St<'_, F>, cx: &Cx, dec: mlb_syntax::BasDec) -> mlb_hir::BasDec
 where
   F: paths::FileSystem,
@@ -145,16 +146,24 @@ where
       mlb_hir::BasDec::Path(path_id, kind)
     }
     mlb_syntax::BasDec::Ann(annotations, dec) => {
-      let diagnostics_ignore_all = annotations.iter().any(|x| {
-        let s = x.val.as_str().trim_matches('"').trim();
-        s == "milletDiagnosticsIgnore all"
-      });
       let inner = get_bas_dec(st, cx, *dec);
-      if diagnostics_ignore_all {
-        mlb_hir::BasDec::Ann(mlb_hir::Annotation::DiagnosticsIgnoreAll, inner.into())
-      } else {
-        inner
-      }
+      let annotations = annotations.iter().rev().filter_map(|ann| {
+        let mut iter = ann.val.as_str().trim_matches('"').split_ascii_whitespace();
+        let fst = iter.next()?;
+        let snd = iter.next()?;
+        if iter.next().is_some() {
+          return None;
+        }
+        let fst = fst.strip_prefix("millet")?;
+        match fst {
+          "DiagnosticsIgnore" => match snd {
+            "all" => Some(mlb_hir::Annotation::DiagnosticsIgnoreAll),
+            _ => None,
+          },
+          _ => None,
+        }
+      });
+      annotations.fold(inner, |ac, ann| mlb_hir::BasDec::Ann(ann, ac.into()))
     }
     mlb_syntax::BasDec::Seq(decs) => {
       mlb_hir::BasDec::seq(decs.into_iter().map(|dec| get_bas_dec(st, cx, dec)).collect())
