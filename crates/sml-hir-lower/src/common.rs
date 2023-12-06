@@ -107,7 +107,7 @@ fn sml_string(s: &str) -> Option<String> {
   }
 }
 
-pub(crate) fn get_name(n: Option<sml_syntax::SyntaxToken>) -> Option<str_util::Name> {
+pub(crate) fn get_name(n: Option<sml_syntax::kind::SyntaxToken>) -> Option<str_util::Name> {
   n.map(|tok| str_util::Name::new(tok.text()))
 }
 

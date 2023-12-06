@@ -1,6 +1,6 @@
 //! Extracting interesting comments from SML files.
 
-use sml_syntax::{SyntaxKind as SK, SyntaxNode, SyntaxToken};
+use sml_syntax::kind::{SyntaxKind as SK, SyntaxNode, SyntaxToken};
 
 /// Gets the comment above this node, then parses the doc string out of it.
 #[must_use]

@@ -2,7 +2,7 @@
 
 use crate::parser::{ErrorKind, Exited, Expected, Parser};
 use crate::util::{ascription, comma_sep, lab, path_must};
-use sml_syntax::SyntaxKind as SK;
+use sml_syntax::kind::SyntaxKind as SK;
 
 pub(crate) fn ty(p: &mut Parser<'_>) {
   if ty_prec(p, TyPrec::Arrow).is_none() {

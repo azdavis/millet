@@ -16,6 +16,7 @@ test = false
 diagnostic.workspace = true
 fast-hash.workspace = true
 str-util.workspace = true
+text-size-util.workspace = true
 
 config.path = "../config"
 cov-mark.path = "../cov-mark"

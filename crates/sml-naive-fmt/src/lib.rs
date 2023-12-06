@@ -7,7 +7,8 @@
 
 use fast_hash::FxHashSet;
 use sml_syntax::ast::{self, AstNode as _};
-use sml_syntax::{rowan::TextRange, SyntaxKind};
+use sml_syntax::kind::SyntaxKind;
+use text_size_util::TextRange;
 
 /// Returns the formatted syntax tree.
 ///

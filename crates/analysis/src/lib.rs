@@ -8,6 +8,7 @@ use fast_hash::FxHashSet;
 use paths::{PathId, PathMap, WithPath};
 use sml_statics_types::{def, env::Env};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
+use sml_syntax::kind::SyntaxKind;
 use std::process::{Command, Stdio};
 use std::{error::Error, fmt, io::Write as _};
 use text_pos::{PositionDb, PositionUtf16, RangeUtf16};
@@ -318,7 +319,7 @@ impl Analysis {
   pub fn completions(&self, pos: WithPath<PositionUtf16>) -> Option<Vec<CompletionItem>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     match ft.token.kind() {
-      sml_syntax::SyntaxKind::Name | sml_syntax::SyntaxKind::Dot => {}
+      SyntaxKind::Name | SyntaxKind::Dot => {}
       _ => return None,
     }
     let mut envs = vec![&ft.file.scope.env, &ft.file.info.basis().env];

@@ -1,7 +1,7 @@
 //! Parsing a full program.
 
 use crate::parser::{ErrorKind, Expected, Parser};
-use sml_syntax::SyntaxKind as SK;
+use sml_syntax::kind::SyntaxKind as SK;
 
 pub(crate) fn root(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) {
   let entered = p.enter();

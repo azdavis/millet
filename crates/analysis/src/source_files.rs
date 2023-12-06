@@ -2,7 +2,7 @@
 
 use paths::{PathMap, WithPath};
 use sml_syntax::ast::{AstNode as _, SyntaxNodePtr};
-use sml_syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxToken};
+use sml_syntax::kind::SyntaxToken;
 use text_pos::{PositionUtf16, RangeUtf16};
 
 pub(crate) fn path_and_range(
@@ -25,17 +25,7 @@ pub(crate) fn file_and_token(
   if !tr.contains_inclusive(offset) {
     return None;
   }
-  let token = match syntax.token_at_offset(offset) {
-    TokenAtOffset::None => return None,
-    TokenAtOffset::Single(t) => t,
-    TokenAtOffset::Between(t1, t2) => {
-      if priority(t1.kind()) >= priority(t2.kind()) {
-        t1
-      } else {
-        t2
-      }
-    }
-  };
+  let token = sml_syntax::node_token(syntax, offset)?;
   Some(FileAndToken { file, token })
 }
 
@@ -65,16 +55,5 @@ impl FileAndToken<'_> {
         None => node = node.parent()?,
       }
     }
-  }
-}
-
-fn priority(kind: SyntaxKind) -> u8 {
-  match kind {
-    SyntaxKind::Name => 5,
-    SyntaxKind::OpKw | SyntaxKind::Dot => 4,
-    SyntaxKind::LRound | SyntaxKind::RRound | SyntaxKind::LCurly | SyntaxKind::RCurly => 3,
-    SyntaxKind::Comma | SyntaxKind::Colon | SyntaxKind::Star | SyntaxKind::Eq => 2,
-    SyntaxKind::Whitespace | SyntaxKind::BlockComment | SyntaxKind::Invalid => 0,
-    _ => 1,
   }
 }

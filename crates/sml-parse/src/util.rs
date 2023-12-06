@@ -1,7 +1,7 @@
 //! Parse utilities.
 
 use crate::parser::{ErrorKind, Exited, Expected, Parser};
-use sml_syntax::{token::Token, SyntaxKind as SK};
+use sml_syntax::{kind::SyntaxKind as SK, token::Token};
 
 /// whether to emit errors for infix violations
 #[derive(Debug, Clone, Copy)]

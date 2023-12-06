@@ -350,7 +350,11 @@ fn call_unit_fn(st: &mut St<'_>, vid: &str_util::Name, ptr: SyntaxNodePtr) -> sm
 /// 3. `((fn _ => ... (fn _ => (fn _ => e) en) ...) e1)`
 ///
 /// the vec must not be empty, since we need a last expression `e`.
-fn exp_idx_in_seq<A, B>(st: &mut St<'_>, exps: A, exp: &sml_syntax::SyntaxNode) -> sml_hir::ExpIdx
+fn exp_idx_in_seq<A, B>(
+  st: &mut St<'_>,
+  exps: A,
+  exp: &sml_syntax::kind::SyntaxNode,
+) -> sml_hir::ExpIdx
 where
   A: IntoIterator<IntoIter = B>,
   B: DoubleEndedIterator<Item = sml_hir::ExpIdx>,

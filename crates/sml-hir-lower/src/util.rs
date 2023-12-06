@@ -4,8 +4,8 @@ use config::lang::Language;
 use diagnostic::{Code, Severity};
 use fast_hash::FxHashMap;
 use sml_syntax::ast::{AstNode as _, SyntaxNodePtr};
-use sml_syntax::rowan::TextRange;
 use std::fmt;
+use text_size_util::TextRange;
 
 /// Pointers between the AST and the HIR.
 #[derive(Debug, Default)]
@@ -349,11 +349,11 @@ impl<'a> St<'a> {
     ret
   }
 
-  pub(crate) fn err(&mut self, node: &sml_syntax::SyntaxNode, kind: ErrorKind) {
+  pub(crate) fn err(&mut self, node: &sml_syntax::kind::SyntaxNode, kind: ErrorKind) {
     self.errors.push(Error { range: sml_syntax::node_range(node), kind });
   }
 
-  pub(crate) fn err_tok(&mut self, tok: &sml_syntax::SyntaxToken, kind: ErrorKind) {
+  pub(crate) fn err_tok(&mut self, tok: &sml_syntax::kind::SyntaxToken, kind: ErrorKind) {
     self.errors.push(Error { range: tok.text_range(), kind });
   }
 
@@ -461,7 +461,7 @@ impl<'a> St<'a> {
   }
 }
 
-fn pats_text_range(case: &sml_syntax::ast::FunBindCase) -> Option<sml_syntax::rowan::TextRange> {
+fn pats_text_range(case: &sml_syntax::ast::FunBindCase) -> Option<text_size_util::TextRange> {
   let mut pats = case.pats();
   let first = pats.next()?;
   let mut last = pats.next()?;

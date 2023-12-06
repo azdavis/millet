@@ -549,7 +549,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
           st.err_tok(&bar, e);
         }
         let ptr = SyntaxNodePtr::new(fun_bind.syntax());
-        let mut name = None::<sml_syntax::SyntaxToken>;
+        let mut name = None::<sml_syntax::kind::SyntaxToken>;
         let mut num_pats = None::<usize>;
         let iter = fun_bind.fun_bind_cases().map(|case| {
           let mut pats = Vec::<sml_hir::PatIdx>::with_capacity(1);

@@ -1,8 +1,9 @@
 //! The parser. A thin wrapper around event-parse, with operator precedence.
 
 use diagnostic::{Code, Severity};
-use sml_syntax::{rowan::TextRange, SyntaxKind};
+use sml_syntax::kind::SyntaxKind;
 use std::fmt;
+use text_size_util::TextRange;
 
 pub(crate) use event_parse::{Entered, Exited};
 

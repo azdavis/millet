@@ -357,7 +357,7 @@ fn get_group_file(st: &mut St<'_>, cx: Cx<'_>, ac: &mut MBasis, path: paths::Pat
 ///
 /// If we couldn't find a piece of syntax.
 pub fn add_all_doc_comments(
-  root: &sml_syntax::SyntaxNode,
+  root: &sml_syntax::kind::SyntaxNode,
   low: &sml_hir_lower::Lower,
   info: &mut sml_statics::info::Info,
 ) {

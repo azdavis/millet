@@ -6,17 +6,15 @@ pub mod ast {
 }
 
 #[allow(missing_debug_implementations, missing_docs)]
-mod kind {
+pub mod kind {
   include!(concat!(env!("OUT_DIR"), "/kind.rs"));
 }
 
-pub use kind::*;
-pub use rowan;
 pub use token;
 
 use ast::AstNode as _;
 
-fn custom_node_range(node: SyntaxNode) -> Option<rowan::TextRange> {
+fn custom_node_range(node: kind::SyntaxNode) -> Option<rowan::TextRange> {
   if let Some(node) = ast::CaseExp::cast(node.clone()) {
     let case_kw = node.case_kw()?;
     let of_kw = node.of_kw()?;
@@ -47,6 +45,35 @@ fn custom_node_range(node: SyntaxNode) -> Option<rowan::TextRange> {
 /// the `case ... of`. This is so the range is across fewer (usually one) line(s) than if we used
 /// the range of the whole `case` and all of its matcher arms.
 #[must_use]
-pub fn node_range(node: &SyntaxNode) -> rowan::TextRange {
+pub fn node_range(node: &kind::SyntaxNode) -> rowan::TextRange {
   custom_node_range(node.clone()).unwrap_or_else(|| node.text_range())
+}
+
+/// Returns the best token in the node at the offset.
+#[must_use]
+pub fn node_token(syntax: &kind::SyntaxNode, offset: rowan::TextSize) -> Option<kind::SyntaxToken> {
+  match syntax.token_at_offset(offset) {
+    rowan::TokenAtOffset::None => None,
+    rowan::TokenAtOffset::Single(t) => Some(t),
+    rowan::TokenAtOffset::Between(t1, t2) => {
+      Some(if priority(t1.kind()) >= priority(t2.kind()) { t1 } else { t2 })
+    }
+  }
+}
+
+fn priority(kind: kind::SyntaxKind) -> u8 {
+  match kind {
+    kind::SyntaxKind::Name => 5,
+    kind::SyntaxKind::OpKw | kind::SyntaxKind::Dot => 4,
+    kind::SyntaxKind::LRound
+    | kind::SyntaxKind::RRound
+    | kind::SyntaxKind::LCurly
+    | kind::SyntaxKind::RCurly => 3,
+    kind::SyntaxKind::Comma
+    | kind::SyntaxKind::Colon
+    | kind::SyntaxKind::Star
+    | kind::SyntaxKind::Eq => 2,
+    kind::SyntaxKind::Whitespace | kind::SyntaxKind::BlockComment | kind::SyntaxKind::Invalid => 0,
+    _ => 1,
+  }
 }

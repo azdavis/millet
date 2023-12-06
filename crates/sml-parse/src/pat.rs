@@ -5,7 +5,7 @@ use crate::ty::{ty, ty_annotation};
 use crate::util::{
   comma_sep, eat_name_star, lab, name_star, path, path_infix, path_no_infix, should_break, InfixErr,
 };
-use sml_syntax::SyntaxKind as SK;
+use sml_syntax::kind::SyntaxKind as SK;
 
 pub(crate) fn pat(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) -> Option<Exited> {
   pat_prec(p, fe, PatPrec::Min, infix)

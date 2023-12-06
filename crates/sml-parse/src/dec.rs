@@ -9,7 +9,7 @@ use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
 use crate::util::{
   ascription, eat_name_star, many_sep, maybe_semi_sep, name_star_eq, path, path_must, InfixErr,
 };
-use sml_syntax::SyntaxKind as SK;
+use sml_syntax::kind::SyntaxKind as SK;
 
 pub(crate) fn dec(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> bool {
   maybe_semi_sep(p, SK::Dec, |p| dec_with_tail(p, fe, infix))
