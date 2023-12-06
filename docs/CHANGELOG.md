@@ -15,9 +15,10 @@ The versioning system is basically the following:
 
 ## main
 
-- Allow `milletIgnore true` to completely ignore a basis dec.
 - Use multi-line types less often in error messages.
-- Encourage `milletDiagnosticsIgnore true` instead of `milletDiagnosticsIgnore all`.
+- Encourage the ML Basis annotation `milletDiagnosticsIgnore true` instead of `milletDiagnosticsIgnore all`, both of which have the same meaning.
+- Allow the ML Basis annotation `milletDiagnosticsIgnore false` to disable a previous `milletDiagnosticsIgnore true`.
+- Allow the ML Basis annotation `milletIgnore true` to completely ignore the contained basis declaration.
 
 ## v0.14.0
 
