@@ -128,3 +128,35 @@ structure L = List
 ",
   );
 }
+
+#[test]
+fn override_sig_docs_with_structure() {
+  fail(
+    r"
+signature EXAMPLE = sig
+  (*!
+   * signature foo docs
+   *)
+  val foo: unit
+  (*!
+   * signature bar docs
+   *)
+  val bar: unit
+end
+
+structure Example: EXAMPLE = struct
+  (*!
+   * structure foo docs
+   *)
+  val foo = ()
+
+  val bar = ()
+end
+
+val foo = Example.foo
+(**       ^^^^^^^^^^^ hover: structure foo docs *)
+val bar = Example.bar
+(**       ^^^^^^^^^^^ hover: signature bar docs *)
+",
+  );
+}
