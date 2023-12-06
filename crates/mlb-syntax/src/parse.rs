@@ -66,16 +66,13 @@ impl<'a> Parser<'a> {
 fn bas_dec(p: &mut Parser<'_>) -> Result<BasDec> {
   let mut ac = Vec::<BasDec>::new();
   loop {
-    let bd = match bas_dec_one(p)? {
+    match bas_dec_one(p)? {
       BasDecOne::NoStartTok => break,
-      BasDecOne::StdBasisPath => None,
-      BasDecOne::Ok(bd) => Some(bd),
-    };
+      BasDecOne::StdBasisPath => {}
+      BasDecOne::Ok(bd) => ac.push(bd),
+    }
     if p.cur() == Some(Token::Semicolon) {
       p.bump();
-    }
-    if let Some(bd) = bd {
-      ac.push(bd);
     }
   }
   let ret = if ac.len() == 1 { ac.pop().unwrap() } else { BasDec::Seq(ac) };
