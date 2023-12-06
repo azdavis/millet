@@ -224,7 +224,7 @@ Variable names should contain ASCII alphanumeric characters and `-`, and not beg
 
 In SML/NJ CM files **only**, a variable name can be empty or contain `-`.
 
-Certain path variables are used for "basis paths". These tell a SML implementation where the source files that implement the standard basis and other libraries are. The variables are:
+Certain path variables are used for basis paths. These paths tell a SML implementation where the source files that implement the standard basis and other libraries are. The variables are:
 
 - In MLB files:
   - `SML_LIB`
@@ -234,10 +234,10 @@ Certain path variables are used for "basis paths". These tell a SML implementati
 
 However, Millet already comes with built-in definitions for most of the standard basis. Thus, if these special variables are referenced in a path, but not defined in `millet.toml`, Millet ignores the entire path instead of erroring.
 
-If you do define these special variables in `millet.toml`, then Millet will attempt to process any paths that contain those variables normally, just like any other path. However, this may not always be desirable:
+If you do define these special variables in `millet.toml`, then Millet will attempt to process any paths that contain those variables normally. However, this may not always be desirable:
 
 - If your group file references a basis path that Millet already has built-in definitions for, those built-in definitions could clash with the definitions at that basis path.
-- Because the standard basis is special, the files that implement it may not be 100% legal SML. Millet may not be able to properly process these files.
+- Because the standard basis is special, the files that implement it may not be fully conformant SML. Millet may not be able to properly process these files.
 
 You can use the [`milletIgnore`](#milletignore) ML Basis annotation for these situations. SML/NJ CM does not have a comparable "annotations" feature.
 
@@ -601,12 +601,9 @@ Whether to ignore all content in the basis declaration.
 
 Possible arguments:
 
-- `true`: Ignore the whole basis declaration inside.
+- `true`: Ignore the whole basis declaration contained inside.
 
-This is basically a subset of `milletDiagnosticsIgnore`, except:
-
-- You cannot enable it and then re-disable it inside itself.
-- The files are not processed at all. That means no definitions from those files will be available.
+The text of the contained basis declaration must parse as a basis declaration. But it, and any files mentioned inside it, is otherwise totally ignored, and not processed at all. That means no definitions from those files will be available.
 
 For instance, given these SML files:
 
@@ -627,6 +624,8 @@ c.sml
 ```
 
 There will be no errors, since `b.sml`, which would have shadowed `a` to be a `bool` and caused a type error in `c.sml`, is completely ignored.
+
+Unlike `milletDiagnosticsIgnore` you cannot enable this annotation and then re-disable it inside itself.
 
 ## Features
 
