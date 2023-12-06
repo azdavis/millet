@@ -235,9 +235,9 @@ fn get_bas_dec(
       }
     }
     mlb_hir::BasDec::Ann(ann, dec) => match ann {
-      mlb_hir::Annotation::DiagnosticsIgnoreAll => {
+      mlb_hir::Annotation::DiagnosticsIgnore(ignore) => {
         let old = st.report_diagnostics;
-        st.report_diagnostics = false;
+        st.report_diagnostics = !*ignore;
         get_bas_dec(st, cx, path, scope, ac, dec);
         st.report_diagnostics = old;
       }

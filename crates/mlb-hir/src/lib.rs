@@ -65,5 +65,5 @@ pub enum PathKind {
 #[derive(Debug, Clone, Copy)]
 pub enum Annotation {
   /// Ignore all diagnostics.
-  DiagnosticsIgnoreAll,
+  DiagnosticsIgnore(bool),
 }

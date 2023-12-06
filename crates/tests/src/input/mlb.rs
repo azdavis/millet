@@ -59,7 +59,7 @@ end
   check_multi([("s.mlb", mlb)]);
 }
 
-fn ann_diagnostics_ignore(mlb: &str) {
+fn ann_diagnostics_ignore(mlb: &str, a: bool, b: bool, c: bool) {
   let reported = r#"
 val () = "err"
 (** + expected `unit`, found `string` *)
@@ -67,7 +67,12 @@ val () = "err"
   let ignored = r#"
 val () = "err"
 "#;
-  let files = [("s.mlb", mlb), ("a.sml", reported), ("b.sml", ignored), ("c.sml", reported)];
+  let files = [
+    ("s.mlb", mlb),
+    ("a.sml", if a { reported } else { ignored }),
+    ("b.sml", if b { reported } else { ignored }),
+    ("c.sml", if c { reported } else { ignored }),
+  ];
   let opts = raw::Opts {
     std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
@@ -87,7 +92,7 @@ ann "milletDiagnosticsIgnore all" in
 end
 c.sml
 "#;
-  ann_diagnostics_ignore(mlb);
+  ann_diagnostics_ignore(mlb, true, false, true);
 }
 
 #[test]
@@ -99,7 +104,21 @@ ann "milletDiagnosticsIgnore true" in
 end
 c.sml
 "#;
-  ann_diagnostics_ignore(mlb);
+  ann_diagnostics_ignore(mlb, true, false, true);
+}
+
+#[test]
+fn ann_diagnostics_ignore_false() {
+  let mlb = r#"
+ann "milletDiagnosticsIgnore true" in
+  a.sml
+  ann "milletDiagnosticsIgnore false" in
+    b.sml
+  end
+end
+c.sml
+"#;
+  ann_diagnostics_ignore(mlb, false, true, true);
 }
 
 #[test]

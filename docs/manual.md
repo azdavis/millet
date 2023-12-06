@@ -538,6 +538,7 @@ Possible arguments:
 
 - `true`: Ignore all diagnostics.
 - `all` (discouraged): Ignore all diagnostics.
+- `false`: Report diagnostics as normal.
 
 For example, suppose we have 3 files, each quite similar, and each containing a type error:
 
@@ -553,6 +554,20 @@ Even though each file would normally emit a type error, given the following root
 a.sml
 ann "milletDiagnosticsIgnore true" in
   b.sml
+end
+c.sml
+```
+
+Using `false` as the argument to `milletDiagnosticsIgnore` can override a previous `true`.
+
+Given this arrangement, errors would be reported in `b.sml` and `c.sml`:
+
+```text
+ann "milletDiagnosticsIgnore true" in
+  a.sml
+  ann "milletDiagnosticsIgnore false" in
+    b.sml
+  end
 end
 c.sml
 ```
