@@ -68,13 +68,13 @@ ann "milletDiagnosticsIgnore all" in
 end
 c.sml
 "#;
-  let reported = r"
-val _ = foo
-(**     ^^^ undefined value: `foo` *)
-";
-  let ignored = r"
-val _ = foo
-";
+  let reported = r#"
+val () = "err"
+(** + expected `unit`, found `string` *)
+"#;
+  let ignored = r#"
+val () = "err"
+"#;
   let files = [("s.mlb", mlb), ("a.sml", reported), ("b.sml", ignored), ("c.sml", reported)];
   let opts = raw::Opts {
     std_basis: raw::StdBasis::Minimal,
