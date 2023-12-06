@@ -218,6 +218,15 @@ Then the given variable, when referenced inside the given file, has the given va
 | `V3` | `foo/bar/sources.cm` | `/users/foo/bar/c ` |
 | `V3` | `foo/quz/sources.cm` | `/users/foo/quz/c ` |
 
+Note that variables are referenced differently in different kinds of group files. Given that a variable named `A` is defined in `millet.toml`:
+
+- In ML Basis files, it is referenced as `$(A)`.
+- In SML/NJ CM files, it is referenced as `$A`.
+
+Variable names should contain ASCII alphanumeric characters and `-`, and not begin with a numeric character.
+
+In SML/NJ CM files **only**, a variable name can be empty or contain `-`.
+
 #### `diagnostics.<code>.severity`
 
 - Type: `string`
