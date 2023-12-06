@@ -59,15 +59,7 @@ end
   check_multi([("s.mlb", mlb)]);
 }
 
-#[test]
-fn ann_diagnostics_ignore_all() {
-  let mlb = r#"
-a.sml
-ann "milletDiagnosticsIgnore all" in
-  b.sml
-end
-c.sml
-"#;
+fn ann_diagnostics_ignore(mlb: &str) {
   let reported = r#"
 val () = "err"
 (** + expected `unit`, found `string` *)
@@ -84,6 +76,30 @@ val () = "err"
     expected_input: raw::ExpectedInput::Good,
   };
   raw::get(files, opts);
+}
+
+#[test]
+fn ann_diagnostics_ignore_all() {
+  let mlb = r#"
+a.sml
+ann "milletDiagnosticsIgnore all" in
+  b.sml
+end
+c.sml
+"#;
+  ann_diagnostics_ignore(mlb);
+}
+
+#[test]
+fn ann_diagnostics_ignore_true() {
+  let mlb = r#"
+a.sml
+ann "milletDiagnosticsIgnore true" in
+  b.sml
+end
+c.sml
+"#;
+  ann_diagnostics_ignore(mlb);
 }
 
 #[test]

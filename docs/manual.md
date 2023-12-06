@@ -536,7 +536,8 @@ How to ignore [diagnostics](#inline-diagnostics) for the files in the annotated 
 
 Possible arguments:
 
-- `all`: Ignore all diagnostics.
+- `true`: Ignore all diagnostics.
+- `all` (discouraged): Ignore all diagnostics.
 
 For example, suppose we have 3 files, each quite similar, and each containing a type error:
 
@@ -550,7 +551,7 @@ Even though each file would normally emit a type error, given the following root
 
 ```text
 a.sml
-ann "milletDiagnosticsIgnore all" in
+ann "milletDiagnosticsIgnore true" in
   b.sml
 end
 c.sml
@@ -630,7 +631,7 @@ Each diagnostics has a default severity, e.g. "error" or "warning". This can be 
 Diagnostics can be ignored for an entire file or set of files with the [`milletDiagnosticsIgnore`](#milletdiagnosticsignore) ML Basis annotation. Use:
 
 ```
-ann "milletDiagnosticsIgnore all" in
+ann "milletDiagnosticsIgnore true" in
   foo.sml
   bar.sml
 end

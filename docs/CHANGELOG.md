@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Use multi-line types less often in error messages.
+- Encourage `milletDiagnosticsIgnore true` instead of `milletDiagnosticsIgnore all`.
 
 ## v0.14.0
 

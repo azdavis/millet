@@ -157,7 +157,7 @@ where
         let fst = fst.strip_prefix("millet")?;
         match fst {
           "DiagnosticsIgnore" => match snd {
-            "all" => Some(mlb_hir::Annotation::DiagnosticsIgnoreAll),
+            "all" | "true" => Some(mlb_hir::Annotation::DiagnosticsIgnoreAll),
             _ => None,
           },
           _ => None,
