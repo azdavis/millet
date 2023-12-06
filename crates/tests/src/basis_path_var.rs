@@ -7,6 +7,15 @@ fn ignored(name: &str, contents: &str) {
   check_multi([(name, contents), ("a.sml", "val a = 3"), ("b.sml", "val b = a")]);
 }
 
+fn present(name: &str, contents: &str, config: &str) {
+  check_multi([
+    (config::file::PATH, config),
+    (name, contents),
+    ("a.sml", "val a = 3"),
+    ("b.sml", "val b = a"),
+  ]);
+}
+
 #[test]
 fn mlb_sml_lib_ignored() {
   let mlb = r"
@@ -40,4 +49,45 @@ Group is
   $SMLNJ-LIB/foo/bar.sml
 ";
   ignored("s.cm", cm);
+}
+
+#[test]
+fn mlb_sml_lib_present() {
+  let config = r#"
+version = 1
+workspace.path-vars.SML_LIB.value = "a"
+"#;
+  let mlb = r"
+$(SML_LIB).sml
+b.sml
+";
+  present("s.mlb", mlb, config);
+}
+
+#[test]
+fn cm_empty_present() {
+  let config = r#"
+version = 1
+workspace.path-vars."".value = "a"
+"#;
+  let cm = r"
+Group is
+  $.sml
+  b.sml
+";
+  present("s.cm", cm, config);
+}
+
+#[test]
+fn cm_smlnj_lib_present() {
+  let config = r#"
+version = 1
+workspace.path-vars."SMLNJ-LIB".value = "a"
+"#;
+  let cm = r"
+Group is
+  $SMLNJ-LIB.sml
+  b.sml
+";
+  present("s.cm", cm, config);
 }
