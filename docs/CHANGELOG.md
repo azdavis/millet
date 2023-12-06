@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.14.1
 
 - Use multi-line types less often in error messages.
 - Encourage the ML Basis annotation `milletDiagnosticsIgnore true` instead of `milletDiagnosticsIgnore all`, both of which have the same meaning.
