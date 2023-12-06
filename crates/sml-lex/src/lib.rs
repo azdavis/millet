@@ -2,9 +2,10 @@
 
 use diagnostic::{Code, Severity};
 use lex_util::{advance_while, block_comment, is_whitespace, string};
-use sml_syntax::{kind::SyntaxKind as SK, token::Token};
+use sml_syntax::kind::SyntaxKind as SK;
 use std::fmt;
 use text_size_util::{TextRange, TextSize};
+use token::Token;
 
 /// A lexed input.
 #[derive(Debug)]

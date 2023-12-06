@@ -12,7 +12,8 @@ mod util;
 pub mod parser;
 
 use sml_syntax::ast::{AstNode as _, Root};
-use sml_syntax::{kind::SyntaxKind as SK, token::Token};
+use sml_syntax::kind::SyntaxKind as SK;
+use token::Token;
 
 /// The result of a parse.
 #[derive(Debug)]

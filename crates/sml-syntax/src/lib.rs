@@ -10,8 +10,6 @@ pub mod kind {
   include!(concat!(env!("OUT_DIR"), "/kind.rs"));
 }
 
-pub use token;
-
 use ast::AstNode as _;
 
 fn custom_node_range(node: kind::SyntaxNode) -> Option<rowan::TextRange> {

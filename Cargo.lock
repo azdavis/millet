@@ -1041,6 +1041,7 @@ dependencies = [
  "lex-util",
  "sml-syntax",
  "text-size-util",
+ "token",
 ]
 
 [[package]]
@@ -1073,6 +1074,7 @@ dependencies = [
  "sml-syntax",
  "str-util",
  "text-size-util",
+ "token",
 ]
 
 [[package]]

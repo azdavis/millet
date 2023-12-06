@@ -15,6 +15,7 @@ doctest = false
 [dependencies]
 diagnostic.workspace = true
 text-size-util.workspace = true
+token.workspace = true
 
 cov-mark.path = "../cov-mark"
 lex-util.path = "../lex-util"

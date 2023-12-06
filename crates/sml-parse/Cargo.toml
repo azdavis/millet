@@ -18,6 +18,7 @@ event-parse.workspace = true
 fast-hash.workspace = true
 str-util.workspace = true
 text-size-util.workspace = true
+token.workspace = true
 
 sml-fixity.path = "../sml-fixity"
 sml-syntax.path = "../sml-syntax"
