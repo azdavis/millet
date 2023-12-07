@@ -130,7 +130,7 @@ structure L = List
 }
 
 #[test]
-fn override_sig_docs_with_structure() {
+fn override_sig_docs_with_structure_val() {
   check(
     r"
 signature EXAMPLE = sig
@@ -166,6 +166,33 @@ val foo = Example.foo
 
 val bar = Example.bar
 (**       ^^^^^^^^^^^ hover: signature bar docs *)
+",
+  );
+}
+
+#[test]
+fn override_sig_docs_with_structure_type() {
+  fail(
+    r"
+signature SIG = sig
+  (*!
+   * foo
+   *)
+  type t
+end
+
+structure Str : SIG = struct
+  (*!
+   * bar
+   *)
+  type t = int
+end
+
+type t = Str.t
+(**      ^^^^^ hover: foo *)
+
+type t = Str.t
+(**      ^^^^^ hover: bar *)
 ",
   );
 }
