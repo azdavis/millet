@@ -173,14 +173,13 @@ impl Analysis {
   pub fn get_defs(&self, pos: WithPath<PositionUtf16>) -> Option<Vec<WithPath<RangeUtf16>>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
-    let ret: Vec<_> = ft
+    let iter = ft
       .file
       .info
       .get_defs(idx)
       .into_iter()
-      .filter_map(|def| source_files::path_and_range(&self.source_files, def.to_regular_idx()?))
-      .collect();
-    Some(ret)
+      .filter_map(|def| source_files::path_and_range(&self.source_files, def.to_regular_idx()?));
+    Some(iter.collect())
   }
 
   /// Returns the ranges of the definitions of the types involved in the type of the item at this
@@ -189,14 +188,13 @@ impl Analysis {
   pub fn get_ty_defs(&self, pos: WithPath<PositionUtf16>) -> Option<Vec<WithPath<RangeUtf16>>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
-    Some(
-      ft.file
-        .info
-        .get_ty_defs(&self.syms_tys, idx)?
-        .into_iter()
-        .filter_map(|def| source_files::path_and_range(&self.source_files, def.to_regular_idx()?))
-        .collect(),
-    )
+    let iter = ft
+      .file
+      .info
+      .get_ty_defs(&self.syms_tys, idx)?
+      .into_iter()
+      .filter_map(|def| source_files::path_and_range(&self.source_files, def.to_regular_idx()?));
+    Some(iter.collect())
   }
 
   /// Given a position on a `case` expression, return the code and its range to fill the case with
