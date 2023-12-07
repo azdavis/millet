@@ -259,6 +259,7 @@ fn get_str_exp(
         to_add = sig.env.clone();
         realize::get_env(&mut st.syms_tys.tys, &subst, &mut to_add);
       }
+      enrich_defs(&str_exp_env, &mut to_add);
       if let Some(ov) = ov {
         let ty_info = to_add.ty_env.get(ov.as_str()).expect("no overloaded ty");
         match st.syms_tys.tys.data(ty_info.ty_scheme.ty) {
@@ -325,6 +326,32 @@ fn get_str_exp(
       bs.env.append(&mut let_env);
       get_str_exp(st, &bs, ars, ac, *str_exp);
     }
+  }
+}
+
+/// helps get the defs (and therefore e.g. docs) from a structure that ascribes to a signature, not
+/// just the docs from the signature
+fn enrich_defs(general: &Env, specific: &mut Env) {
+  if specific.def.is_none() {
+    specific.def = general.def;
+  }
+  for (name, specific) in specific.str_env.iter_mut() {
+    let Some(general) = general.str_env.get(name) else { continue };
+    enrich_defs(general, specific);
+  }
+  for (name, specific) in specific.ty_env.iter_mut() {
+    let Some(general) = general.ty_env.get(name) else { continue };
+    if specific.def.is_none() {
+      specific.def = general.def;
+    }
+    for (name, specific) in specific.val_env.iter_mut() {
+      let Some(general) = general.val_env.get(name) else { continue };
+      specific.defs.extend(general.defs.iter().copied());
+    }
+  }
+  for (name, specific) in specific.val_env.iter_mut() {
+    let Some(general) = general.val_env.get(name) else { continue };
+    specific.defs.extend(general.defs.iter().copied());
   }
 }
 

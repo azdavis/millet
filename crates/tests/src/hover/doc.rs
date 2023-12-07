@@ -131,7 +131,7 @@ structure L = List
 
 #[test]
 fn override_sig_docs_with_structure() {
-  fail(
+  check(
     r"
 signature EXAMPLE = sig
   (*!
@@ -155,11 +155,14 @@ structure Example: EXAMPLE = struct
   (** ^^^ hover: structure foo docs *)
 
   val bar = ()
-  (** ^^^ hover: signature bar docs *)
+  (** ^^^ hover: unit *)
 end
 
 val foo = Example.foo
 (**       ^^^^^^^^^^^ hover: structure foo docs *)
+
+val foo = Example.foo
+(**       ^^^^^^^^^^^ hover: signature foo docs *)
 
 val bar = Example.bar
 (**       ^^^^^^^^^^^ hover: signature bar docs *)

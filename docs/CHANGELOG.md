@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Given `structure Foo : FOO = struct ... end`, where there are documentation comments inside the `...`, show those documentation comments on usages of items in `Foo`, in addition to any documentation from `FOO`.
+
 ## v0.14.1
 
 - Use multi-line types less often in error messages.
