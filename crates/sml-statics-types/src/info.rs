@@ -51,7 +51,14 @@ pub struct ValInfo {
   pub ty_scheme: TyScheme,
   /// The identifier status.
   pub id_status: IdStatus,
-  /// The definitions. It's a set, because we can have or patterns.
+  /// The definitions.
+  ///
+  /// It's a set, because we can have:
+  ///
+  /// - Or patterns. Each occurrence of a variable in each or pattern alternative should be one of
+  ///   the defs.
+  /// - Structures ascribing to signatures. The definition in the structure and signature are both
+  ///   important.
   pub defs: FxHashSet<def::Def>,
   /// Whether this is disallowed.
   pub disallow: Option<Disallow>,
