@@ -6,7 +6,7 @@ use crate::info::{TyInfo, ValEnv, ValInfo};
 use crate::ty::{Ty, TyKind, TyScheme};
 use crate::{def, overload};
 use drop_bomb::DropBomb;
-use fast_hash::FxHashMap;
+use fast_hash::{FxHashMap, FxHashSet};
 use std::fmt;
 
 /// A symbol, aka a type name. Definition: `TyName`
@@ -245,7 +245,7 @@ impl Syms {
     let ty_info = TyInfo {
       ty_scheme: TyScheme::zero(Ty::NONE),
       val_env: SymValEnv::default(),
-      def: None,
+      defs: FxHashSet::default(),
       disallow: None,
     };
     // must start with sometimes equality, as an assumption for constructing datatypes. we may

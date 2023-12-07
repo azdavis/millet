@@ -20,17 +20,19 @@ pub struct Env {
   pub ty_env: TyEnv,
   /// The value env.
   pub val_env: ValEnv,
-  /// The def site for this env.
-  pub def: Option<def::Def>,
+  /// The definitions.
+  ///
+  /// It's a set, because we can have structures ascribing to signatures.
+  pub defs: FxHashSet<def::Def>,
   /// Whether everything in this env is disallowed.
   pub disallow: Option<Disallow>,
 }
 
 impl Env {
-  /// Returns an empty `Env` with the given def.
+  /// Returns an empty `Env` with the given defs.
   #[must_use]
-  pub fn new(def: Option<def::Def>) -> Env {
-    Env { def, ..Env::default() }
+  pub fn new(defs: FxHashSet<def::Def>) -> Env {
+    Env { defs, ..Env::default() }
   }
 
   /// Appends other onto self, emptying other.

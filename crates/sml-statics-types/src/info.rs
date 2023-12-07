@@ -17,8 +17,10 @@ pub struct TyInfo<VE = ValEnv> {
   pub ty_scheme: TyScheme,
   /// The val environment.
   pub val_env: VE,
-  /// The def.
-  pub def: Option<def::Def>,
+  /// The definitions.
+  ///
+  /// It's a set, because we can have structures ascribing to signatures.
+  pub defs: FxHashSet<def::Def>,
   /// Whether this is disallowed.
   pub disallow: Option<Disallow>,
 }
@@ -32,7 +34,7 @@ where
     TyInfo {
       ty_scheme: self.ty_scheme,
       val_env: self.val_env.into(),
-      def: self.def,
+      defs: self.defs,
       disallow: self.disallow,
     }
   }

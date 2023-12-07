@@ -44,13 +44,17 @@ impl<'a> St<'a> {
     }
   }
 
-  pub(crate) fn def(&self, idx: sml_hir::Idx) -> Option<def::Def> {
+  pub(crate) fn def_opt(&self, idx: sml_hir::Idx) -> Option<def::Def> {
     let path = match self.info.mode {
-      Mode::Regular(p) => def::Path::Regular(p?),
+      Mode::Regular(Some(p)) => def::Path::Regular(p),
       Mode::BuiltinLib(p) => def::Path::BuiltinLib(p),
-      Mode::PathOrder | Mode::Dynamics => return None,
+      Mode::Regular(None) | Mode::PathOrder | Mode::Dynamics => return None,
     };
     Some(def::Def::Path(path, idx))
+  }
+
+  pub(crate) fn def(&self, idx: sml_hir::Idx) -> FxHashSet<def::Def> {
+    self.def_opt(idx).into_iter().collect()
   }
 
   pub(crate) fn err<I>(&mut self, idx: I, kind: ErrorKind)

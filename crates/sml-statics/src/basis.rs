@@ -1,7 +1,7 @@
 //! Bases. (The plural of "basis".)
 
 use crate::get_env::get_mut_env;
-use fast_hash::FxHashMap;
+use fast_hash::{FxHashMap, FxHashSet};
 use sml_statics_types::disallow::{self, Disallow};
 use sml_statics_types::env::{Cx, Env, FunEnv, SigEnv, StrEnv};
 use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
@@ -153,7 +153,7 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
     TyInfo {
       ty_scheme: alpha_list.clone(),
       val_env: datatype_ve([(Primitive::Nil, alpha_list), (Primitive::Cons, cons)]),
-      def: Some(Primitive::List.into()),
+      defs: FxHashSet::from_iter([Primitive::List.into()]),
       disallow: None,
     }
   };
@@ -167,7 +167,7 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
     TyInfo {
       ty_scheme: ty_scheme_one(&mut tys, TyVarKind::Regular, ref_),
       val_env: datatype_ve([(Primitive::RefVal, con)]),
-      def: Some(Primitive::RefTy.into()),
+      defs: FxHashSet::from_iter([Primitive::RefTy.into()]),
       disallow: None,
     }
   };
@@ -175,7 +175,7 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
   let vector_info = TyInfo {
     ty_scheme: ty_scheme_one(&mut tys, TyVarKind::Regular, |tys, a| tys.con(vec![a], Sym::VECTOR)),
     val_env: SymValEnv::default(),
-    def: Some(Primitive::Vector.into()),
+    defs: FxHashSet::from_iter([Primitive::Vector.into()]),
     disallow: None,
   };
   insert_special(&mut syms, Sym::VECTOR, vector_info);
@@ -190,7 +190,7 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
       let ti = TyInfo {
         ty_scheme: TyScheme::zero(ty),
         val_env: ValEnv::default(),
-        def: Some(name.into()),
+        defs: FxHashSet::from_iter([name.into()]),
         disallow: None,
       };
       (str_util::Name::new(name.as_str()), ti)
@@ -244,7 +244,13 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
   let bs = Bs {
     fun_env: FunEnv::default(),
     sig_env: SigEnv::default(),
-    env: Env { str_env: StrEnv::default(), ty_env, val_env, def: None, disallow: None },
+    env: Env {
+      str_env: StrEnv::default(),
+      ty_env,
+      val_env,
+      defs: FxHashSet::default(),
+      disallow: None,
+    },
   };
   (sml_statics_types::St { syms, tys }, bs)
 }
@@ -267,7 +273,8 @@ fn insert_special(syms: &mut Syms, sym: Sym, ty_info: SymTyInfo) {
 fn basic_datatype(tys: &mut Tys, sym: Sym, ctors: &'static [Primitive]) -> SymTyInfo {
   let ty_scheme = TyScheme::zero(tys.con(Vec::new(), sym));
   let val_env = datatype_ve(ctors.iter().map(|&x| (x, ty_scheme.clone())));
-  TyInfo { ty_scheme, val_env, def: Some(sym.primitive().unwrap().into()), disallow: None }
+  let defs = FxHashSet::from_iter([sym.primitive().unwrap().into()]);
+  TyInfo { ty_scheme, val_env, defs, disallow: None }
 }
 
 fn datatype_ve<I>(xs: I) -> SymValEnv

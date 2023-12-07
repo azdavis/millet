@@ -172,7 +172,7 @@ val bar = Example.bar
 
 #[test]
 fn override_sig_docs_with_structure_type() {
-  fail(
+  check(
     r"
 signature SIG = sig
   (*!

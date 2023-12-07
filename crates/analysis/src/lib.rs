@@ -20,6 +20,8 @@ pub use mlb_statics::StdBasis;
 /// The url to go to for information about diagnostics.
 pub const URL: &str = "https://github.com/azdavis/millet/blob/main/docs/diagnostics";
 
+const DOC_SEPARATOR: &str = "\n\n---\n\n";
+
 /// Performs analysis.
 #[derive(Debug)]
 pub struct Analysis {
@@ -140,7 +142,7 @@ impl Analysis {
         let this = def::Def::Path(def::Path::Regular(pos.path), idx);
         parts.extend(self.get_doc(this));
         let defs = ft.file.info.get_defs(idx);
-        parts.extend(defs.into_iter().filter_map(|def| self.get_doc(def)));
+        parts.extend(defs.into_iter().flatten().filter_map(|&def| self.get_doc(def)));
         ptr.text_range()
       }
       None => ft.token.text_range(),
@@ -152,7 +154,7 @@ impl Analysis {
       return None;
     }
     let range = ft.file.syntax.pos_db.range_utf16(range)?;
-    Some((parts.join("\n\n---\n\n"), range))
+    Some((parts.join(DOC_SEPARATOR), range))
   }
 
   fn get_doc(&self, def: def::Def) -> Option<&str> {
@@ -178,6 +180,7 @@ impl Analysis {
       .info
       .get_defs(idx)
       .into_iter()
+      .flatten()
       .filter_map(|def| source_files::path_and_range(&self.source_files, def.to_regular_idx()?));
     Some(iter.collect())
   }
@@ -342,7 +345,7 @@ impl Analysis {
       label: name.as_str().to_owned(),
       kind: sml_namespace::SymbolKind::Structure,
       detail: None,
-      documentation: env.def.and_then(|d| self.get_doc(d)).map(ToOwned::to_owned),
+      documentation: self.get_defs_doc(&env.defs),
     }));
     ac.extend(env.val_env.iter().map(|(name, val_info)| {
       let ty_scheme = val_info.ty_scheme.display(&self.syms_tys, config::DiagnosticLines::Many);
@@ -350,18 +353,20 @@ impl Analysis {
         label: name.as_str().to_owned(),
         kind: sml_symbol_kind::get(&self.syms_tys.tys, val_info),
         detail: Some(ty_scheme.to_string()),
-        documentation: val_info.defs.iter().filter_map(|&x| self.get_doc(x)).fold(None, |ac, x| {
-          match ac {
-            None => Some(x.to_owned()),
-            Some(mut ac) => {
-              ac.push_str("\n\n---\n\n");
-              ac.push_str(x);
-              Some(ac)
-            }
-          }
-        }),
+        documentation: self.get_defs_doc(&val_info.defs),
       }
     }));
+  }
+
+  fn get_defs_doc(&self, defs: &FxHashSet<def::Def>) -> Option<String> {
+    defs.iter().filter_map(|&x| self.get_doc(x)).fold(None, |ac, x| match ac {
+      None => Some(x.to_owned()),
+      Some(mut ac) => {
+        ac.push_str("\n\n---\n\n");
+        ac.push_str(x);
+        Some(ac)
+      }
+    })
   }
 
   /// Returns all inlay hints for the range.

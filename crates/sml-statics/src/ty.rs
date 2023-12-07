@@ -3,7 +3,7 @@
 use crate::{error::ErrorKind, util::record};
 use crate::{get_env::get_ty_info, info::TyEntry, st::St};
 use sml_statics_types::ty::{Ty, TyData, TyScheme, TyVarSrc};
-use sml_statics_types::{def, env::Cx, item::Item, util::apply_bv};
+use sml_statics_types::{env::Cx, item::Item, util::apply_bv};
 
 /// The mode for how we're checking this type.
 #[derive(Debug, Clone, Copy)]
@@ -24,7 +24,7 @@ pub(crate) fn get(
   let Some(ty) = ty else { return Ty::NONE };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
-  let mut def = None::<def::Def>;
+  // let mut defs = FxH
   let ret = match &ars.ty[ty] {
     sml_hir::Ty::Hole => {
       st.err(ty, ErrorKind::TyHole);
@@ -66,7 +66,8 @@ pub(crate) fn get(
           let want_len = ty_info.ty_scheme.bound_vars.len();
           if want_len == arguments.len() {
             ty_scheme = Some(ty_info.ty_scheme.clone());
-            def = ty_info.def;
+            let defs = st.info.entries.defs.ty.entry(ty).or_default();
+            defs.extend(ty_info.defs.iter().copied());
             let mut ret = ty_info.ty_scheme.ty;
             let subst: Vec<_> = arguments.iter().map(|&ty| get(st, cx, ars, mode, ty)).collect();
             apply_bv(&mut st.syms_tys.tys, &subst, &mut ret);
@@ -93,8 +94,5 @@ pub(crate) fn get(
     }
   };
   st.info.entries.tys.ty.insert(ty, TyEntry::new(ret, ty_scheme));
-  if let Some(def) = def {
-    st.info.entries.defs.ty.insert(ty, def);
-  }
   ret
 }

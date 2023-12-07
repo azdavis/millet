@@ -208,9 +208,8 @@ fn get_str_exp(
       }
       match got_env.val {
         Ok(got_env) => {
-          if let Some(def) = got_env.def {
-            st.info.entries.defs.str_exp.insert(str_exp, def);
-          }
+          let defs = st.info.entries.defs.str_exp.entry(str_exp).or_default();
+          defs.extend(got_env.defs.iter().copied());
           ac.append(&mut got_env.clone());
         }
         Err(e) => st.err(str_exp, e.into()),
@@ -246,7 +245,7 @@ fn get_str_exp(
           if let Some(sml_hir::StrExp::Struct(decs)) = inner_str_exp.map(|x| &ars.str_exp[x]) {
             if let Some(sml_hir::SigExp::Name(_)) = sig_exp.map(|x| &ars.sig_exp[x]) {
               if decs.is_empty() {
-                ac.def = to_add.def;
+                ac.defs.extend(to_add.defs.iter().copied());
               }
             }
           }
@@ -302,20 +301,18 @@ fn get_str_exp(
       let mut param_env = fun_sig.param.env.clone();
       realize::get_env(&mut st.syms_tys.tys, &subst, &mut param_env);
       enrich::get_env(st, arg_idx, &arg_env, &param_env);
-      let def = st.def(idx);
+      let def = st.def_opt(idx);
       for (_, env) in to_add.str_env.iter_mut() {
-        env.def = def;
+        env.defs.extend(def.iter().copied());
       }
       for (_, ty_env) in to_add.ty_env.iter_mut() {
-        ty_env.def = def;
+        ty_env.defs.extend(def.iter().copied());
       }
       for (_, val_info) in to_add.val_env.iter_mut() {
-        // TODO add to the set?
-        val_info.defs = def.into_iter().collect();
+        val_info.defs.extend(def.iter().copied());
       }
-      if let Some(def) = fun_sig.body_env.def {
-        st.info.entries.defs.str_exp.insert(str_exp, def);
-      }
+      let str_exp_defs = st.info.entries.defs.str_exp.entry(str_exp).or_default();
+      str_exp_defs.extend(fun_sig.body_env.defs.iter().copied());
       ac.append(&mut to_add);
     }
     // @def(55)
@@ -332,18 +329,14 @@ fn get_str_exp(
 /// helps get the defs (and therefore e.g. docs) from a structure that ascribes to a signature, not
 /// just the docs from the signature
 fn enrich_defs(general: &Env, specific: &mut Env) {
-  if specific.def.is_none() {
-    specific.def = general.def;
-  }
+  specific.defs.extend(general.defs.iter().copied());
   for (name, specific) in specific.str_env.iter_mut() {
     let Some(general) = general.str_env.get(name) else { continue };
     enrich_defs(general, specific);
   }
   for (name, specific) in specific.ty_env.iter_mut() {
     let Some(general) = general.ty_env.get(name) else { continue };
-    if specific.def.is_none() {
-      specific.def = general.def;
-    }
+    specific.defs.extend(general.defs.iter().copied());
     for (name, specific) in specific.val_env.iter_mut() {
       let Some(general) = general.val_env.get(name) else { continue };
       specific.defs.extend(general.defs.iter().copied());
@@ -382,12 +375,11 @@ fn get_sig_exp(
       gen_fresh_syms(st, &mut subst, &sig.ty_names);
       let mut sig_env = sig.env.clone();
       realize::get_env(&mut st.syms_tys.tys, &subst, &mut sig_env);
-      if let Some(def) = sig.env.def {
-        st.info.entries.defs.sig_exp.insert(sig_exp, def);
-        // @test(hover::doc::std_basis_structure)
-        if matches!(st.info.mode, Mode::BuiltinLib(_)) {
-          ac.def = sig_env.def;
-        }
+      let sig_exp_defs = st.info.entries.defs.sig_exp.entry(sig_exp).or_default();
+      sig_exp_defs.extend(sig.env.defs.iter().copied());
+      // @test(hover::doc::std_basis_structure)
+      if matches!(st.info.mode, Mode::BuiltinLib(_)) {
+        ac.defs.extend(sig.env.defs.iter().copied());
       }
       ac.append(&mut sig_env);
       match st.info.mode {
@@ -661,7 +653,7 @@ fn get_ty_desc(
   let ty_info = TyInfo {
     ty_scheme: n_ary_con(&mut st.syms_tys.tys, bound_vars, started.sym()),
     val_env: SymValEnv::default(),
-    def: st.def(idx),
+    defs: st.def(idx),
     disallow: None,
   };
   st.syms_tys.syms.finish(started, ty_info.clone(), equality);

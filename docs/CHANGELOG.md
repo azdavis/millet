@@ -15,7 +15,7 @@ The versioning system is basically the following:
 
 ## main
 
-- Given `structure Foo : FOO = struct ... end`, where there are documentation comments inside the `...`, show those documentation comments on usages of items in `Foo`, in addition to any documentation from `FOO`.
+- Documentation and go-to-def for structures ascribing to signatures works for both the structure and the signature parts of the definitions contained inside.
 
 ## v0.14.1
 

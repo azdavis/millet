@@ -10,37 +10,40 @@ use std::fmt;
 
 pub(crate) type IdxMap<K, V> = la_arena::ArenaMap<la_arena::Idx<K>, V>;
 
+pub(crate) type DefMap<K> = IdxMap<K, FxHashSet<def::Def>>;
+
 #[derive(Debug, Default, Clone)]
 pub(crate) struct Defs {
-  pub(crate) str_exp: IdxMap<sml_hir::StrExp, def::Def>,
-  pub(crate) sig_exp: IdxMap<sml_hir::SigExp, def::Def>,
-  pub(crate) dec: IdxMap<sml_hir::Dec, def::Def>,
-  pub(crate) exp: IdxMap<sml_hir::Exp, FxHashSet<def::Def>>,
-  pub(crate) pat: IdxMap<sml_hir::Pat, FxHashSet<def::Def>>,
-  pub(crate) ty: IdxMap<sml_hir::Ty, def::Def>,
+  pub(crate) str_exp: DefMap<sml_hir::StrExp>,
+  pub(crate) sig_exp: DefMap<sml_hir::SigExp>,
+  pub(crate) dec: DefMap<sml_hir::Dec>,
+  pub(crate) exp: DefMap<sml_hir::Exp>,
+  pub(crate) pat: DefMap<sml_hir::Pat>,
+  pub(crate) ty: DefMap<sml_hir::Ty>,
 }
 
 impl Defs {
-  fn get(&self, idx: sml_hir::Idx) -> FxHashSet<def::Def> {
+  fn get(&self, idx: sml_hir::Idx) -> Option<&FxHashSet<def::Def>> {
     match idx {
-      sml_hir::Idx::StrDec(_) | sml_hir::Idx::Spec(_) => FxHashSet::default(),
-      sml_hir::Idx::StrExp(idx) => self.str_exp.get(idx).into_iter().copied().collect(),
-      sml_hir::Idx::SigExp(idx) => self.sig_exp.get(idx).into_iter().copied().collect(),
-      sml_hir::Idx::Dec(idx) => self.dec.get(idx).into_iter().copied().collect(),
-      sml_hir::Idx::Exp(idx) => self.exp.get(idx).into_iter().flatten().copied().collect(),
-      sml_hir::Idx::Pat(idx) => self.pat.get(idx).into_iter().flatten().copied().collect(),
-      sml_hir::Idx::Ty(idx) => self.ty.get(idx).into_iter().copied().collect(),
+      sml_hir::Idx::StrDec(_) | sml_hir::Idx::Spec(_) => None,
+      sml_hir::Idx::StrExp(idx) => self.str_exp.get(idx),
+      sml_hir::Idx::SigExp(idx) => self.sig_exp.get(idx),
+      sml_hir::Idx::Dec(idx) => self.dec.get(idx),
+      sml_hir::Idx::Exp(idx) => self.exp.get(idx),
+      sml_hir::Idx::Pat(idx) => self.pat.get(idx),
+      sml_hir::Idx::Ty(idx) => self.ty.get(idx),
     }
   }
 
   fn with_def(&self, def: def::Def) -> impl Iterator<Item = sml_hir::Idx> + '_ {
-    std::iter::empty::<(sml_hir::Idx, def::Def)>()
-      .chain(self.str_exp.iter().map(|(idx, &d)| (idx.into(), d)))
-      .chain(self.sig_exp.iter().map(|(idx, &d)| (idx.into(), d)))
-      .chain(self.dec.iter().map(|(idx, &d)| (idx.into(), d)))
-      .chain(self.exp.iter().flat_map(|(idx, ds)| ds.iter().map(move |&d| (idx.into(), d))))
-      .chain(self.pat.iter().flat_map(|(idx, ds)| ds.iter().map(move |&d| (idx.into(), d))))
-      .chain(self.ty.iter().map(|(idx, &d)| (idx.into(), d)))
+    std::iter::empty::<(sml_hir::Idx, &FxHashSet<def::Def>)>()
+      .chain(self.str_exp.iter().map(|(idx, set)| (idx.into(), set)))
+      .chain(self.sig_exp.iter().map(|(idx, set)| (idx.into(), set)))
+      .chain(self.dec.iter().map(|(idx, set)| (idx.into(), set)))
+      .chain(self.exp.iter().map(|(idx, set)| (idx.into(), set)))
+      .chain(self.pat.iter().map(|(idx, set)| (idx.into(), set)))
+      .chain(self.ty.iter().map(|(idx, set)| (idx.into(), set)))
+      .flat_map(|(idx, defs)| defs.iter().map(move |&def| (idx, def)))
       .filter_map(move |(idx, d)| (d == def).then_some(idx))
   }
 }
@@ -154,11 +157,11 @@ impl Info {
 
   /// Returns the definition sites of the idx.
   #[must_use]
-  pub fn get_defs(&self, idx: sml_hir::Idx) -> FxHashSet<def::Def> {
+  pub fn get_defs(&self, idx: sml_hir::Idx) -> Option<&FxHashSet<def::Def>> {
     self.entries.defs.get(idx)
   }
 
-  /// Returns the definition site of the type for the idx.
+  /// Returns the definition sites of the type for the idx.
   #[must_use]
   pub fn get_ty_defs(
     &self,
@@ -167,12 +170,10 @@ impl Info {
   ) -> Option<Vec<def::Def>> {
     let ty_entry = self.entries.tys.get(idx)?;
     let mut ret = Vec::<def::Def>::new();
-    ty_syms(&st.tys, ty_entry.ty, &mut |sym| match st.syms.get(sym) {
-      None => {}
-      Some(sym_info) => match sym_info.ty_info.def {
-        None => {}
-        Some(def) => ret.push(def),
-      },
+    ty_syms(&st.tys, ty_entry.ty, &mut |sym| {
+      let sym_info = st.syms.get(sym);
+      let defs = sym_info.iter().flat_map(|sym_info| sym_info.ty_info.defs.iter()).copied();
+      ret.extend(defs);
     });
     Some(ret)
   }
@@ -214,28 +215,32 @@ impl Info {
     path: paths::PathId,
   ) -> Vec<DocumentSymbol> {
     let mut ret = Vec::<DocumentSymbol>::new();
-    ret.extend(self.bs.fun_env.iter().filter_map(|(name, fun_sig)| {
-      let idx = def_idx(path, fun_sig.body_env.def?)?;
-      let mut children = Vec::<DocumentSymbol>::new();
-      env_syms(&mut children, st, path, &fun_sig.body_env);
-      Some(DocumentSymbol {
-        name: name.as_str().to_owned(),
-        kind: sml_namespace::SymbolKind::Functor,
-        detail: None,
-        idx,
-        children,
+    ret.extend(self.bs.fun_env.iter().flat_map(|(name, fun_sig)| {
+      fun_sig.body_env.defs.iter().filter_map(|&def| {
+        let idx = def_idx(path, def)?;
+        let mut children = Vec::<DocumentSymbol>::new();
+        env_syms(&mut children, st, path, &fun_sig.body_env);
+        Some(DocumentSymbol {
+          name: name.as_str().to_owned(),
+          kind: sml_namespace::SymbolKind::Functor,
+          detail: None,
+          idx,
+          children,
+        })
       })
     }));
-    ret.extend(self.bs.sig_env.iter().filter_map(|(name, sig)| {
-      let idx = def_idx(path, sig.env.def?)?;
-      let mut children = Vec::<DocumentSymbol>::new();
-      env_syms(&mut children, st, path, &sig.env);
-      Some(DocumentSymbol {
-        name: name.as_str().to_owned(),
-        kind: sml_namespace::SymbolKind::Signature,
-        detail: None,
-        idx,
-        children,
+    ret.extend(self.bs.sig_env.iter().flat_map(|(name, sig)| {
+      sig.env.defs.iter().filter_map(|&def| {
+        let idx = def_idx(path, def)?;
+        let mut children = Vec::<DocumentSymbol>::new();
+        env_syms(&mut children, st, path, &sig.env);
+        Some(DocumentSymbol {
+          name: name.as_str().to_owned(),
+          kind: sml_namespace::SymbolKind::Signature,
+          detail: None,
+          idx,
+          children,
+        })
       })
     }));
     env_syms(&mut ret, st, path, &self.bs.env);
@@ -315,27 +320,31 @@ fn env_syms(
   path: paths::PathId,
   env: &Env,
 ) {
-  ac.extend(env.str_env.iter().filter_map(|(name, env)| {
-    let idx = def_idx(path, env.def?)?;
-    let mut children = Vec::<DocumentSymbol>::new();
-    env_syms(&mut children, st, path, env);
-    Some(DocumentSymbol {
-      name: name.as_str().to_owned(),
-      kind: sml_namespace::SymbolKind::Structure,
-      detail: None,
-      idx,
-      children,
+  ac.extend(env.str_env.iter().flat_map(|(name, env)| {
+    env.defs.iter().filter_map(|&def| {
+      let idx = def_idx(path, def)?;
+      let mut children = Vec::<DocumentSymbol>::new();
+      env_syms(&mut children, st, path, env);
+      Some(DocumentSymbol {
+        name: name.as_str().to_owned(),
+        kind: sml_namespace::SymbolKind::Structure,
+        detail: None,
+        idx,
+        children,
+      })
     })
   }));
-  ac.extend(env.ty_env.iter().filter_map(|(name, ty_info)| {
-    let idx = def_idx(path, ty_info.def?)?;
-    let ty_scheme = ty_info.ty_scheme.display(st, config::DiagnosticLines::Many);
-    Some(DocumentSymbol {
-      name: name.as_str().to_owned(),
-      kind: sml_namespace::SymbolKind::Type,
-      detail: Some(ty_scheme.to_string()),
-      idx,
-      children: Vec::new(),
+  ac.extend(env.ty_env.iter().flat_map(|(name, ty_info)| {
+    ty_info.defs.iter().filter_map(|&def| {
+      let idx = def_idx(path, def)?;
+      let ty_scheme = ty_info.ty_scheme.display(st, config::DiagnosticLines::Many);
+      Some(DocumentSymbol {
+        name: name.as_str().to_owned(),
+        kind: sml_namespace::SymbolKind::Type,
+        detail: Some(ty_scheme.to_string()),
+        idx,
+        children: Vec::new(),
+      })
     })
   }));
   ac.extend(env.val_env.iter().flat_map(|(name, val_info)| {

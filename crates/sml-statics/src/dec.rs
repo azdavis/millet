@@ -206,9 +206,8 @@ fn get_one(
               IdStatus::Exn(_) => {
                 match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
                   None => {
-                    if let Some(&def) = val_info.defs.iter().next() {
-                      st.info.entries.defs.dec.insert(dec, def);
-                    }
+                    let dec_defs = st.info.entries.defs.dec.entry(dec).or_default();
+                    dec_defs.extend(val_info.defs.iter());
                   }
                   Some(e) => st.err(dec, e),
                 }
@@ -299,7 +298,7 @@ fn get_ty_binds(
     let ty = ty::get(st, cx, ars, ty::Mode::TyRhs, ty_bind.ty);
     let ty_scheme = generalize::get_fixed(&mut st.syms_tys.tys, fixed, ty);
     let ty_info =
-      TyInfo { ty_scheme, val_env: ValEnv::default(), def: st.def(idx), disallow: None };
+      TyInfo { ty_scheme, val_env: ValEnv::default(), defs: st.def(idx), disallow: None };
     if let Some(e) = ins_no_dupe(ty_env, ty_bind.name.clone(), ty_info, Item::Ty) {
       st.err(idx, e);
     }
@@ -345,7 +344,7 @@ pub(crate) fn get_dat_binds(
     let ty_info = TyInfo {
       ty_scheme: ty_scheme.clone(),
       val_env: ValEnv::default(),
-      def: st.def(idx),
+      defs: st.def(idx),
       disallow: None,
     };
     if let Some(e) = ins_no_dupe(&mut fake_ty_env, dat_bind.name.clone(), ty_info, Item::Ty) {
@@ -414,7 +413,7 @@ pub(crate) fn get_dat_binds(
     // NOTE: no checking for duplicates here
     big_val_env.append(&mut val_env.clone().into());
     let ty_info =
-      TyInfo { ty_scheme: datatype.ty_scheme, val_env, def: st.def(idx), disallow: None };
+      TyInfo { ty_scheme: datatype.ty_scheme, val_env, defs: st.def(idx), disallow: None };
     let ty_info_dve = ty_info.clone().with_default_val_env_type();
     let equality = equality::get_ty_info(
       st.info.mode,
