@@ -2,18 +2,9 @@
 
 The changelog is not an exhaustive list of changes between versions. For that, check the git log.
 
-Millet technically follows [SemVer][sem-ver], but the major version is zero, and it probably will be [for a while][zero-ver]. This means Millet makes **absolutely no** stability guarantees between versions.
+Millet technically follows [SemVer][sem-ver], but the major version is zero, and it probably will be [for a while][zero-ver].
 
-The versioning system is basically the following:
-
-- The version is split into three numbers, `major.minor.patch`.
-- Usually, we increment the "patch" version.
-- We increment the "minor" version either:
-  - After many "patch" versions.
-  - If there's a really "big" change.
-- As mentioned, the "major" version is 0.
-
-## main
+## v0.14.2
 
 - Documentation and go-to-def for structures ascribing to signatures works for both the structure and the signature parts of the definitions contained inside.
 
