@@ -6,6 +6,11 @@
 #![cfg(test)]
 #![allow(clippy::single_match_else)]
 
+// #[allow(clippy::pedantic, missing_debug_implementations, missing_docs)]
+mod diagnostics {
+  include!(concat!(env!("OUT_DIR"), "/diagnostics.rs"));
+}
+
 mod basis_path_var;
 mod big;
 mod cannot_rebind;

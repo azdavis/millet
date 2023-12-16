@@ -11,6 +11,12 @@ workspace = true
 [lib]
 doctest = false
 
+[build-dependencies]
+quote.workspace = true
+proc-macro2.workspace = true
+syn.workspace = true
+prettyplease.workspace = true
+
 [dev-dependencies]
 diagnostic.workspace = true
 fast-hash.workspace = true
