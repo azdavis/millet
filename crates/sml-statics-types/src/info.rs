@@ -6,7 +6,6 @@ use crate::sym::Exn;
 use crate::ty::TyScheme;
 use crate::{def, disallow::Disallow};
 use chain_map::ChainMap;
-use fast_hash::FxHashSet;
 
 /// Information about a type.
 ///
@@ -18,9 +17,7 @@ pub struct TyInfo<VE = ValEnv> {
   /// The val environment.
   pub val_env: VE,
   /// The definitions.
-  ///
-  /// It's a set, because we can have structures ascribing to signatures.
-  pub defs: FxHashSet<def::Def>,
+  pub defs: def::Set,
   /// Whether this is disallowed.
   pub disallow: Option<Disallow>,
 }
@@ -55,13 +52,13 @@ pub struct ValInfo {
   pub id_status: IdStatus,
   /// The definitions.
   ///
-  /// It's a set, because we can have:
-  ///
-  /// - Or patterns. Each occurrence of a variable in each or pattern alternative should be one of
+  /// Note that for or patterns, each occurrence of a variable in each or pattern alternative should be one of
   ///   the defs.
   /// - Structures ascribing to signatures. The definition in the structure and signature are both
   ///   important.
-  pub defs: FxHashSet<def::Def>,
+  ///
+  /// It's an ordered set because we want to show documentation for all the defs in a stable order.
+  pub defs: def::Set,
   /// Whether this is disallowed.
   pub disallow: Option<Disallow>,
 }

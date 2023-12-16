@@ -21,9 +21,7 @@ pub struct Env {
   /// The value env.
   pub val_env: ValEnv,
   /// The definitions.
-  ///
-  /// It's a set, because we can have structures ascribing to signatures.
-  pub defs: FxHashSet<def::Def>,
+  pub defs: def::Set,
   /// Whether everything in this env is disallowed.
   pub disallow: Option<Disallow>,
 }
@@ -31,7 +29,7 @@ pub struct Env {
 impl Env {
   /// Returns an empty `Env` with the given defs.
   #[must_use]
-  pub fn new(defs: FxHashSet<def::Def>) -> Env {
+  pub fn new(defs: def::Set) -> Env {
     Env { defs, ..Env::default() }
   }
 

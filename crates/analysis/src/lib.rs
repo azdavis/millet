@@ -358,7 +358,7 @@ impl Analysis {
     }));
   }
 
-  fn get_defs_doc(&self, defs: &FxHashSet<def::Def>) -> Option<String> {
+  fn get_defs_doc(&self, defs: &def::Set) -> Option<String> {
     defs.iter().filter_map(|&x| self.get_doc(x)).fold(None, |ac, x| match ac {
       None => Some(x.to_owned()),
       Some(mut ac) => {

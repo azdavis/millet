@@ -4,12 +4,12 @@ use fast_hash::FxHashMap;
 use once_cell::sync::Lazy;
 
 /// A definition site.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Def {
-  /// A def contained at a path.
-  Path(Path, sml_hir::Idx),
   /// A primitive, inherent def.
   Primitive(Primitive),
+  /// A def contained at a path.
+  Path(Path, sml_hir::Idx),
 }
 
 impl Def {
@@ -27,18 +27,18 @@ impl Def {
 }
 
 /// A definition path.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Path {
-  /// A regular path.
-  Regular(paths::PathId),
   /// A built-in library path, like the std basis or other such similar "always available"
   /// libraries. Contrast with primitives, which are built-in but not expressible in a regular SML
   /// source file.
   BuiltinLib(&'static str),
+  /// A regular path.
+  Regular(paths::PathId),
 }
 
 /// A primitive definition, often not expressible in real SML.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[allow(missing_docs)]
 pub enum Primitive {
   Int,
@@ -180,3 +180,11 @@ impl std::str::FromStr for Primitive {
     Ok(ret)
   }
 }
+
+/// A set of defs.
+///
+/// When we have a structure ascribing a signature, we want to have the def from both the structure
+/// and the signature be part of the defs for one "overall" thing.
+///
+/// The set is ordered, because we want to show documentation for all the defs in a stable order.
+pub type Set = std::collections::BTreeSet<Def>;

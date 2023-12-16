@@ -1,7 +1,6 @@
 //! See [`Info`].
 
 use crate::basis::Bs;
-use fast_hash::FxHashSet;
 use sml_hir::la_arena;
 use sml_statics_types::ty::{Ty, TyData, TyScheme};
 use sml_statics_types::util::ty_syms;
@@ -10,7 +9,7 @@ use std::fmt;
 
 pub(crate) type IdxMap<K, V> = la_arena::ArenaMap<la_arena::Idx<K>, V>;
 
-pub(crate) type DefMap<K> = IdxMap<K, FxHashSet<def::Def>>;
+pub(crate) type DefMap<K> = IdxMap<K, def::Set>;
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct Defs {
@@ -23,7 +22,7 @@ pub(crate) struct Defs {
 }
 
 impl Defs {
-  fn get(&self, idx: sml_hir::Idx) -> Option<&FxHashSet<def::Def>> {
+  fn get(&self, idx: sml_hir::Idx) -> Option<&def::Set> {
     match idx {
       sml_hir::Idx::StrDec(_) | sml_hir::Idx::Spec(_) => None,
       sml_hir::Idx::StrExp(idx) => self.str_exp.get(idx),
@@ -36,7 +35,7 @@ impl Defs {
   }
 
   fn with_def(&self, def: def::Def) -> impl Iterator<Item = sml_hir::Idx> + '_ {
-    std::iter::empty::<(sml_hir::Idx, &FxHashSet<def::Def>)>()
+    std::iter::empty::<(sml_hir::Idx, &def::Set)>()
       .chain(self.str_exp.iter().map(|(idx, set)| (idx.into(), set)))
       .chain(self.sig_exp.iter().map(|(idx, set)| (idx.into(), set)))
       .chain(self.dec.iter().map(|(idx, set)| (idx.into(), set)))
@@ -157,19 +156,15 @@ impl Info {
 
   /// Returns the definition sites of the idx.
   #[must_use]
-  pub fn get_defs(&self, idx: sml_hir::Idx) -> Option<&FxHashSet<def::Def>> {
+  pub fn get_defs(&self, idx: sml_hir::Idx) -> Option<&def::Set> {
     self.entries.defs.get(idx)
   }
 
   /// Returns the definition sites of the type for the idx.
   #[must_use]
-  pub fn get_ty_defs(
-    &self,
-    st: &sml_statics_types::St,
-    idx: sml_hir::Idx,
-  ) -> Option<Vec<def::Def>> {
+  pub fn get_ty_defs(&self, st: &sml_statics_types::St, idx: sml_hir::Idx) -> Option<def::Set> {
     let ty_entry = self.entries.tys.get(idx)?;
-    let mut ret = Vec::<def::Def>::new();
+    let mut ret = def::Set::new();
     ty_syms(&st.tys, ty_entry.ty, &mut |sym| {
       let sym_info = st.syms.get(sym);
       let defs = sym_info.iter().flat_map(|sym_info| sym_info.ty_info.defs.iter()).copied();

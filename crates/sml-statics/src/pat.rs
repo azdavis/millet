@@ -7,7 +7,6 @@ use crate::{
   compatible::eq_ty_scheme, config, error::ErrorKind, get_env::get_val_info, st::St, ty,
   unify::unify,
 };
-use fast_hash::FxHashSet;
 use sml_statics_types::info::{IdStatus, ValEnv, ValInfo};
 use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme};
 use sml_statics_types::util::{get_scon, instantiate};
@@ -36,7 +35,7 @@ pub(crate) fn get(
       pm_pat: Pat::zero(Con::Any, pat),
       ty: st.syms_tys.tys.meta_var(cfg.gen),
       ty_scheme: None,
-      defs: FxHashSet::default(),
+      defs: def::Set::default(),
     },
   };
   st.info.entries.tys.pat.insert(pat_, TyEntry::new(ret.ty, ret.ty_scheme));
@@ -50,7 +49,7 @@ struct PatRet {
   pm_pat: Pat,
   ty: Ty,
   ty_scheme: Option<TyScheme>,
-  defs: FxHashSet<def::Def>,
+  defs: def::Set,
 }
 
 fn get_(
@@ -63,7 +62,7 @@ fn get_(
 ) -> Option<PatRet> {
   let pat = Some(pat_idx);
   let mut ty_scheme = None::<TyScheme>;
-  let mut defs = FxHashSet::<def::Def>::default();
+  let mut defs = def::Set::default();
   let (pm_pat, ty) = match &ars.pat[pat_idx] {
     // @def(32)
     sml_hir::Pat::Wild => (Pat::zero(Con::Any, pat), st.syms_tys.tys.meta_var(cfg.gen)),

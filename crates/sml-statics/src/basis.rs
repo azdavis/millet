@@ -1,13 +1,13 @@
 //! Bases. (The plural of "basis".)
 
 use crate::get_env::get_mut_env;
-use fast_hash::{FxHashMap, FxHashSet};
+use fast_hash::FxHashMap;
 use sml_statics_types::disallow::{self, Disallow};
 use sml_statics_types::env::{Cx, Env, FunEnv, SigEnv, StrEnv};
 use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
 use sml_statics_types::sym::{Equality, Sym, SymTyInfo, SymValEnv, Syms};
 use sml_statics_types::ty::{BoundTyVar, BoundTyVarData, RecordData, Ty, TyScheme, TyVarKind, Tys};
-use sml_statics_types::{def::Primitive, item::Item, overload};
+use sml_statics_types::{def, item::Item, overload};
 
 /// A basis.
 #[derive(Debug, Default, Clone)]
@@ -140,7 +140,8 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
   syms.overloads_mut().real.push(Sym::REAL);
   syms.overloads_mut().char.push(Sym::CHAR);
   syms.overloads_mut().string.push(Sym::STRING);
-  let bool_info = basic_datatype(&mut tys, Sym::BOOL, &[Primitive::True, Primitive::False]);
+  let bool_info =
+    basic_datatype(&mut tys, Sym::BOOL, &[def::Primitive::True, def::Primitive::False]);
   insert_special(&mut syms, Sym::BOOL, bool_info);
   let list_info = {
     let list = |tys: &mut Tys, a: Ty| tys.con(vec![a], Sym::LIST);
@@ -152,8 +153,8 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
     });
     TyInfo {
       ty_scheme: alpha_list.clone(),
-      val_env: datatype_ve([(Primitive::Nil, alpha_list), (Primitive::Cons, cons)]),
-      defs: FxHashSet::from_iter([Primitive::List.into()]),
+      val_env: datatype_ve([(def::Primitive::Nil, alpha_list), (def::Primitive::Cons, cons)]),
+      defs: def::Set::from([def::Primitive::List.into()]),
       disallow: None,
     }
   };
@@ -166,8 +167,8 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
     });
     TyInfo {
       ty_scheme: ty_scheme_one(&mut tys, TyVarKind::Regular, ref_),
-      val_env: datatype_ve([(Primitive::RefVal, con)]),
-      defs: FxHashSet::from_iter([Primitive::RefTy.into()]),
+      val_env: datatype_ve([(def::Primitive::RefVal, con)]),
+      defs: def::Set::from([def::Primitive::RefTy.into()]),
       disallow: None,
     }
   };
@@ -175,11 +176,11 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
   let vector_info = TyInfo {
     ty_scheme: ty_scheme_one(&mut tys, TyVarKind::Regular, |tys, a| tys.con(vec![a], Sym::VECTOR)),
     val_env: SymValEnv::default(),
-    defs: FxHashSet::from_iter([Primitive::Vector.into()]),
+    defs: def::Set::from([def::Primitive::Vector.into()]),
     disallow: None,
   };
   insert_special(&mut syms, Sym::VECTOR, vector_info);
-  let aliases = [(Primitive::Unit, Ty::UNIT), (Primitive::Exn, Ty::EXN)];
+  let aliases = [(def::Primitive::Unit, Ty::UNIT), (def::Primitive::Exn, Ty::EXN)];
   let ty_env: TyEnv = syms
     .iter_syms()
     .map(|sym_info| {
@@ -190,7 +191,7 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
       let ti = TyInfo {
         ty_scheme: TyScheme::zero(ty),
         val_env: ValEnv::default(),
-        defs: FxHashSet::from_iter([name.into()]),
+        defs: def::Set::from([name.into()]),
         disallow: None,
       };
       (str_util::Name::new(name.as_str()), ti)
@@ -211,21 +212,21 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
       tys.fun(a_a, Ty::BOOL)
     });
     [
-      (Primitive::Mul, num_pair_to_num.clone()),
-      (Primitive::Add, num_pair_to_num.clone()),
-      (Primitive::Sub, num_pair_to_num),
-      (Primitive::RealDiv, real_pair_to_real),
-      (Primitive::Lt, numtxt_pair_to_bool.clone()),
-      (Primitive::LtEq, numtxt_pair_to_bool.clone()),
-      (Primitive::Gt, numtxt_pair_to_bool.clone()),
-      (Primitive::GtEq, numtxt_pair_to_bool),
-      (Primitive::Neg, realint_to_realint.clone()),
-      (Primitive::Abs, realint_to_realint),
-      (Primitive::Div, wordint_pair_to_wordint.clone()),
-      (Primitive::Mod, wordint_pair_to_wordint),
-      (Primitive::Eq, equality_pair_to_bool.clone()),
-      (Primitive::Neq, equality_pair_to_bool),
-      (Primitive::Use, TyScheme::zero(tys.fun(Ty::STRING, Ty::UNIT))),
+      (def::Primitive::Mul, num_pair_to_num.clone()),
+      (def::Primitive::Add, num_pair_to_num.clone()),
+      (def::Primitive::Sub, num_pair_to_num),
+      (def::Primitive::RealDiv, real_pair_to_real),
+      (def::Primitive::Lt, numtxt_pair_to_bool.clone()),
+      (def::Primitive::LtEq, numtxt_pair_to_bool.clone()),
+      (def::Primitive::Gt, numtxt_pair_to_bool.clone()),
+      (def::Primitive::GtEq, numtxt_pair_to_bool),
+      (def::Primitive::Neg, realint_to_realint.clone()),
+      (def::Primitive::Abs, realint_to_realint),
+      (def::Primitive::Div, wordint_pair_to_wordint.clone()),
+      (def::Primitive::Mod, wordint_pair_to_wordint),
+      (def::Primitive::Eq, equality_pair_to_bool.clone()),
+      (def::Primitive::Neq, equality_pair_to_bool),
+      (def::Primitive::Use, TyScheme::zero(tys.fun(Ty::STRING, Ty::UNIT))),
     ]
   };
   let val_env: ValEnv = ty_env
@@ -235,7 +236,7 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
       let vi = ValInfo {
         ty_scheme,
         id_status: IdStatus::Val,
-        defs: fast_hash::set([name.into()]),
+        defs: def::Set::from([name.into()]),
         disallow: None,
       };
       (str_util::Name::new(name.as_str()), vi)
@@ -248,7 +249,7 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
       str_env: StrEnv::default(),
       ty_env,
       val_env,
-      defs: FxHashSet::default(),
+      defs: def::Set::default(),
       disallow: None,
     },
   };
@@ -270,23 +271,23 @@ fn insert_special(syms: &mut Syms, sym: Sym, ty_info: SymTyInfo) {
   syms.finish(started, ty_info, equality);
 }
 
-fn basic_datatype(tys: &mut Tys, sym: Sym, ctors: &'static [Primitive]) -> SymTyInfo {
+fn basic_datatype(tys: &mut Tys, sym: Sym, ctors: &'static [def::Primitive]) -> SymTyInfo {
   let ty_scheme = TyScheme::zero(tys.con(Vec::new(), sym));
   let val_env = datatype_ve(ctors.iter().map(|&x| (x, ty_scheme.clone())));
-  let defs = FxHashSet::from_iter([sym.primitive().unwrap().into()]);
+  let defs = def::Set::from([sym.primitive().unwrap().into()]);
   TyInfo { ty_scheme, val_env, defs, disallow: None }
 }
 
 fn datatype_ve<I>(xs: I) -> SymValEnv
 where
-  I: IntoIterator<Item = (Primitive, TyScheme)>,
+  I: IntoIterator<Item = (def::Primitive, TyScheme)>,
 {
   xs.into_iter()
     .map(|(name, ty_scheme)| {
       let vi = ValInfo {
         ty_scheme,
         id_status: IdStatus::Con,
-        defs: fast_hash::set([name.into()]),
+        defs: def::Set::from([name.into()]),
         disallow: None,
       };
       (str_util::Name::new(name.as_str()), vi)

@@ -6,7 +6,6 @@ use crate::info::TyEntry;
 use crate::util::record;
 use crate::{config::Cfg, pat_match::Pat};
 use crate::{dec, pat, st::St, ty, unify::unify};
-use fast_hash::FxHashSet;
 use sml_statics_types::env::{Cx, Env};
 use sml_statics_types::sym::{Sym, SymsMarker};
 use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme, Tys};
@@ -32,7 +31,7 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
   let Some(exp) = exp else { return Ty::NONE };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
-  let mut defs = FxHashSet::<def::Def>::default();
+  let mut defs = def::Set::default();
   let ret = match &ars.exp[exp] {
     sml_hir::Exp::Hole => {
       let mv = st.syms_tys.tys.meta_var(Generalizable::Always);
@@ -60,7 +59,6 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
             assert!(st.exp_id_statuses.insert(exp, val_info.id_status).is_none());
           }
           ty_scheme = Some(val_info.ty_scheme.clone());
-          defs.reserve(val_info.defs.len());
           for &def in &val_info.defs {
             defs.insert(def);
             if let def::Def::Path(_, idx) = def {

@@ -53,7 +53,7 @@ impl<'a> St<'a> {
     Some(def::Def::Path(path, idx))
   }
 
-  pub(crate) fn def(&self, idx: sml_hir::Idx) -> FxHashSet<def::Def> {
+  pub(crate) fn def(&self, idx: sml_hir::Idx) -> def::Set {
     self.def_opt(idx).into_iter().collect()
   }
 
