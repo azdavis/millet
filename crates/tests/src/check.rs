@@ -5,6 +5,7 @@ mod input;
 mod reason;
 mod show;
 
+pub(crate) mod markdown;
 pub(crate) mod raw;
 
 use diagnostic::Severity;
