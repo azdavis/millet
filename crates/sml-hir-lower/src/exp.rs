@@ -40,7 +40,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
                 let e = ErrorKind::Disallowed(Disallowed::SuccMl("expression row punning"));
                 st.err_tok(&tok, e);
               }
-              st.exp(sml_hir::Exp::Path(sml_path::Path::one(name.clone())), ptr.clone())
+              st.exp(sml_hir::Exp::Path(sml_path::Path::one(name.clone())), ptr)
             }
             sml_hir::Lab::Num(_) => {
               st.err_tok(&tok, ErrorKind::MissingRhs(MissingRhs::ExpRow));
@@ -62,10 +62,9 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       }
       let lab = get_lab(st, exp.lab()?);
       let fresh = st.fresh();
-      let pat = st.pat(pat::name(fresh.as_str()), ptr.clone());
-      let param =
-        st.pat(sml_hir::Pat::Record { rows: vec![(lab, pat)], allows_other: true }, ptr.clone());
-      let body = st.exp(name(fresh.as_str()), ptr.clone());
+      let pat = st.pat(pat::name(fresh.as_str()), ptr);
+      let param = st.pat(sml_hir::Pat::Record { rows: vec![(lab, pat)], allows_other: true }, ptr);
+      let body = st.exp(name(fresh.as_str()), ptr);
       let arm = sml_hir::Arm { pat: param, exp: body };
       sml_hir::Exp::Fn(vec![arm], sml_hir::FnFlavor::Selector)
     }
@@ -100,9 +99,9 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       #[allow(clippy::needless_collect)]
       let exps: Vec<_> = exp.exp_args().map(|x| get(st, x.exp())).collect();
       exps.into_iter().rev().fold(name("nil"), |ac, x| {
-        let cons = st.exp(name("::"), ptr.clone());
-        let ac = st.exp(ac, ptr.clone());
-        sml_hir::Exp::App(cons, st.exp(tuple([x, ac]), ptr.clone()))
+        let cons = st.exp(name("::"), ptr);
+        let ac = st.exp(ac, ptr);
+        sml_hir::Exp::App(cons, st.exp(tuple([x, ac]), ptr))
       })
     }
     ast::Exp::VectorExp(exp) => {
@@ -144,7 +143,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
           let e = ErrorKind::Disallowed(Disallowed::SuccMl("trailing `;` in `let` expressions"));
           st.err_tok(&s, e);
         }
-        exps.push(st.exp(tuple([]), ptr.clone()));
+        exps.push(st.exp(tuple([]), ptr));
       }
       let exp = exp_idx_in_seq(st, exps, exp.syntax());
       sml_hir::Exp::Let(dec, exp)
@@ -159,10 +158,10 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       if !st.lang().exp.infix {
         st.err(exp.syntax(), ErrorKind::Disallowed(Disallowed::Exp("infix application")));
       }
-      let func = exp.name_star_eq().and_then(|x| st.exp(name(x.token.text()), ptr.clone()));
+      let func = exp.name_star_eq().and_then(|x| st.exp(name(x.token.text()), ptr));
       let lhs = get(st, exp.lhs());
       let rhs = get(st, exp.rhs());
-      let arg = st.exp(tuple([lhs, rhs]), ptr.clone());
+      let arg = st.exp(tuple([lhs, rhs]), ptr);
       sml_hir::Exp::App(func, arg)
     }
     ast::Exp::TypedExp(exp) => {
@@ -183,8 +182,8 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       }
       let cond = get(st, lhs);
       let yes = get(st, rhs);
-      let no = st.exp(name("false"), ptr.clone());
-      if_(st, cond, yes, no, ptr.clone(), sml_hir::FnFlavor::BoolBinOp)
+      let no = st.exp(name("false"), ptr);
+      if_(st, cond, yes, no, ptr, sml_hir::FnFlavor::BoolBinOp)
     }
     ast::Exp::OrelseExp(exp) => {
       if !st.lang().exp.orelse {
@@ -196,9 +195,9 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
         st.err(exp.syntax(), ErrorKind::ComplexBoolExp);
       }
       let cond = get(st, lhs);
-      let yes = st.exp(name("true"), ptr.clone());
+      let yes = st.exp(name("true"), ptr);
       let no = get(st, rhs);
-      if_(st, cond, yes, no, ptr.clone(), sml_hir::FnFlavor::BoolBinOp)
+      if_(st, cond, yes, no, ptr, sml_hir::FnFlavor::BoolBinOp)
     }
     ast::Exp::HandleExp(exp) => {
       if !st.lang().exp.handle {
@@ -227,7 +226,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let cond = get(st, cond);
       let yes = get(st, yes);
       let no = get(st, no);
-      if_(st, cond, yes, no, ptr.clone(), sml_hir::FnFlavor::If)
+      if_(st, cond, yes, no, ptr, sml_hir::FnFlavor::If)
     }
     ast::Exp::WhileExp(exp) => {
       if !st.lang().exp.while_ {
@@ -237,20 +236,19 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let fn_body = {
         let cond = get(st, exp.cond());
         let body = get(st, exp.body());
-        let call = call_unit_fn(st, &vid, ptr.clone());
+        let call = call_unit_fn(st, &vid, ptr);
         let yes = exp_idx_in_seq(st, [body, call], exp.syntax());
-        let no = st.exp(tuple([]), ptr.clone());
-        let fn_body = if_(st, cond, yes, no, ptr.clone(), sml_hir::FnFlavor::While);
-        st.exp(fn_body, ptr.clone())
+        let no = st.exp(tuple([]), ptr);
+        let fn_body = if_(st, cond, yes, no, ptr, sml_hir::FnFlavor::While);
+        st.exp(fn_body, ptr)
       };
-      let arg_pat = st.pat(pat::tuple([]), ptr.clone());
+      let arg_pat = st.pat(pat::tuple([]), ptr);
       let arm = sml_hir::Arm { pat: arg_pat, exp: fn_body };
-      let fn_exp = st.exp(sml_hir::Exp::Fn(vec![arm], sml_hir::FnFlavor::While), ptr.clone());
-      let vid_pat = st.pat(pat::name(vid.as_str()), ptr.clone());
+      let fn_exp = st.exp(sml_hir::Exp::Fn(vec![arm], sml_hir::FnFlavor::While), ptr);
+      let vid_pat = st.pat(pat::name(vid.as_str()), ptr);
       let bind = sml_hir::ValBind { rec: true, pat: vid_pat, exp: fn_exp };
-      let val =
-        st.dec(sml_hir::Dec::Val(vec![], vec![bind], sml_hir::ValFlavor::While), ptr.clone());
-      sml_hir::Exp::Let(vec![val], call_unit_fn(st, &vid, ptr.clone()))
+      let val = st.dec(sml_hir::Dec::Val(vec![], vec![bind], sml_hir::ValFlavor::While), ptr);
+      sml_hir::Exp::Let(vec![val], call_unit_fn(st, &vid, ptr))
     }
     ast::Exp::CaseExp(exp) => {
       if !st.lang().exp.case {
@@ -261,7 +259,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       if arms.len() == 1 {
         st.err(exp.syntax(), ErrorKind::OneArmedCase);
       }
-      case(st, head, arms, ptr.clone(), sml_hir::FnFlavor::Case)
+      case(st, head, arms, ptr, sml_hir::FnFlavor::Case)
     }
     ast::Exp::FnExp(exp) => {
       if !st.lang().exp.fn_ {
@@ -338,8 +336,8 @@ where
 }
 
 fn call_unit_fn(st: &mut St<'_>, vid: &str_util::Name, ptr: SyntaxNodePtr) -> sml_hir::ExpIdx {
-  let vid_exp = st.exp(name(vid.as_str()), ptr.clone());
-  let arg_exp = st.exp(sml_hir::Exp::Record(vec![]), ptr.clone());
+  let vid_exp = st.exp(name(vid.as_str()), ptr);
+  let arg_exp = st.exp(sml_hir::Exp::Record(vec![]), ptr);
   st.exp(sml_hir::Exp::App(vid_exp, arg_exp), ptr)
 }
 
@@ -361,10 +359,10 @@ where
 {
   let ptr = SyntaxNodePtr::new(exp);
   let ret = exps.into_iter().rev().reduce(|ac, x| {
-    let wild = st.pat(sml_hir::Pat::Wild, ptr.clone());
+    let wild = st.pat(sml_hir::Pat::Wild, ptr);
     let arm = sml_hir::Arm { pat: wild, exp: ac };
-    let c = case(st, x, vec![arm], ptr.clone(), sml_hir::FnFlavor::Seq);
-    st.exp(c, ptr.clone())
+    let c = case(st, x, vec![arm], ptr, sml_hir::FnFlavor::Seq);
+    st.exp(c, ptr)
   });
   if ret.is_none() {
     st.err(exp, ErrorKind::EmptyExpSemiSeq);
@@ -380,8 +378,8 @@ fn if_(
   ptr: SyntaxNodePtr,
   flavor: sml_hir::FnFlavor,
 ) -> sml_hir::Exp {
-  let yes_pat = st.pat(pat::name("true"), ptr.clone());
-  let no_pat = st.pat(pat::name("false"), ptr.clone());
+  let yes_pat = st.pat(pat::name("true"), ptr);
+  let no_pat = st.pat(pat::name("false"), ptr);
   let yes_arm = sml_hir::Arm { pat: yes_pat, exp: yes };
   let no_arm = sml_hir::Arm { pat: no_pat, exp: no };
   case(st, cond, vec![yes_arm, no_arm], ptr, flavor)

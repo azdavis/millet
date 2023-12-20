@@ -63,11 +63,11 @@ fn get_top_dec_one(st: &mut St<'_>, top_dec: ast::DecOne) -> sml_hir::StrDecIdx 
         //
         // to have `4` be bound to `x`, but that's weird to do _in a source file_. at a REPL it's
         // fine, but millet doesn't check a REPL, it checks source files.
-        pat: st.pat(sml_hir::Pat::Wild, ptr.clone()),
+        pat: st.pat(sml_hir::Pat::Wild, ptr),
         exp: exp::get(st, top_dec.exp()),
       };
       let dec = sml_hir::Dec::Val(Vec::new(), vec![bind], sml_hir::ValFlavor::TopLevelExp);
-      let dec = st.dec(dec, ptr.clone());
+      let dec = st.dec(dec, ptr);
       st.str_dec(sml_hir::StrDec::Dec(vec![dec]), ptr)
     }
     _ => get_str_dec_one(st, top_dec),
@@ -151,11 +151,11 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
             });
             let param_name = st.fresh();
             let param_sig = sml_hir::SigExp::Spec(get_spec(st, decs));
-            let param_sig = st.sig_exp(param_sig, ptr.clone());
-            let dec = st
-              .dec(sml_hir::Dec::Open(vec![sml_path::Path::one(param_name.clone())]), ptr.clone());
-            let str_dec = st.str_dec(sml_hir::StrDec::Dec(vec![dec]), ptr.clone());
-            let body = st.str_exp(sml_hir::StrExp::Let(vec![str_dec], body), ptr.clone());
+            let param_sig = st.sig_exp(param_sig, ptr);
+            let dec =
+              st.dec(sml_hir::Dec::Open(vec![sml_path::Path::one(param_name.clone())]), ptr);
+            let str_dec = st.str_dec(sml_hir::StrDec::Dec(vec![dec]), ptr);
+            let body = st.str_exp(sml_hir::StrExp::Let(vec![str_dec], body), ptr);
             (param_name, param_sig, body, sml_hir::Flavor::Sugared)
           }
         };
@@ -208,7 +208,7 @@ fn get_str_exp(st: &mut St<'_>, str_exp: Option<ast::StrExp>) -> sml_hir::StrExp
             ast::AppStrExpArg::Dec(x) => Some(x),
           });
           let sd = get_str_dec(st, decs);
-          (st.str_exp(sml_hir::StrExp::Struct(sd), ptr.clone()), sml_hir::Flavor::Sugared)
+          (st.str_exp(sml_hir::StrExp::Struct(sd), ptr), sml_hir::Flavor::Sugared)
         }
       };
       sml_hir::StrExp::App(get_name(str_exp.name())?, arg, flavor)
@@ -272,7 +272,7 @@ where
         sml_hir::SharingKind::Derived
       };
       let paths_eq: Vec<_> = tail.path_eqs().filter_map(|x| get_path(x.path()?)).collect();
-      vec![st.spec(sml_hir::Spec::Sharing(ac, kind, paths_eq), ptr.clone())]
+      vec![st.spec(sml_hir::Spec::Sharing(ac, kind, paths_eq), ptr)]
     }));
   }
   specs
@@ -352,18 +352,13 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
         let mut ret = f(sml_hir::TyDesc { name: name.clone(), ty_vars: ty_vars.clone() });
         if let Some(ty) = ty_desc.eq_ty() {
           let ty = ty::get(st, ty.ty());
-          let spec_idx = st.spec(ret, ptr.clone());
-          let sig_exp = st.sig_exp(sml_hir::SigExp::Spec(vec![spec_idx]), ptr.clone());
-          let sig_exp = st.sig_exp(
-            sml_hir::SigExp::Where(
-              sig_exp,
-              sml_hir::WhereKind::Type(ty_vars, sml_path::Path::one(name), ty),
-            ),
-            ptr.clone(),
-          );
+          let spec_idx = st.spec(ret, ptr);
+          let sig_exp = st.sig_exp(sml_hir::SigExp::Spec(vec![spec_idx]), ptr);
+          let where_kind = sml_hir::WhereKind::Type(ty_vars, sml_path::Path::one(name), ty);
+          let sig_exp = st.sig_exp(sml_hir::SigExp::Where(sig_exp, where_kind), ptr);
           ret = sml_hir::Spec::Include(sig_exp);
         }
-        Some(st.spec(ret, ptr.clone()))
+        Some(st.spec(ret, ptr))
       });
       iter.collect()
     }
@@ -377,7 +372,7 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
       }
       let binds = dat_binds(st, dec.dat_binds());
       let dat = sml_hir::Spec::Datatype(binds);
-      vec![st.spec(dat, ptr.clone())]
+      vec![st.spec(dat, ptr)]
     }
     ast::DecOne::DatCopyDec(dec) => {
       if !st.lang().dec.datatype_copy {
@@ -401,7 +396,7 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
             None
           }
         });
-        Some(st.spec(sml_hir::Spec::Exception(sml_hir::ExDesc { name, ty }), ptr.clone()))
+        Some(st.spec(sml_hir::Spec::Exception(sml_hir::ExDesc { name, ty }), ptr))
       });
       iter.collect()
     }
@@ -434,7 +429,7 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
           }
         };
         let spec = sml_hir::Spec::Str(sml_hir::StrDesc { name, sig_exp });
-        Some(st.spec(spec, ptr.clone()))
+        Some(st.spec(spec, ptr))
       });
       iter.collect()
     }
@@ -444,7 +439,7 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
       }
       let iter = dec.sig_exps().map(|x| {
         let spec = sml_hir::Spec::Include(get_sig_exp(st, Some(x)));
-        st.spec(spec, ptr.clone())
+        st.spec(spec, ptr)
       });
       let specs: Vec<_> = iter.collect();
       if specs.is_empty() {
@@ -561,7 +556,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
                 let lhs = head.lhs();
                 let rhs = head.rhs();
                 let tup = tuple([pat::get(st, None, lhs), pat::get(st, None, rhs)]);
-                pats.push(st.pat(tup, ptr.clone()));
+                pats.push(st.pat(tup, ptr));
                 head.name_star_eq()
               }
             })
@@ -588,11 +583,8 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
               }
             }
           }
-          let pat = if pats.len() == 1 {
-            pats.pop().unwrap()
-          } else {
-            st.pat(pat::tuple(pats), ptr.clone())
-          };
+          let pat =
+            if pats.len() == 1 { pats.pop().unwrap() } else { st.pat(pat::tuple(pats), ptr) };
           let ty = case.ty_annotation().map(|ty_ann| {
             forbid_opaque_asc(st, ty_ann.ascription());
             ty::get(st, ty_ann.ty())
@@ -625,20 +617,19 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
         }
         let exp = {
           let arg_names: Vec<_> = (0..num_pats.unwrap_or(1)).map(|_| st.fresh()).collect();
-          let mut arg_exprs =
-            arg_names.iter().map(|name| st.exp(exp::name(name.as_str()), ptr.clone()));
+          let mut arg_exprs = arg_names.iter().map(|name| st.exp(exp::name(name.as_str()), ptr));
           let head = if arg_exprs.len() == 1 {
             arg_exprs.next().unwrap()
           } else {
             let tup = exp::tuple(arg_exprs);
-            st.exp(tup, ptr.clone())
+            st.exp(tup, ptr)
           };
           let flavor = sml_hir::FnFlavor::FunCase { tuple: num_pats.is_some_and(|x| x != 1) };
-          let case = exp::case(st, head, arms, ptr.clone(), flavor);
-          arg_names.into_iter().rev().fold(st.exp(case, ptr.clone()), |body, name| {
-            let pat = st.pat(pat::name(name.as_str()), ptr.clone());
+          let case = exp::case(st, head, arms, ptr, flavor);
+          arg_names.into_iter().rev().fold(st.exp(case, ptr), |body, name| {
+            let pat = st.pat(pat::name(name.as_str()), ptr);
             let arm = sml_hir::Arm { pat, exp: body };
-            st.exp(sml_hir::Exp::Fn(vec![arm], sml_hir::FnFlavor::FunArg), ptr.clone())
+            st.exp(sml_hir::Exp::Fn(vec![arm], sml_hir::FnFlavor::FunArg), ptr)
           })
         };
         sml_hir::ValBind {
@@ -761,7 +752,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
       }
       let bind = sml_hir::ValBind {
         rec: false,
-        pat: st.pat(pat::tuple([]), ptr.clone()),
+        pat: st.pat(pat::tuple([]), ptr),
         exp: exp::get(st, inner.exp()),
       };
       sml_hir::Dec::Val(Vec::new(), vec![bind], sml_hir::ValFlavor::Do)

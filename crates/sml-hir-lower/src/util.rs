@@ -19,7 +19,7 @@ impl Ptrs {
   /// Returns the unique syntax pointer for an HIR index.
   #[must_use]
   pub fn hir_to_ast(&self, idx: sml_hir::Idx) -> Option<SyntaxNodePtr> {
-    self.hir_to_ast.get(&idx).cloned()
+    self.hir_to_ast.get(&idx).copied()
   }
 
   /// Returns one of possibly many HIR indices for the syntax pointer.
@@ -36,7 +36,7 @@ impl Ptrs {
   }
 
   fn insert(&mut self, idx: sml_hir::Idx, ptr: SyntaxNodePtr) {
-    assert!(self.hir_to_ast.insert(idx, ptr.clone()).is_none());
+    assert!(self.hir_to_ast.insert(idx, ptr).is_none());
     self.ast_to_hir.entry(ptr).or_default().push(idx);
   }
 }

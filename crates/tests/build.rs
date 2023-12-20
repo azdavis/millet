@@ -33,13 +33,5 @@ fn main() {
 
     #(#tests)*
   };
-  write_output(all, "diagnostics.rs");
-}
-
-fn write_output(output: proc_macro2::TokenStream, basename: &str) {
-  let out_dir = std::env::var_os("OUT_DIR").unwrap();
-  let dst = std::path::Path::new(&out_dir).join(basename);
-  let file = syn::parse2(output).unwrap();
-  let formatted = prettyplease::unparse(&file);
-  std::fs::write(dst, formatted).unwrap();
+  write_rs_tokens::go(all, "diagnostics.rs");
 }

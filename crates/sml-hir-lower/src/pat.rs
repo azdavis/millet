@@ -66,13 +66,13 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
           let as_tail = row.as_pat_tail().map(|x| get(st, flavor, x.pat()));
           let pat = match (ty_ann, as_tail) {
             (Some(ty), Some(pat)) => {
-              sml_hir::Pat::As(lab.clone(), st.pat(sml_hir::Pat::Typed(pat, ty), ptr.clone()))
+              sml_hir::Pat::As(lab.clone(), st.pat(sml_hir::Pat::Typed(pat, ty), ptr))
             }
-            (Some(ty), None) => sml_hir::Pat::Typed(st.pat(name(lab.as_str()), ptr.clone()), ty),
+            (Some(ty), None) => sml_hir::Pat::Typed(st.pat(name(lab.as_str()), ptr), ty),
             (None, Some(pat)) => sml_hir::Pat::As(lab.clone(), pat),
             (None, None) => name(lab.as_str()),
           };
-          Some((sml_hir::Lab::Name(lab), st.pat(pat, ptr.clone())))
+          Some((sml_hir::Lab::Name(lab), st.pat(pat, ptr)))
         }
       });
       let rows: Vec<_> = rows.collect();
@@ -112,8 +112,8 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       let pats: Vec<_> = pat.pat_args().map(|x| get(st, flavor, x.pat())).collect();
       pats.into_iter().rev().fold(name("nil"), |ac, x| {
         let cons = sml_path::Path::one(str_util::Name::new("::"));
-        let ac = st.pat(ac, ptr.clone());
-        sml_hir::Pat::Con(cons, Some(st.pat(tuple([x, ac]), ptr.clone())))
+        let ac = st.pat(ac, ptr);
+        sml_hir::Pat::Con(cons, Some(st.pat(tuple([x, ac]), ptr)))
       })
     }
     ast::Pat::VectorPat(pat) => {
@@ -137,7 +137,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       let func = sml_path::Path::one(str_util::Name::new(pat.name_star_eq()?.token.text()));
       let lhs = get(st, flavor, pat.lhs());
       let rhs = get(st, flavor, pat.rhs());
-      let arg = st.pat(tuple([lhs, rhs]), ptr.clone());
+      let arg = st.pat(tuple([lhs, rhs]), ptr);
       sml_hir::Pat::Con(func, Some(arg))
     }
     ast::Pat::TypedPat(pat) => {
@@ -153,7 +153,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       let name = match lhs {
         ast::Pat::TypedPat(pat) => {
           let ty = ty::get(st, pat.ty());
-          rhs = st.pat(sml_hir::Pat::Typed(rhs, ty), ptr.clone());
+          rhs = st.pat(sml_hir::Pat::Typed(rhs, ty), ptr);
           get_pat_name(st, pat.pat()?)?
         }
         pat => get_pat_name(st, pat)?,
