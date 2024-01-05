@@ -15,7 +15,7 @@ use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Cfg {
-  pub(crate) cfg: config::Cfg,
+  pub(crate) inner: config::Cfg,
   pub(crate) gen: Generalizable,
   pub(crate) rec: bool,
 }
@@ -94,7 +94,7 @@ fn get_(
       // @def(34)
       if is_var {
         let ty = st.syms_tys.tys.meta_var(cfg.gen);
-        insert_name(st, pat_idx.into(), cfg.cfg, ve, path.last().clone(), ty);
+        insert_name(st, pat_idx.into(), cfg.inner, ve, path.last().clone(), ty);
         // a little WET with val_info_for_var
         if let Mode::Dynamics = st.info.mode {
           assert!(st.pat_id_statuses.insert(pat_idx, IdStatus::Val).is_none());
@@ -206,7 +206,7 @@ fn get_(
       if !val_info_for_var(cx.env.val_env.get(name)) {
         st.err(pat_idx, ErrorKind::InvalidAsPatName(name.clone()));
       }
-      insert_name(st, pat_idx.into(), cfg.cfg, ve, name.clone(), ty);
+      insert_name(st, pat_idx.into(), cfg.inner, ve, name.clone(), ty);
       (pm_pat, ty)
     }
     sml_hir::Pat::Or(or_pat) => {

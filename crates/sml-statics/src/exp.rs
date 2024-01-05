@@ -360,7 +360,7 @@ fn get_matcher(
   // @def(14)
   for arm in matcher {
     let mut ve = ValEnv::default();
-    let cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes, rec: false };
+    let cfg = pat::Cfg { inner: cfg, gen: Generalizable::Sometimes, rec: false };
     let (pm_pat, pat_ty) = pat::get(st, cfg, ars, cx, &mut ve, arm.pat);
     for (name, new_vi) in ve.iter() {
       let Some(old_vi) = cx.env.val_env.get(name) else { continue };
@@ -369,7 +369,7 @@ fn get_matcher(
     }
     let mut cx = cx.clone();
     cx.env.val_env.append(&mut ve);
-    let exp_ty = get(st, cfg.cfg, &cx, ars, arm.exp);
+    let exp_ty = get(st, cfg.inner, &cx, ars, arm.exp);
     unify(st, arm.pat.map_or(idx, Into::into), param_ty, pat_ty);
     unify(st, arm.exp.map_or(idx, Into::into), res_ty, exp_ty);
     pats.push(pm_pat);

@@ -62,7 +62,7 @@ fn get_one(
       let mut ve = ValEnv::default();
       let mut src_exp = FxHashMap::<str_util::Name, sml_hir::ExpIdx>::default();
       let exp_cfg = Cfg { mark_defined: true };
-      let mut pat_cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes, rec: false };
+      let mut pat_cfg = pat::Cfg { inner: cfg, gen: Generalizable::Sometimes, rec: false };
       let marker = st.syms_tys.syms.mark();
       while let Some(val_bind) = val_binds.get(idx) {
         if val_bind.rec {
