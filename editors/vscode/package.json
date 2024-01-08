@@ -22,9 +22,8 @@
   ],
   "main": "out/main.js",
   "scripts": {
-    "build-base": "esbuild src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node18",
-    "build-debug": "npm run build-base",
-    "build-release": "npm run build-base -- --minify",
+    "build-debug": "esbuild src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node18",
+    "build-release": "npm run build-debug -- --minify",
     "check": "tsc"
   },
   "dependencies": {

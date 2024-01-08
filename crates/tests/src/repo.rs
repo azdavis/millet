@@ -428,21 +428,19 @@ fn vs_code_config() {
 fn node_version() {
   let version = "18";
   let package_json: serde_json::Value = serde_json::from_str(PACKAGE_JSON).unwrap();
-  let build_base = package_json
+  let npm_build = package_json
     .as_object()
     .unwrap()
     .get("scripts")
     .unwrap()
     .as_object()
     .unwrap()
-    .get("build-base")
+    .get("build-debug")
     .unwrap()
     .as_str()
     .unwrap();
-  let mut split = build_base.split("--target=node");
-  split.next().unwrap();
-  assert_eq!(split.next().unwrap(), version);
-  assert!(split.next().is_none());
+  let (_, npm_build_version) = npm_build.split_once("--target=node").unwrap();
+  assert_eq!(npm_build_version, version);
   let readme = include_str!("../../../README.md");
   let readme_table_line =
     readme.lines().find_map(|line| line.strip_prefix("| [Node.js][node]")).unwrap();
