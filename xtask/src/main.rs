@@ -122,7 +122,7 @@ fn run(c: &mut Command) -> Result<()> {
 fn run_ci() -> Result<()> {
   run(Command::new("cargo").args(["build", "--locked"]))?;
   run(Command::new("cargo").args(["fmt", "--", "--check"]))?;
-  run(Command::new("cargo").args(["clippy"]))?;
+  run(Command::new("cargo").args(["clippy", "--locked"]))?;
   run(Command::new("cargo").args(["test", "--locked"]))?;
   if env_var_enabled("SKIP_FULL_STD_BASIS") {
     println!("note: SKIP_FULL_STD_BASIS env var was set to 1");
