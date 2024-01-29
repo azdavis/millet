@@ -281,12 +281,6 @@ Inspired by the [cov-mark crate](https://docs.rs/cov-mark/latest/cov_mark/), but
 
 A good default panic hook that shows backtraces and exhorts the reader to file a bug report.
 
-### `crates/chain-map`
-
-A map optimized for the use-case of cloning and adding a few elements onto the clone. Used in the statics. Named after Python's [collection][].
-
-[collection]: https://docs.python.org/3/library/collections.html#collections.ChainMap
-
 ### `crates/config`
 
 The format for the optional Millet configuration file.

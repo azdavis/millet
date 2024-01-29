@@ -13,6 +13,7 @@ test = false
 doctest = false
 
 [dependencies]
+chain-map.workspace = true
 diagnostic.workspace = true
 elapsed.workspace = true
 fast-hash.workspace = true
@@ -23,7 +24,6 @@ pattern-match.workspace = true
 str-util.workspace = true
 uniq.workspace = true
 
-chain-map.path = "../chain-map"
 config.path = "../config"
 cov-mark.path = "../cov-mark"
 sml-hir.path = "../sml-hir"
