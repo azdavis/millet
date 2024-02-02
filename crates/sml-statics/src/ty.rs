@@ -24,7 +24,6 @@ pub(crate) fn get(
   let Some(ty) = ty else { return Ty::NONE };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
-  // let mut defs = FxH
   let ret = match &ars.ty[ty] {
     sml_hir::Ty::Hole => {
       st.err(ty, ErrorKind::TyHole);
