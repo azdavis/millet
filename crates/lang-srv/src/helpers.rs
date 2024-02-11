@@ -73,14 +73,13 @@ pub(crate) fn apply_changes(
   let mut index_valid = u32::MAX;
   for change in content_changes {
     // The None case can't happen as we have handled it above already
-    if let Some(range) = change.range {
-      if index_valid <= range.end.line {
-        pos_db = text_pos::PositionDb::new(contents);
-      }
-      index_valid = range.start.line;
-      if let Some(range) = pos_db.text_range_utf16(analysis_range(range)) {
-        contents.replace_range(std::ops::Range::<usize>::from(range), &change.text);
-      }
+    let Some(range) = change.range else { continue };
+    if index_valid <= range.end.line {
+      pos_db = text_pos::PositionDb::new(contents);
+    }
+    index_valid = range.start.line;
+    if let Some(range) = pos_db.text_range_utf16(analysis_range(range)) {
+      contents.replace_range(std::ops::Range::<usize>::from(range), &change.text);
     }
   }
 }
