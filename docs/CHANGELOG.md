@@ -4,6 +4,10 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 Millet technically follows [SemVer][sem-ver], but the major version is zero, and it probably will be [for a while][zero-ver].
 
+## v0.14.3
+
+- Try to crash less when incrementally updating a file.
+
 ## v0.14.2
 
 - Documentation and go-to-def for structures ascribing to signatures works for both the structure and the signature parts of the definitions contained inside.
