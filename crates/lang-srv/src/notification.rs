@@ -74,7 +74,15 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
       let Some(text) = root.input.sources.get_mut(&path) else {
         bail!("no source in the input for DidChangeTextDocument")
       };
-      helpers::apply_changes(text, params.content_changes);
+      let text = std::panic::AssertUnwindSafe(text);
+      let res = std::panic::catch_unwind(|| {
+        let mut text = text;
+        helpers::apply_changes(*text, params.content_changes);
+      });
+      match res {
+        Ok(()) => {}
+        Err(e) => bail!("apply_changes panicked: {e:?}"),
+      }
       if st.cx.options.diagnostics.on_change {
         diagnostics::try_publish(st);
       } else {
