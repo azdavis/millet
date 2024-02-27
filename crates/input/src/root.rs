@@ -23,7 +23,7 @@ impl Root {
     errors: &mut Vec<Error>,
   ) -> Root
   where
-    F: paths::FileSystem,
+    F: paths_glob::FileSystem,
   {
     let mut root_group_source = ErrorSource::default();
     let mut root_group_paths = Vec::<GroupPathBuf>::new();
@@ -215,7 +215,7 @@ fn glob_root_group_paths<F>(
   config_path: &Path,
   errors: &mut Vec<Error>,
 ) where
-  F: paths::FileSystem,
+  F: paths_glob::FileSystem,
 {
   let glob = str_path(ErrorSource { path: Some(config_path.to_owned()), range: None }, path);
   let glob = match glob {
@@ -225,7 +225,7 @@ fn glob_root_group_paths<F>(
       return;
     }
   };
-  let paths = match fs.glob(glob) {
+  let paths = match F::glob(glob) {
     Ok(x) => x,
     Err(e) => {
       errors.push(Error::new(
@@ -236,15 +236,15 @@ fn glob_root_group_paths<F>(
       return;
     }
   };
-  for path in paths {
+  for path in fs.walk(&paths) {
     let path = match path {
       Ok(x) => x,
       Err(e) => {
-        errors.push(Error::from_io(config_path.to_owned(), e.into_error()));
+        errors.push(Error::from_io(config_path.to_owned(), e.into()));
         continue;
       }
     };
-    let path = root.as_path().join(path);
+    let path = root.as_path().join(F::entry_path(&path));
     match GroupPathBuf::new(fs, path.clone()) {
       Some(path) => root_group_paths.push(path),
       None => errors.push(Error::new(

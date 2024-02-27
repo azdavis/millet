@@ -42,7 +42,7 @@ impl Input {
   /// When the path has no parent, or other such weird cases.
   pub fn new<F>(fs: &F, paths: &mut paths::Store, root: &paths::CanonicalPathBuf) -> Input
   where
-    F: paths::FileSystem,
+    F: paths_glob::FileSystem,
   {
     let mut ret = Input::default();
     let root = root::Root::new(fs, paths, root, &mut ret.errors);

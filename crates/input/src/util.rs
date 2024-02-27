@@ -20,7 +20,7 @@ pub(crate) enum ErrorKind {
   Duplicate(str_util::Name),
   InvalidErrorCode(str_util::SmolStr, diagnostic::ParseCodeError),
   SourcePathNotInFiles,
-  GlobPattern(paths::PatternError),
+  GlobPattern(paths_glob::BuildError),
   EmptyGlob(str_util::SmolStr),
   FunSig,
   NonUtf8Path,
@@ -197,7 +197,7 @@ where
   F: paths::FileSystem,
 {
   let canonical = canonicalize(fs, path, source)?;
-  Ok(paths.get_id(&canonical))
+  Ok(paths.get_id(canonical.as_canonical_path()))
 }
 
 pub(crate) fn get_path_id_in_group<F>(
@@ -216,7 +216,7 @@ where
   };
   let path = group.path.as_path().parent().expect("group path with no parent").join(path);
   let canonical = canonicalize(fs, path.as_path(), source.clone())?;
-  let id = paths.get_id(&canonical);
+  let id = paths.get_id(canonical.as_canonical_path());
   Ok((id, canonical, source))
 }
 
@@ -228,7 +228,7 @@ pub(crate) fn canonicalize<F>(
 where
   F: paths::FileSystem,
 {
-  fs.canonicalize(path).map_err(|e| Error::new(source, path.to_owned(), ErrorKind::Io(e)))
+  fs.canonical(path).map_err(|e| Error::new(source, path.to_owned(), ErrorKind::Io(e)))
 }
 
 pub(crate) fn read_file<F>(fs: &F, source: ErrorSource, path: &Path) -> Result<String>
@@ -296,13 +296,13 @@ impl StartedGroup {
   where
     F: paths::FileSystem,
   {
-    let path = paths.get_path(cur.path).clone();
+    let path = paths.get_path(cur.path).to_owned();
     let contents = match fs.read_to_string(path.as_path()) {
       Ok(x) => x,
       Err(inner) => {
         return Err(IoError {
           error_path: path,
-          source_path: paths.get_path(cur.parent).clone(),
+          source_path: paths.get_path(cur.parent).to_owned(),
           range: cur.range,
           inner,
         })

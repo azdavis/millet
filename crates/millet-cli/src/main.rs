@@ -49,7 +49,7 @@ fn run() -> usize {
     }
   };
   let fs = paths::RealFileSystem::default();
-  let root = match fs.canonicalize(root.as_path()) {
+  let root = match fs.canonical(root.as_path()) {
     Ok(x) => x,
     Err(e) => {
       show_input_error(root.as_path(), &input::Error::from_io(root.clone(), e));

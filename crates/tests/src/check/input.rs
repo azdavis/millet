@@ -27,4 +27,4 @@ where
 /// shouldn't fail because the root should be readable. (Otherwise, where are these tests being
 /// run?)
 pub(crate) static ROOT: Lazy<paths::CanonicalPathBuf> =
-  Lazy::new(|| paths::RealFileSystem::default().canonicalize(std::path::Path::new("/")).unwrap());
+  Lazy::new(|| paths::RealFileSystem::default().canonical(std::path::Path::new("/")).unwrap());

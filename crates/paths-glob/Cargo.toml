@@ -1,0 +1,17 @@
+[package]
+name = "paths-glob"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+test = true
+doctest = true
+
+[dependencies]
+paths.workspace = true
+wax.workspace = true

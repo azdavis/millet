@@ -273,6 +273,10 @@ Depends on `analysis` and a bunch of third party crates to implement a language 
 
 These crates don't really fit in anywhere else.
 
+### `crates/paths-glob`
+
+Extends the `paths` crate with globs (like `**/*.sml`).
+
 ### `crates/cov-mark`
 
 Inspired by the [cov-mark crate](https://docs.rs/cov-mark/latest/cov_mark/), but doesn't use linker shenanigans.

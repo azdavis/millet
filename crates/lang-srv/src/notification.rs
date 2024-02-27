@@ -29,7 +29,7 @@ fn try_update_input(
   let mut ret = Vec::<paths::PathId>::with_capacity(changes.len());
   for change in changes {
     let path = convert::canonical_path_buf(&cx.fs, &change.uri)?;
-    let path_id = cx.paths.get_id(&path);
+    let path_id = cx.paths.get_id(path.as_canonical_path());
     ret.push(path_id);
     let mut entry = match input.sources.entry(path_id) {
       Entry::Occupied(x) => x,

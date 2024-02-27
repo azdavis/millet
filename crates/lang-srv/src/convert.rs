@@ -13,7 +13,7 @@ where
     bail!("not a file url: {url}")
   }
   match url.to_file_path() {
-    Ok(pb) => Ok(fs.canonicalize(pb.as_path())?),
+    Ok(pb) => Ok(fs.canonical(pb.as_path())?),
     Err(()) => bail!("couldn't make a URL into a file path: {url}"),
   }
 }
@@ -118,7 +118,7 @@ pub(crate) fn url_to_path_id<F>(
 where
   F: paths::FileSystem,
 {
-  Ok(paths.get_id(&canonical_path_buf(fs, url)?))
+  Ok(paths.get_id(canonical_path_buf(fs, url)?.as_canonical_path()))
 }
 
 pub(crate) fn text_doc_pos_params<F>(
