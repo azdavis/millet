@@ -43,6 +43,12 @@ Millet is also available in various other package managers and repositories. The
 - [Homebrew][]
 - [Nixpkgs][]
 
+There is some support for Millet in various editors as well:
+
+- [Emacs](https://git.savannah.gnu.org/cgit/emacs.git/commit/?id=477eb882b57b3defd43ea8dd9510cfdf5fd9ee79)
+- [Emacs LSP](https://github.com/emacs-lsp/lsp-mode)
+- [Neovim](https://github.com/neovim/nvim-lspconfig)
+
 ## Community
 
 Millet is affiliated with Project Savanna, a project whose goal is to improve tooling for Standard ML.
