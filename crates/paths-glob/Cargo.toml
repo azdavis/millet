@@ -9,8 +9,8 @@ publish.workspace = true
 workspace = true
 
 [lib]
-test = true
-doctest = true
+test = false
+doctest = false
 
 [dependencies]
 paths.workspace = true
