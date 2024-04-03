@@ -4,6 +4,16 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 Millet technically follows [SemVer][sem-ver], but the major version is zero, and it probably will be [for a while][zero-ver].
 
+## main
+
+- Accept implicit type variable scoping in `exception`s within another declaration, as in:
+
+  ```sml
+  fun f x =
+    let exception Poly of 'a
+    in raise Poly x end
+  ```
+
 ## v0.14.3
 
 - Try to crash less when incrementally updating a file.

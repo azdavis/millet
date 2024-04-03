@@ -234,10 +234,20 @@ fn get_dec_one(
       get_dec(st, ars, scope, mode, local_dec);
       get_dec(st, ars, scope, mode, in_dec);
     }
+    sml_hir::Dec::Exception(ex_binds) => match mode {
+      Mode::Get(ac) => {
+        for ex_bind in ex_binds {
+          match *ex_bind {
+            sml_hir::ExBind::New(_, Some(ty)) => get_ty(ars, ac, ty),
+            sml_hir::ExBind::New(..) | sml_hir::ExBind::Copy(..) => {}
+          }
+        }
+      }
+      Mode::Set => {}
+    },
     sml_hir::Dec::Ty(_)
     | sml_hir::Dec::Datatype(_, _)
     | sml_hir::Dec::DatatypeCopy(_, _)
-    | sml_hir::Dec::Exception(_)
     | sml_hir::Dec::Open(_) => {}
   }
 }

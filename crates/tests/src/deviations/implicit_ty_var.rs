@@ -50,7 +50,6 @@ fn exception() {
 fun f x =
   let
     exception Poly of 'a
-(**                   ^^ undefined *)
   in
     raise Poly x
   end
