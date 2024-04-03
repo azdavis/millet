@@ -552,10 +552,7 @@ fn version() {
 
   for member in METADATA.get("workspace_members").unwrap().as_array().unwrap() {
     let member = member.as_str().unwrap();
-    let mut iter = member.split_ascii_whitespace();
-    // package name
-    iter.next();
-    let member_version = iter.next().unwrap();
+    let (_, member_version) = member.split_once('#').unwrap();
     assert_eq!(pkg_json_ver, member_version);
   }
 
