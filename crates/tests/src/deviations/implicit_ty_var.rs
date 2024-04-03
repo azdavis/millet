@@ -17,7 +17,7 @@ fn datatype() {
 fun f x =
   let
     datatype t = Poly of 'a
-(**                      ^^ undefined *)
+(**                      ^^ not allowed here *)
   in
     Poly x; 4
   end
@@ -34,7 +34,7 @@ fn typ() {
 fun f x =
   let
     type t = 'a
-(**          ^^ undefined *)
+(**          ^^ not allowed here *)
   in
     x: t
   end

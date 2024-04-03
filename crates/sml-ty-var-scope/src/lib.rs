@@ -283,11 +283,41 @@ fn get_dec_one(
       }
       Mode::FilterBoundAbove => {}
     },
-    sml_hir::Dec::Ty(_)
-    | sml_hir::Dec::Datatype(_, _)
-    | sml_hir::Dec::Abstype(..)
-    | sml_hir::Dec::DatatypeCopy(..)
-    | sml_hir::Dec::Open(..) => {}
+    sml_hir::Dec::Ty(ty_binds) => match mode {
+      Mode::GetUnguarded(ac) => get_ty_binds(ars, ac, ty_binds),
+      Mode::FilterBoundAbove => {}
+    },
+    sml_hir::Dec::Datatype(dat_binds, ty_binds) => match mode {
+      Mode::GetUnguarded(ac) => {
+        get_ty_binds(ars, ac, ty_binds);
+        for dat_bind in dat_binds {
+          let mut dat_ac = TyVarSet::default();
+          for con_bind in &dat_bind.cons {
+            if let Some(ty) = con_bind.ty {
+              get_ty(ars, &mut dat_ac, ty);
+            }
+          }
+          for ty_var in &dat_bind.ty_vars {
+            dat_ac.remove(ty_var);
+          }
+          ac.extend(dat_ac);
+        }
+      }
+      Mode::FilterBoundAbove => {}
+    },
+    // Abstype is not implemented. DatatypeCopy and Open contain only names/paths.
+    sml_hir::Dec::Abstype(..) | sml_hir::Dec::DatatypeCopy(..) | sml_hir::Dec::Open(..) => {}
+  }
+}
+
+fn get_ty_binds(ars: &sml_hir::Arenas, ac: &mut TyVarSet, ty_binds: &[sml_hir::TyBind]) {
+  for ty_bind in ty_binds {
+    let mut ty_ac = TyVarSet::default();
+    get_ty(ars, &mut ty_ac, ty_bind.ty);
+    for ty_var in &ty_bind.ty_vars {
+      ty_ac.remove(ty_var);
+    }
+    ac.extend(ty_ac);
   }
 }
 
