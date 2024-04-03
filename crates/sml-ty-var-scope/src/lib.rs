@@ -235,8 +235,8 @@ fn get_dec_one(
             Mode::FilterBoundAbove => unreachable!("mode changed"),
           };
           // we want only free occurrences, so ignore those already explicitly in scope
-          for x in &scope {
-            ac.remove(x);
+          for ty_var in &scope {
+            ac.remove(ty_var);
           }
           assert!(st.val_dec.insert(dec, ac).is_none());
         }
@@ -255,8 +255,8 @@ fn get_dec_one(
           // this one, fulfilling condition 2.
           //
           // note that because we used `get_mut`, this updates `st` itself for later.
-          for x in &scope {
-            ty_vars.remove(x);
+          for ty_var in &scope {
+            ty_vars.remove(ty_var);
           }
           // we note that these ty vars are now (implicitly) bound, so we don't re-bind them in any
           // val decs contained in this one.
