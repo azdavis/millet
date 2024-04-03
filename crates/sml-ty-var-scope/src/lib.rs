@@ -41,16 +41,12 @@ pub fn get(ars: &mut sml_hir::Arenas, root: &[sml_hir::StrDecIdx]) {
   get_str_dec(&mut st, ars, root);
   // now we know what we need to do, we just need to do it.
   for (dec, implicit) in st.val_dec {
-    match &mut ars.dec[dec] {
-      sml_hir::Dec::Val(ty_vars, _, _) => ty_vars.extend(implicit),
-      _ => unreachable!("only val may implicitly bind ty vars"),
-    }
+    let sml_hir::Dec::Val(ty_vars, _, _) = &mut ars.dec[dec] else { unreachable!("Dec not Val") };
+    ty_vars.extend(implicit);
   }
   for (spec, implicit) in st.val_spec {
-    match &mut ars.spec[spec] {
-      sml_hir::Spec::Val(ty_vars, _) => ty_vars.extend(implicit),
-      _ => unreachable!("only val may implicitly bind ty vars"),
-    }
+    let sml_hir::Spec::Val(ty_vars, _) = &mut ars.spec[spec] else { unreachable!("Spec not Val") };
+    ty_vars.extend(implicit);
   }
 }
 
