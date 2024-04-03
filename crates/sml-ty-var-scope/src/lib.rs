@@ -229,7 +229,6 @@ fn get_dec_one(
         }
       }
     }
-    sml_hir::Dec::Abstype(_, _, dec) => get_dec(st, ars, scope, mode, dec),
     sml_hir::Dec::Local(local_dec, in_dec) => {
       get_dec(st, ars, scope, mode, local_dec);
       get_dec(st, ars, scope, mode, in_dec);
@@ -247,8 +246,9 @@ fn get_dec_one(
     },
     sml_hir::Dec::Ty(_)
     | sml_hir::Dec::Datatype(_, _)
-    | sml_hir::Dec::DatatypeCopy(_, _)
-    | sml_hir::Dec::Open(_) => {}
+    | sml_hir::Dec::Abstype(..)
+    | sml_hir::Dec::DatatypeCopy(..)
+    | sml_hir::Dec::Open(..) => {}
   }
 }
 
