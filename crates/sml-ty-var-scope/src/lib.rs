@@ -71,9 +71,9 @@ fn get_str_dec_one(st: &mut St, ars: &sml_hir::Arenas, str_dec: sml_hir::StrDecI
     // the only mildly interesting case. we go over the dec twice. first, we get unguarded type
     // variables, then we determine which ones should be bound where.
     sml_hir::StrDec::Dec(dec) => {
-      let mut mode = Mode::Get(TyVarSet::default());
+      let mut mode = Mode::GetUnguarded(TyVarSet::default());
       get_dec(st, ars, &TyVarSet::default(), &mut mode, dec);
-      mode = Mode::Set;
+      mode = Mode::FilterBoundAbove;
       get_dec(st, ars, &TyVarSet::default(), &mut mode, dec);
     }
     sml_hir::StrDec::Structure(str_binds) => {
@@ -169,10 +169,12 @@ fn get_spec_one(st: &mut St, ars: &sml_hir::Arenas, spec: sml_hir::SpecIdx) {
 /// Reifying the mode not is probably not the most efficient way to do this, since then we have to
 /// do a lot of runtime branching on the mode.
 enum Mode {
-  /// We're getting the unguarded type variables in this declaration.
-  Get(TyVarSet),
-  /// We finished getting the type variables, and now we're setting them to binding sites.
-  Set,
+  /// We're getting the unguarded ty vars in this declaration.
+  GetUnguarded(TyVarSet),
+  /// We finished getting the unguarded ty vars. Now we're re-going over the decs to see
+  /// exactly where the ty vars should be bound, by filtering out ty vars that have already been
+  /// implicitly bound by a containing val dec.
+  FilterBoundAbove,
 }
 
 /// this just goes over each single dec in sequence.
@@ -199,37 +201,38 @@ fn get_dec_one(
   match &ars.dec[dec] {
     // the most interesting case.
     sml_hir::Dec::Val(ty_vars, val_binds, _) => {
-      // `scope` is used in both Get and Set modes, but slightly differently each time.
+      // `scope` is used in both GetUnguarded and FilterBoundAbove modes, but slightly differently
+      // each time.
       //
-      // in Get mode, `scope` is the set of ty vars for which there is a containing user-written ty
-      // var binder that has **explicitly** brought that ty var into scope. .
+      // in GetUnguarded mode, `scope` is the set of ty vars for which there is a containing
+      // user-written ty var binder that has **explicitly** brought that ty var into scope. .
       //
-      // in Set mode, `scope` is the set of ty vars for which there is a containing `val` decs that
-      // we have determined will **implicitly** bring that ty var into scope.
+      // in FilterBoundAbove mode, `scope` is the set of ty vars for which there is a containing
+      // `val` decs that we have determined will **implicitly** bring that ty var into scope.
       let mut scope = scope.clone();
       match mode {
-        Mode::Get(_) => {
+        Mode::GetUnguarded(_) => {
           scope.extend(ty_vars.iter().cloned());
-          // note: this shadows the original mode passed in from above. we use a completely new get
-          // mode for this val dec. this is because we want the Get accumulator to contain those
-          // type variables which are **unguarded** in this dec.
+          // we use a completely new mode for this val dec, shadowing the original mode passed in
+          // from above. this is because we want the GetUnguarded accumulator to contain those type
+          // variables which are **unguarded** in this dec.
           //
           // from the definition, paraphrased (p 20):
           //
-          // > A free occurrence of a type variable in a value declaration is said to be unguarded
-          // > if the occurrence is not part of a smaller value declaration within that value
-          // > declaration. In this case we say that 'a occurs unguarded in the value declaration.
-          let mut mode = Mode::Get(TyVarSet::default());
+          // > A free occurrence of a ty var in a val dec is said to be unguarded if the occurrence
+          // > is not part of a smaller val dec within that value declaration. In this case we say
+          // > that 'a occurs unguarded in the val dec.
+          let mut mode = Mode::GetUnguarded(TyVarSet::default());
           for val_bind in val_binds {
             match &mut mode {
-              Mode::Get(ac) => get_pat(ars, ac, val_bind.pat),
-              Mode::Set => unreachable!("mode changed to Set"),
+              Mode::GetUnguarded(ac) => get_pat(ars, ac, val_bind.pat),
+              Mode::FilterBoundAbove => unreachable!("mode changed"),
             }
             get_exp(st, ars, &scope, &mut mode, val_bind.exp);
           }
           let mut ac = match mode {
-            Mode::Get(ac) => ac,
-            Mode::Set => unreachable!("mode changed to Set"),
+            Mode::GetUnguarded(ac) => ac,
+            Mode::FilterBoundAbove => unreachable!("mode changed"),
           };
           // we want only free occurrences, so ignore those already explicitly in scope
           for x in &scope {
@@ -237,28 +240,28 @@ fn get_dec_one(
           }
           assert!(st.val_dec.insert(dec, ac).is_none());
         }
-        Mode::Set => {
-          // from the definition, paraphrased (p 20), continuing from the "unguarded" discussion
-          // above:
+        Mode::FilterBoundAbove => {
+          // from the definition, paraphrased, continuing from the "unguarded" discussion above:
           //
-          // > We say that 'a is implicitly scoped at a particular value declaration in a program
-          // > if:
+          // > We say that 'a is implicitly scoped at a particular val dec in a program if:
           // >
-          // > 1. 'a occurs unguarded in this value declaration, and
-          // > 2. 'a does not occur unguarded in any larger value declaration containing the given
-          // >    one.
+          // > 1. 'a occurs unguarded in this val dec, and
+          // > 2. 'a does not occur unguarded in any larger val dec containing the given one.
           //
           // here we get the ty vars, which are currently exactly the unguarded variables for this
           // dec, fulfilling condition 1.
-          let ty_vars = st.val_dec.get_mut(&dec).expect("Set without preceding Get");
+          let ty_vars = st.val_dec.get_mut(&dec).expect("didn't GetUnguarded");
           // we then mutate to remove any variables implicitly scoped by any val decs that contain
-          // this one, fulfilling condition 2. note that this updates `st` as well for later.
+          // this one, fulfilling condition 2.
+          //
+          // note that because we used `get_mut`, this updates `st` itself for later.
           for x in &scope {
             ty_vars.remove(x);
           }
           // we note that these ty vars are now (implicitly) bound, so we don't re-bind them in any
           // val decs contained in this one.
           scope.extend(ty_vars.iter().cloned());
+          // finally, we recur.
           for val_bind in val_binds {
             get_exp(st, ars, &scope, mode, val_bind.exp);
           }
@@ -270,7 +273,7 @@ fn get_dec_one(
       get_dec(st, ars, scope, mode, in_dec);
     }
     sml_hir::Dec::Exception(ex_binds) => match mode {
-      Mode::Get(ac) => {
+      Mode::GetUnguarded(ac) => {
         for ex_bind in ex_binds {
           match *ex_bind {
             sml_hir::ExBind::New(_, Some(ty)) => get_ty(ars, ac, ty),
@@ -278,7 +281,7 @@ fn get_dec_one(
           }
         }
       }
-      Mode::Set => {}
+      Mode::FilterBoundAbove => {}
     },
     sml_hir::Dec::Ty(_)
     | sml_hir::Dec::Datatype(_, _)
@@ -289,7 +292,8 @@ fn get_dec_one(
 }
 
 /// mostly passes the `mode` down to further fns that need it. also uses the mode to explore further
-/// parts of the expression in `Get` mode, but ignores those parts in `Set` mode.
+/// parts of the expression in `GetUnguarded` mode, but ignores those parts in `FilterBoundAbove`
+/// mode.
 fn get_exp(
   st: &mut St,
   ars: &sml_hir::Arenas,
@@ -316,8 +320,8 @@ fn get_exp(
       get_exp(st, ars, scope, mode, *head);
       for arm in matcher_arms {
         match mode {
-          Mode::Get(ac) => get_pat(ars, ac, arm.pat),
-          Mode::Set => {}
+          Mode::GetUnguarded(ac) => get_pat(ars, ac, arm.pat),
+          Mode::FilterBoundAbove => {}
         }
         get_exp(st, ars, scope, mode, arm.exp);
       }
@@ -326,8 +330,8 @@ fn get_exp(
     sml_hir::Exp::Fn(matcher_arms, _) => {
       for arm in matcher_arms {
         match mode {
-          Mode::Get(ac) => get_pat(ars, ac, arm.pat),
-          Mode::Set => {}
+          Mode::GetUnguarded(ac) => get_pat(ars, ac, arm.pat),
+          Mode::FilterBoundAbove => {}
         }
         get_exp(st, ars, scope, mode, arm.exp);
       }
@@ -335,8 +339,8 @@ fn get_exp(
     sml_hir::Exp::Typed(exp, ty, _) => {
       get_exp(st, ars, scope, mode, *exp);
       match mode {
-        Mode::Get(ac) => get_ty(ars, ac, *ty),
-        Mode::Set => {}
+        Mode::GetUnguarded(ac) => get_ty(ars, ac, *ty),
+        Mode::FilterBoundAbove => {}
       }
     }
     sml_hir::Exp::Vector(exps) => {
