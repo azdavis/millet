@@ -103,7 +103,6 @@ fn get_str_exp(st: &mut St, ars: &sml_hir::Arenas, str_exp: sml_hir::StrExpIdx) 
   let Some(str_exp) = str_exp else { return };
   match &ars.str_exp[str_exp] {
     sml_hir::StrExp::Struct(str_dec) => get_str_dec(st, ars, str_dec),
-    sml_hir::StrExp::Path(_) => {}
     sml_hir::StrExp::Ascription(str_exp, _, sig_exp) => {
       get_str_exp(st, ars, *str_exp);
       get_sig_exp(st, ars, *sig_exp);
@@ -113,6 +112,7 @@ fn get_str_exp(st: &mut St, ars: &sml_hir::Arenas, str_exp: sml_hir::StrExpIdx) 
       get_str_dec(st, ars, str_dec);
       get_str_exp(st, ars, *str_exp);
     }
+    sml_hir::StrExp::Path(_) => {}
   }
 }
 
@@ -120,10 +120,8 @@ fn get_sig_exp(st: &mut St, ars: &sml_hir::Arenas, sig_exp: sml_hir::SigExpIdx) 
   let Some(sig_exp) = sig_exp else { return };
   match &ars.sig_exp[sig_exp] {
     sml_hir::SigExp::Spec(spec) => get_spec(st, ars, spec),
+    sml_hir::SigExp::Where(sig_exp, _) => get_sig_exp(st, ars, *sig_exp),
     sml_hir::SigExp::Name(_) => {}
-    sml_hir::SigExp::Where(sig_exp, _) => {
-      get_sig_exp(st, ars, *sig_exp);
-    }
   }
 }
 
@@ -301,7 +299,6 @@ fn get_exp(
 ) {
   let Some(exp) = exp else { return };
   match &ars.exp[exp] {
-    sml_hir::Exp::Hole | sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) => {}
     sml_hir::Exp::Record(rows) => {
       for &(_, exp) in rows {
         get_exp(st, ars, scope, mode, exp);
@@ -347,6 +344,7 @@ fn get_exp(
         get_exp(st, ars, scope, mode, *exp);
       }
     }
+    sml_hir::Exp::Hole | sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) => {}
   }
 }
 
@@ -354,7 +352,6 @@ fn get_exp(
 fn get_pat(ars: &sml_hir::Arenas, ac: &mut TyVarSet, pat: sml_hir::PatIdx) {
   let Some(pat) = pat else { return };
   match &ars.pat[pat] {
-    sml_hir::Pat::Wild | sml_hir::Pat::SCon(_) => {}
     sml_hir::Pat::Con(_, argument) => get_pat(ars, ac, argument.flatten()),
     sml_hir::Pat::Record { rows, .. } => {
       for &(_, pat) in rows {
@@ -376,6 +373,7 @@ fn get_pat(ars: &sml_hir::Arenas, ac: &mut TyVarSet, pat: sml_hir::PatIdx) {
         get_pat(ars, ac, pat);
       }
     }
+    sml_hir::Pat::Wild | sml_hir::Pat::SCon(_) => {}
   }
 }
 
@@ -383,7 +381,8 @@ fn get_pat(ars: &sml_hir::Arenas, ac: &mut TyVarSet, pat: sml_hir::PatIdx) {
 fn get_ty(ars: &sml_hir::Arenas, ac: &mut TyVarSet, ty: sml_hir::TyIdx) {
   let Some(ty) = ty else { return };
   match &ars.ty[ty] {
-    sml_hir::Ty::Hole => {}
+    // the only slightly interesting case, where we note the ty variable we saw. the other cases are
+    // just any applicable recursion.
     sml_hir::Ty::Var(tv) => {
       ac.insert(tv.clone());
     }
@@ -401,5 +400,6 @@ fn get_ty(ars: &sml_hir::Arenas, ac: &mut TyVarSet, ty: sml_hir::TyIdx) {
       get_ty(ars, ac, *param);
       get_ty(ars, ac, *res);
     }
+    sml_hir::Ty::Hole => {}
   }
 }
