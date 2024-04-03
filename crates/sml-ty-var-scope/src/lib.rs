@@ -31,13 +31,15 @@
 use fast_hash::{FxHashMap, FxHashSet};
 
 /// Computes what type variables to add.
-///
-/// It is somewhat troublesome to try to actually add the type variables as we traverse, since then
-/// the dec arena needs to be mutable, and that causes all sorts of unhappiness since we need to
-/// traverse it. Traversing and mutating a thing at the same time is not easy.
 pub fn get(ars: &mut sml_hir::Arenas, root: &[sml_hir::StrDecIdx]) {
   let mut st = St::default();
+  // it is troublesome to try to actually add the type variables as we traverse, since then the dec
+  // arena needs to be mutable, and that causes all sorts of unhappiness since we need to traverse
+  // it. traversing and mutating a thing at the same time is not easy.
+  //
+  // to solve this, we first go over the whole dec and mutate the st, not the arenas.
   get_str_dec(&mut st, ars, root);
+  // now we know what we need to do, we just need to do it.
   for (dec, implicit) in st.val_dec {
     match &mut ars.dec[dec] {
       sml_hir::Dec::Val(ty_vars, _, _) => ty_vars.extend(implicit),
@@ -61,6 +63,7 @@ struct St {
 
 type TyVarSet = FxHashSet<sml_hir::TyVar>;
 
+/// this just goes over each single str dec in sequence.
 fn get_str_dec(st: &mut St, ars: &sml_hir::Arenas, str_decs: &[sml_hir::StrDecIdx]) {
   for &str_dec in str_decs {
     get_str_dec_one(st, ars, str_dec);
@@ -69,6 +72,8 @@ fn get_str_dec(st: &mut St, ars: &sml_hir::Arenas, str_decs: &[sml_hir::StrDecId
 
 fn get_str_dec_one(st: &mut St, ars: &sml_hir::Arenas, str_dec: sml_hir::StrDecIdx) {
   match &ars.str_dec[str_dec] {
+    // the only mildly interesting case. we go over the dec twice. first, we get unguarded type
+    // variables, then we determine which ones should be bound where.
     sml_hir::StrDec::Dec(dec) => {
       let mut mode = Mode::Get(TyVarSet::default());
       get_dec(st, ars, &TyVarSet::default(), &mut mode, dec);
@@ -135,6 +140,9 @@ fn get_spec(st: &mut St, ars: &sml_hir::Arenas, specs: &[sml_hir::SpecIdx]) {
 fn get_spec_one(st: &mut St, ars: &sml_hir::Arenas, spec: sml_hir::SpecIdx) {
   match &ars.spec[spec] {
     sml_hir::Spec::Val(_, val_descs) => {
+      // specs are simpler than val decs. there's no need to do multiple passes, consider nested
+      // declarations, or scan expressions or patterns for free ty var occurrences. we need only
+      // look at the types on each val desc.
       let mut ac = TyVarSet::default();
       for val_desc in val_descs {
         get_ty(ars, &mut ac, val_desc.ty);
@@ -167,14 +175,13 @@ fn get_spec_one(st: &mut St, ars: &sml_hir::Arenas, spec: sml_hir::SpecIdx) {
 /// Reifying the mode not is probably not the most efficient way to do this, since then we have to
 /// do a lot of runtime branching on the mode.
 enum Mode {
-  /// We're getting the type variables. The set is the set of all type variables in this `val` dec.
-  /// (We'll filter out the ones already explicitly in scope later.)
+  /// We're getting the unguarded type variables in this declaration.
   Get(TyVarSet),
   /// We finished getting the type variables, and now we're setting them to binding sites.
   Set,
 }
 
-/// `scope` is already bound variables.
+/// this just goes over each single dec in sequence.
 fn get_dec(
   st: &mut St,
   ars: &sml_hir::Arenas,
@@ -187,6 +194,7 @@ fn get_dec(
   }
 }
 
+/// the most interesting fn.
 fn get_dec_one(
   st: &mut St,
   ars: &sml_hir::Arenas,
@@ -195,11 +203,28 @@ fn get_dec_one(
   dec: sml_hir::DecIdx,
 ) {
   match &ars.dec[dec] {
+    // the most interesting case.
     sml_hir::Dec::Val(ty_vars, val_binds, _) => {
+      // `scope` is used in both Get and Set modes, but slightly differently each time.
+      //
+      // in Get mode, `scope` is the set of ty vars for which there is a containing user-written ty
+      // var binder that has **explicitly** brought that ty var into scope. .
+      //
+      // in Set mode, `scope` is the set of ty vars for which there is a containing `val` decs that
+      // we have determined will **implicitly** bring that ty var into scope.
       let mut scope = scope.clone();
       match mode {
         Mode::Get(_) => {
           scope.extend(ty_vars.iter().cloned());
+          // note: this shadows the original mode passed in from above. we use a completely new get
+          // mode for this val dec. this is because we want the Get accumulator to contain those
+          // type variables which are **unguarded** in this dec.
+          //
+          // from the definition, paraphrased (p 20):
+          //
+          // > A free occurrence of a type variable in a value declaration is said to be unguarded
+          // > if the occurrence is not part of a smaller value declaration within that value
+          // > declaration. In this case we say that 'a occurs unguarded in the value declaration.
           let mut mode = Mode::Get(TyVarSet::default());
           for val_bind in val_binds {
             match &mut mode {
@@ -212,17 +237,34 @@ fn get_dec_one(
             Mode::Get(ac) => ac,
             Mode::Set => unreachable!("mode changed to Set"),
           };
+          // we want only free occurrences, so ignore those already explicitly in scope
           for x in &scope {
             ac.remove(x);
           }
           assert!(st.val_dec.insert(dec, ac).is_none());
         }
         Mode::Set => {
-          let unguarded = st.val_dec.get_mut(&dec).expect("should have been set in the Get pass");
+          // from the definition, paraphrased (p 20), continuing from the "unguarded" discussion
+          // above:
+          //
+          // > We say that 'a is implicitly scoped at a particular value declaration in a program
+          // > if:
+          // >
+          // > 1. 'a occurs unguarded in this value declaration, and
+          // > 2. 'a does not occur unguarded in any larger value declaration containing the given
+          // >    one.
+          //
+          // here we get the ty vars, which are currently exactly the unguarded variables for this
+          // dec, fulfilling condition 1.
+          let ty_vars = st.val_dec.get_mut(&dec).expect("Set without preceding Get");
+          // we then mutate to remove any variables implicitly scoped by any val decs that contain
+          // this one, fulfilling condition 2. note that this updates `st` as well for later.
           for x in &scope {
-            unguarded.remove(x);
+            ty_vars.remove(x);
           }
-          scope.extend(unguarded.iter().cloned());
+          // we note that these ty vars are now (implicitly) bound, so we don't re-bind them in any
+          // val decs contained in this one.
+          scope.extend(ty_vars.iter().cloned());
           for val_bind in val_binds {
             get_exp(st, ars, &scope, mode, val_bind.exp);
           }
@@ -252,6 +294,8 @@ fn get_dec_one(
   }
 }
 
+/// mostly passes the `mode` down to further fns that need it. also uses the mode to explore further
+/// parts of the expression in `Get` mode, but ignores those parts in `Set` mode.
 fn get_exp(
   st: &mut St,
   ars: &sml_hir::Arenas,
@@ -310,6 +354,7 @@ fn get_exp(
   }
 }
 
+/// records all encountered type variables in `ac`.
 fn get_pat(ars: &sml_hir::Arenas, ac: &mut TyVarSet, pat: sml_hir::PatIdx) {
   let Some(pat) = pat else { return };
   match &ars.pat[pat] {
@@ -338,6 +383,7 @@ fn get_pat(ars: &sml_hir::Arenas, ac: &mut TyVarSet, pat: sml_hir::PatIdx) {
   }
 }
 
+/// records all encountered type variables in `ac`.
 fn get_ty(ars: &sml_hir::Arenas, ac: &mut TyVarSet, ty: sml_hir::TyIdx) {
   let Some(ty) = ty else { return };
   match &ars.ty[ty] {
