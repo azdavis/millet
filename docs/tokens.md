@@ -685,7 +685,7 @@ val _ =
 Cause an infix identifier to temporarily act as though it is not.
 
 ```sml
-val x : int = op + (1, 2)
+val five : int = op + (2, 3)
 ```
 
 If the infix identifier is "symbolic" (`+`, `*`, `@`, etc), then no intervening whitespace between the `op` and the identifier is required.
