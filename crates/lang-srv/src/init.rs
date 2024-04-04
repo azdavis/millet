@@ -32,8 +32,20 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
     sender,
     req_queue: ReqQueue::default(),
   };
+  let last_workspace_folder = init
+    .workspace_folders
+    .and_then(|mut xs| {
+      let ret = xs.pop();
+      if !xs.is_empty() {
+        log::warn!("we only support the last workspace folder");
+      }
+      ret
+    })
+    .map(|x| x.uri.clone());
+  #[allow(deprecated)]
+  let root_uri = last_workspace_folder.or(init.root_uri);
   let mut root =
-    init.root_uri.map(|url| convert::clean_path_buf(&url).map_err(|e| (e, url))).transpose();
+    root_uri.map(|url| convert::clean_path_buf(&url).map_err(|e| (e, url))).transpose();
   let mut ret = St {
     // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
     mode: match root.as_mut().ok().and_then(Option::take) {
