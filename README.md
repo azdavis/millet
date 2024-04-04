@@ -66,7 +66,7 @@ We encourage contributions of all kinds. Please read the [contributing][] guide.
 | What            | Version       | Why                   | Required |
 | --------------- | ------------- | --------------------- | -------- |
 | [Rust][rust]    | Latest stable | Build Rust code       | Yes      |
-| [Node.js][node] | 18            | Build TypeScript code | No       |
+| [Node.js][node] | 20            | Build TypeScript code | No       |
 
 The project is mostly written in Rust, so you will need a Rust installation. It should include:
 

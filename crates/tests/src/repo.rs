@@ -427,7 +427,7 @@ fn vs_code_config() {
 
 #[test]
 fn node_version() {
-  let version = "18";
+  let version = "20";
   let package_json: serde_json::Value = serde_json::from_str(PACKAGE_JSON).unwrap();
   let npm_build = package_json
     .as_object()
