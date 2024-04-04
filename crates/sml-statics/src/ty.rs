@@ -41,12 +41,10 @@ pub(crate) fn get(
         };
         match (mode, fv_data.src) {
           // regular mode allows all ty var types, and ty vars bound at types are always valid.
-          (Mode::Regular, _) | (_, TyVarSrc::Ty) => *fv,
-          (Mode::TyRhs, TyVarSrc::Val) => {
-            st.err(ty, ErrorKind::TyVarNotAllowedForTyRhs);
-            Ty::NONE
-          }
+          (Mode::Regular, _) | (_, TyVarSrc::Ty) => {}
+          (Mode::TyRhs, TyVarSrc::Val) => st.err(ty, ErrorKind::TyVarNotAllowedForTyRhs),
         }
+        *fv
       }
     },
     // @def(45)
