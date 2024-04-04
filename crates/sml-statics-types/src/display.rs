@@ -382,14 +382,24 @@ impl fmt::Display for IncompatibleDisplay<'_> {
       Incompatible::FixedTyVar(a, b) => {
         write!(f, "`{a}` and `{b}` are different type variables")
       }
-      Incompatible::MissingRow(lab) => {
-        write!(f, "record type is missing field: `{lab}`")
-      }
-      Incompatible::ExtraRows(rows) => {
-        let n = rows.len();
-        let s = if n == 1 { "" } else { "s" };
-        write!(f, "record type has {n} extra field{s}: ")?;
-        fmt_util::comma_seq(f, rows.iter().map(|(lab, _)| Backticks(lab)))
+      Incompatible::MismatchedRows { missing, extra } => {
+        f.write_str("record type ")?;
+        if !missing.is_empty() {
+          let n = missing.len();
+          let s = if n == 1 { "" } else { "s" };
+          write!(f, "is missing {n} field{s}: ")?;
+          fmt_util::comma_seq(f, missing.iter().map(Backticks))?;
+          if !extra.is_empty() {
+            f.write_str(", and ")?;
+          }
+        }
+        if !extra.is_empty() {
+          let n = extra.len();
+          let s = if n == 1 { "" } else { "s" };
+          write!(f, "has {n} extra field{s}: ")?;
+          fmt_util::comma_seq(f, extra.iter().map(Backticks))?;
+        }
+        Ok(())
       }
       Incompatible::Con(a, b) => {
         let a = a.display(&self.st.syms);

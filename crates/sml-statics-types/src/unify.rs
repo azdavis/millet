@@ -6,6 +6,7 @@ use crate::ty::{
   UnsolvedMetaTyVarKind,
 };
 use crate::{equality, mode::Mode, overload};
+use std::collections::BTreeSet;
 
 /// An error when unifying.
 #[derive(Debug)]
@@ -30,8 +31,7 @@ pub struct Circularity {
 #[allow(missing_docs)]
 pub enum Incompatible {
   FixedTyVar(sml_hir::TyVar, sml_hir::TyVar),
-  MissingRow(sml_hir::Lab),
-  ExtraRows(RecordData),
+  MismatchedRows { missing: BTreeSet<sml_hir::Lab>, extra: BTreeSet<sml_hir::Lab> },
   Con(Sym, Sym),
   HeadMismatch(Ty, Ty),
   OverloadCon(overload::Overload, Sym),
@@ -77,16 +77,20 @@ pub fn unify(tys: &mut Tys, syms: &Syms, want: Ty, got: Ty) -> Result<(), Error>
       Err(Incompatible::FixedTyVar(want.ty_var, got.ty_var).into())
     }
     (TyData::Record(want_rows), TyData::Record(mut got_rows)) => {
+      let mut missing = BTreeSet::<sml_hir::Lab>::default();
       for (lab, want_ty) in want_rows {
         match got_rows.remove(&lab) {
-          None => return Err(Incompatible::MissingRow(lab.clone()).into()),
+          None => {
+            missing.insert(lab);
+          }
           Some(got_ty) => unify(tys, syms, want_ty, got_ty)?,
         }
       }
-      if got_rows.is_empty() {
+      if got_rows.is_empty() && missing.is_empty() {
         Ok(())
       } else {
-        Err(Incompatible::ExtraRows(got_rows).into())
+        let extra: BTreeSet<_> = got_rows.into_keys().collect();
+        Err(Incompatible::MismatchedRows { missing, extra }.into())
       }
     }
     (TyData::Con(want), TyData::Con(got)) => {

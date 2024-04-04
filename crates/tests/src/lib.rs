@@ -39,6 +39,7 @@ mod literal;
 mod local;
 mod matching;
 mod misc;
+mod mismatched_fields;
 mod num_record;
 mod open;
 mod overload;
