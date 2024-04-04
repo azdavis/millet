@@ -3,7 +3,7 @@
 use crate::pat_match::{Con, Lang, Pat, VariantName};
 use fmt_util::{comma_seq, sep_seq};
 use pattern_match::{ConPat, RawPat};
-use sml_statics_types::sym::Syms;
+use sml_statics_types::{display::Backticks, sym::Syms};
 use std::fmt;
 
 pub(crate) fn get(
@@ -227,16 +227,5 @@ impl fmt::Display for RowDisplay<'_> {
       }
       RowDisplay::Rest => f.write_str("..."),
     }
-  }
-}
-
-struct Backticks<T>(T);
-
-impl<T> fmt::Display for Backticks<T>
-where
-  T: fmt::Display,
-{
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "`{}`", self.0)
   }
 }

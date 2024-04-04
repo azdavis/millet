@@ -386,8 +386,10 @@ impl fmt::Display for IncompatibleDisplay<'_> {
         write!(f, "record type is missing field: `{lab}`")
       }
       Incompatible::ExtraRows(rows) => {
-        write!(f, "record type has extra fields: ")?;
-        fmt_util::comma_seq(f, rows.iter().map(|(lab, _)| lab))
+        let n = rows.len();
+        let s = if n == 1 { "" } else { "s" };
+        write!(f, "record type has {n} extra field{s}: ")?;
+        fmt_util::comma_seq(f, rows.iter().map(|(lab, _)| Backticks(lab)))
       }
       Incompatible::Con(a, b) => {
         let a = a.display(&self.st.syms);
@@ -430,5 +432,18 @@ impl fmt::Display for IncompatibleDisplay<'_> {
         write!(f, "not an equality type because it contains {not_eq}: `{ty}`")
       }
     }
+  }
+}
+
+/// A struct that displays the `T` with backticks around it.
+#[derive(Debug)]
+pub struct Backticks<T>(pub T);
+
+impl<T> fmt::Display for Backticks<T>
+where
+  T: fmt::Display,
+{
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "`{}`", self.0)
   }
 }

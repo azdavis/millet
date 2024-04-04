@@ -835,10 +835,11 @@ The companion of `(`.
 
 ## `,`
 
-Separate things, like tuple elements, list elements, and type arguments.
+Separate things, like tuple/record elements, list elements, and type arguments.
 
 ```sml
 val tup = (false, 5)
+val record = { name = "綿谷新", height = 173 }
 val lst = [1, 4, 3]
 type ('a, 'b) parser = 'a -> ('a * 'b) option
 ```
