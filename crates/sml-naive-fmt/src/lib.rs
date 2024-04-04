@@ -560,12 +560,7 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
     ast::Exp::OpAndalsoExp(_) => st.write("op andalso"),
     ast::Exp::OpOrelseExp(_) => st.write("op orelse"),
     ast::Exp::SConExp(exp) => st.write(exp.s_con()?.token.text()),
-    ast::Exp::PathExp(exp) => {
-      if exp.op_kw().is_some() {
-        st.write("op ");
-      }
-      path(st, exp.path()?)?;
-    }
+    ast::Exp::PathExp(exp) => op_path(st, exp.op_kw(), exp.path()?)?,
     ast::Exp::RecordExp(exp) => {
       st.write("{ ");
       sep(st, ", ", exp.exp_rows(), |st, row| {
@@ -741,10 +736,7 @@ fn get_pat(st: &mut St, pat: ast::Pat) -> Res {
     ast::Pat::WildcardPat(_) => st.write("_"),
     ast::Pat::SConPat(pat) => st.write(pat.s_con()?.token.text()),
     ast::Pat::ConPat(pat) => {
-      if pat.op_kw().is_some() {
-        st.write("op ");
-      }
-      path(st, pat.path()?)?;
+      op_path(st, pat.op_kw(), pat.path()?)?;
       if let Some(pat) = pat.pat() {
         st.write(" ");
         get_pat(st, pat)?;
@@ -893,6 +885,25 @@ fn path(st: &mut St, p: ast::Path) -> Res {
     st.write(x.name_star_eq()?.token.text());
     Some(())
   })
+}
+
+fn op_path(
+  st: &mut St,
+  op: Option<sml_syntax::kind::SyntaxToken>,
+  p: sml_syntax::ast::Path,
+) -> Res {
+  if op.is_some() {
+    st.write("op");
+    let needs_space = p
+      .name_star_eq_dots()
+      .next()
+      .and_then(|x| x.name_star_eq()?.token.text().as_bytes().first().copied())
+      .is_some_and(|x| x.is_ascii_alphanumeric());
+    if needs_space {
+      st.write(" ");
+    }
+  }
+  path(st, p)
 }
 
 fn pat_args<I>(st: &mut St, iter: I) -> Res

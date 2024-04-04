@@ -685,13 +685,19 @@ val _ =
 Cause an infix identifier to temporarily act as though it is not.
 
 ```sml
-val five : int = op + (2, 3)
+val five : int = op+ (2, 3)
 ```
 
 If the infix identifier is "symbolic" (`+`, `*`, `@`, etc), then no intervening whitespace between the `op` and the identifier is required.
 
 ```sml
 val xs : int list = op@ ([1, 2], [5, 8])
+```
+
+If not, then intervening whitespace is required.
+
+```sml
+val two = op div (8, 4)
 ```
 
 Often used to pass infix operators to higher-order functions.
