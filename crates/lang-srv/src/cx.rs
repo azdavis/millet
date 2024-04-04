@@ -70,7 +70,7 @@ impl Cx {
     );
   }
 
-  pub(crate) fn get_input(&mut self, root: &paths::CanonicalPathBuf) -> input::Input {
+  pub(crate) fn get_input(&mut self, root: &paths::CleanPath) -> input::Input {
     elapsed::log("Input::new", || input::Input::new(&self.fs, &mut self.paths, root))
   }
 }

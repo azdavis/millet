@@ -28,8 +28,8 @@ fn try_update_input(
 ) -> Result<Vec<paths::PathId>> {
   let mut ret = Vec::<paths::PathId>::with_capacity(changes.len());
   for change in changes {
-    let path = convert::canonical_path_buf(&cx.fs, &change.uri)?;
-    let path_id = cx.paths.get_id(path.as_canonical_path());
+    let path = convert::clean_path_buf(&change.uri)?;
+    let path_id = cx.paths.get_id(path.as_clean_path());
     ret.push(path_id);
     let mut entry = match input.sources.entry(path_id) {
       Entry::Occupied(x) => x,
@@ -59,7 +59,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
           Ok(_) => {
             // TODO use path ids
           }
-          Err(_) => root.input = st.cx.get_input(&root.path),
+          Err(_) => root.input = st.cx.get_input(root.path.as_clean_path()),
         }
         diagnostics::try_publish(st);
       }
@@ -69,7 +69,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
   })?;
   n = helpers::try_notif::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
     let url = params.text_document.uri;
-    let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.paths, &url)?;
+    let path = convert::url_to_path_id(&mut st.cx.paths, &url)?;
     if let Mode::Root(root) = &mut st.mode {
       let Some(text) = root.input.sources.get_mut(&path) else {
         bail!("no source in the input for DidChangeTextDocument")
@@ -96,7 +96,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
       if st.cx.registered_for_watched_files {
         log::warn!("ignoring DidSaveTextDocument since we registered for watched file events");
       } else {
-        root.input = st.cx.get_input(&root.path);
+        root.input = st.cx.get_input(root.path.as_clean_path());
         diagnostics::try_publish(st);
       }
     }

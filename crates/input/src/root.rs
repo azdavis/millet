@@ -1,9 +1,7 @@
 //! Getting the root groups.
 
 use crate::types::Severities;
-use crate::util::{
-  get_path_id, read_dir, str_path, Error, ErrorKind, ErrorSource, GroupPathKind, NoRootFlavor,
-};
+use crate::util::{read_dir, str_path, Error, ErrorKind, ErrorSource, GroupPathKind, NoRootFlavor};
 use fast_hash::{FxHashMap, FxHashSet};
 use paths::PathId;
 use slash_var_path::{EnvEntry, EnvEntryKind};
@@ -19,7 +17,7 @@ impl Root {
   pub(crate) fn new<F>(
     fs: &F,
     paths: &mut paths::Store,
-    root: &paths::CanonicalPathBuf,
+    root: &paths::CleanPath,
     errors: &mut Vec<Error>,
   ) -> Root
   where
@@ -80,10 +78,9 @@ impl Root {
     }
     let mut ret = Root { groups: Vec::new(), config };
     for root_group_path in root_group_paths {
-      match get_path_id(fs, paths, root_group_source.clone(), &root_group_path.path) {
-        Ok(path) => ret.groups.push(RootGroup { path, kind: root_group_path.kind }),
-        Err(e) => errors.push(e),
-      }
+      let path = root.join(root_group_path.path.as_path());
+      let path_id = paths.get_id(path.as_clean_path());
+      ret.groups.push(RootGroup { path: path_id, kind: root_group_path.kind });
     }
     ret
   }
@@ -104,7 +101,7 @@ pub(crate) struct Config {
 
 impl Config {
   fn from_file(
-    root: &paths::CanonicalPathBuf,
+    root: &paths::CleanPath,
     config_path: &Path,
     contents: &str,
     errors: &mut Vec<Error>,
@@ -210,7 +207,7 @@ fn disallow(
 fn glob_root_group_paths<F>(
   fs: &F,
   root_group_paths: &mut Vec<GroupPathBuf>,
-  root: &paths::CanonicalPathBuf,
+  root: &paths::CleanPath,
   path: &Path,
   config_path: &Path,
   errors: &mut Vec<Error>,

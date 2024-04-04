@@ -5,15 +5,15 @@ use anyhow::{bail, Context as _, Result};
 use lsp_types::Url;
 use std::fmt;
 
-pub(crate) fn canonical_path_buf<F>(fs: &F, url: &Url) -> Result<paths::CanonicalPathBuf>
-where
-  F: paths::FileSystem,
-{
+pub(crate) fn clean_path_buf(url: &Url) -> Result<paths::CleanPathBuf> {
   if url.scheme() != "file" {
     bail!("not a file url: {url}")
   }
   match url.to_file_path() {
-    Ok(pb) => Ok(fs.canonical(pb.as_path())?),
+    Ok(pb) => match paths::CleanPathBuf::new(pb.as_path()) {
+      Some(x) => Ok(x),
+      None => bail!("non-absolute URL path: {}", pb.display()),
+    },
     Err(()) => bail!("couldn't make a URL into a file path: {url}"),
   }
 }
@@ -110,26 +110,15 @@ pub(crate) fn analysis_range(range: lsp_types::Range) -> text_pos::RangeUtf16 {
   text_pos::RangeUtf16 { start: analysis_position(range.start), end: analysis_position(range.end) }
 }
 
-pub(crate) fn url_to_path_id<F>(
-  fs: &F,
-  paths: &mut paths::Store,
-  url: &Url,
-) -> Result<paths::PathId>
-where
-  F: paths::FileSystem,
-{
-  Ok(paths.get_id(canonical_path_buf(fs, url)?.as_canonical_path()))
+pub(crate) fn url_to_path_id(paths: &mut paths::Store, url: &Url) -> Result<paths::PathId> {
+  Ok(paths.get_id(clean_path_buf(url)?.as_clean_path()))
 }
 
-pub(crate) fn text_doc_pos_params<F>(
-  fs: &F,
+pub(crate) fn text_doc_pos_params(
   paths: &mut paths::Store,
   params: &lsp_types::TextDocumentPositionParams,
-) -> Result<paths::WithPath<text_pos::PositionUtf16>>
-where
-  F: paths::FileSystem,
-{
-  let path = url_to_path_id(fs, paths, &params.text_document.uri)?;
+) -> Result<paths::WithPath<text_pos::PositionUtf16>> {
+  let path = url_to_path_id(paths, &params.text_document.uri)?;
   let pos = analysis_position(params.position);
   Ok(path.wrap(pos))
 }

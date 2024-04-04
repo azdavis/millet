@@ -40,7 +40,7 @@ impl Input {
   /// # Panics
   ///
   /// When the path has no parent, or other such weird cases.
-  pub fn new<F>(fs: &F, paths: &mut paths::Store, root: &paths::CanonicalPathBuf) -> Input
+  pub fn new<F>(fs: &F, paths: &mut paths::Store, root: &paths::CleanPath) -> Input
   where
     F: paths_glob::FileSystem,
   {

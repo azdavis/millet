@@ -49,15 +49,16 @@ fn run() -> usize {
     }
   };
   let fs = paths::RealFileSystem::default();
-  let root = match fs.canonical(root.as_path()) {
+  let pwd = match fs.current_dir() {
     Ok(x) => x,
     Err(e) => {
-      show_input_error(root.as_path(), &input::Error::from_io(root.clone(), e));
+      println!("error: couldn't get current dir: {e}");
       return 1;
     }
   };
+  let root = pwd.as_clean_path().join(root.as_path());
   let mut store = paths::Store::new();
-  let inp = input::Input::new(&fs, &mut store, &root);
+  let inp = input::Input::new(&fs, &mut store, root.as_clean_path());
   let options = analysis::Options {
     lines: config::DiagnosticLines::One,
     ignore: config::init::DiagnosticsIgnore::AfterSyntax,

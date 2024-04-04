@@ -22,6 +22,7 @@ text-pos.workspace = true
 text-size-util.workspace = true
 
 config.path = "../config"
+cov-mark.path = "../cov-mark"
 mlb-hir.path = "../mlb-hir"
 sml-comment.path = "../sml-comment"
 sml-file-syntax.path = "../sml-file-syntax"

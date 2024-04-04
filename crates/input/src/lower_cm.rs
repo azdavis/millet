@@ -27,6 +27,8 @@ pub(crate) fn get<F>(
     st.errors.push(e.into_error());
   }
   for (path, cm_file) in st.cm_files {
+    // could be None if the path didn't exist
+    let Some(pos_db) = cm_file.pos_db else { continue };
     let exports: Vec<_> = cm_file
       .exports
       .into_iter()
@@ -45,7 +47,7 @@ pub(crate) fn get<F>(
       mlb_hir::BasDec::seq(path_decs).into(),
       mlb_hir::BasDec::seq(exports).into(),
     );
-    let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
+    let group = Group { bas_dec, pos_db };
     groups.insert(path, group);
   }
 }
@@ -116,14 +118,7 @@ fn get_one_cm_file<F>(
   F: paths::FileSystem,
 {
   for pp in cm.paths {
-    let pid = get_path_id_in_group(st.fs, st.paths, group, pp.val.as_path(), pp.range);
-    let (path_id, path, source) = match pid {
-      Ok(x) => x,
-      Err(e) => {
-        st.errors.push(e);
-        continue;
-      }
-    };
+    let (path_id, path, source) = get_path_id_in_group(st.paths, group, pp.val.as_path(), pp.range);
     match pp.val.kind() {
       cm_syntax::PathKind::Sml(kind) => {
         let contents = match read_file(st.fs, source, path.as_path()) {
@@ -217,14 +212,8 @@ fn get_export<F>(
     }
     cm_syntax::Export::Source(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
-        let pid = get_path_id_in_group(st.fs, st.paths, cx.group, p.as_path(), path.range);
-        let (path_id, _, source) = match pid {
-          Ok(x) => x,
-          Err(e) => {
-            st.errors.push(e);
-            return;
-          }
-        };
+        let (path_id, _, source) =
+          get_path_id_in_group(st.paths, cx.group, p.as_path(), path.range);
         match st.sources.get(&path_id) {
           Some(contents) => get_top_defs(contents.as_str(), ac, path.range),
           None => st.errors.push(Error::new(
@@ -299,14 +288,7 @@ fn get_one_and_extend_with<F>(
 ) where
   F: paths::FileSystem,
 {
-  let pid = get_path_id_in_group(st.fs, st.paths, group, path, range);
-  let (path_id, _, source) = match pid {
-    Ok(x) => x,
-    Err(e) => {
-      st.errors.push(e);
-      return;
-    }
-  };
+  let (path_id, _, source) = get_path_id_in_group(st.paths, group, path, range);
   let cur = GroupPathToProcess { parent, range: source.range, path: path_id };
   match get_one(st, cur) {
     Ok(()) => extend_with(st, cur.path, range, ac),

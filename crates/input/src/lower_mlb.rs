@@ -112,15 +112,8 @@ where
       mlb_hir::BasDec::seq(binds)
     }
     mlb_syntax::BasDec::Path(pp) => {
-      let pid = get_path_id_in_group(st.fs, st.paths, &cx.group, pp.val.as_path(), pp.range);
-      let (path_id, path, source) = match pid {
-        Ok(x) => x,
-        Err(e) => {
-          st.errors.push(e);
-          cov_mark::hit("no_path");
-          return mlb_hir::BasDec::seq(Vec::new());
-        }
-      };
+      let (path_id, path, source) =
+        get_path_id_in_group(st.paths, &cx.group, pp.val.as_path(), pp.range);
       let kind = match pp.val.kind() {
         mlb_syntax::PathKind::Sml(file_kind) => {
           let contents = match read_file(st.fs, source, path.as_path()) {

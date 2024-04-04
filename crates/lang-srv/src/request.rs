@@ -23,7 +23,7 @@ const REQUEST_FAILED: i32 = -32803;
 fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   r = helpers::try_req::<lsp_types::request::HoverRequest, _>(r, |id, params| {
     let params = params.text_document_position_params;
-    let pos = convert::text_doc_pos_params(&st.cx.fs, &mut st.cx.paths, &params)?;
+    let pos = convert::text_doc_pos_params(&mut st.cx.paths, &params)?;
     let res =
       st.analysis.get_md(pos, st.cx.options.token_hover.0).map(|(value, range)| lsp_types::Hover {
         contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
@@ -37,7 +37,7 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   })?;
   r = helpers::try_req::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
     let params = params.text_document_position_params;
-    let pos = convert::text_doc_pos_params(&st.cx.fs, &mut st.cx.paths, &params)?;
+    let pos = convert::text_doc_pos_params(&mut st.cx.paths, &params)?;
     let res: Vec<_> = st
       .analysis
       .get_defs(pos)
@@ -50,7 +50,7 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   })?;
   r = helpers::try_req::<lsp_types::request::GotoTypeDefinition, _>(r, |id, params| {
     let params = params.text_document_position_params;
-    let pos = convert::text_doc_pos_params(&st.cx.fs, &mut st.cx.paths, &params)?;
+    let pos = convert::text_doc_pos_params(&mut st.cx.paths, &params)?;
     let locs: Vec<_> = st
       .analysis
       .get_ty_defs(pos)
@@ -64,7 +64,7 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   })?;
   r = helpers::try_req::<lsp_types::request::CodeActionRequest, _>(r, |id, params| {
     let url = params.text_document.uri;
-    let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.paths, &url)?;
+    let path = convert::url_to_path_id(&mut st.cx.paths, &url)?;
     let range = convert::analysis_range(params.range);
     let mut actions = Vec::<lsp_types::CodeActionOrCommand>::new();
     if let Some((range, new_text)) = st.analysis.fill_case(path.wrap(range.start)) {
@@ -75,7 +75,7 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   })?;
   r = helpers::try_req::<lsp_types::request::Formatting, _>(r, |id, params| {
     let url = params.text_document.uri;
-    let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.paths, &url)?;
+    let path = convert::url_to_path_id(&mut st.cx.paths, &url)?;
     let res = match &st.mode {
       Mode::Root(root) => {
         // need to re-compute the internal parse tree etc
@@ -111,7 +111,7 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   })?;
   r = helpers::try_req::<lsp_types::request::DocumentSymbolRequest, _>(r, |id, params| {
     let url = params.text_document.uri;
-    let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.paths, &url)?;
+    let path = convert::url_to_path_id(&mut st.cx.paths, &url)?;
     let res: Option<Vec<_>> = st
       .analysis
       .document_symbols(path)
@@ -121,7 +121,7 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   })?;
   r = helpers::try_req::<lsp_types::request::References, _>(r, |id, params| {
     let params = params.text_document_position;
-    let pos = convert::text_doc_pos_params(&st.cx.fs, &mut st.cx.paths, &params)?;
+    let pos = convert::text_doc_pos_params(&mut st.cx.paths, &params)?;
     let res: Option<Vec<_>> = st.analysis.find_all_references(pos).map(|locs| {
       locs.into_iter().filter_map(|loc| convert::lsp_location(&st.cx.paths, loc)).collect()
     });
@@ -130,7 +130,7 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   })?;
   r = helpers::try_req::<lsp_types::request::Completion, _>(r, |id, params| {
     let params = params.text_document_position;
-    let pos = convert::text_doc_pos_params(&st.cx.fs, &mut st.cx.paths, &params)?;
+    let pos = convert::text_doc_pos_params(&mut st.cx.paths, &params)?;
     let res: Option<Vec<_>> =
       st.analysis.completions(pos).map(|cs| cs.into_iter().map(convert::completion_item).collect());
     st.cx.send_response(Response::new_ok(id, res));
@@ -138,7 +138,7 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   })?;
   r = helpers::try_req::<lsp_types::request::InlayHintRequest, _>(r, |id, params| {
     let url = params.text_document.uri;
-    let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.paths, &url)?;
+    let path = convert::url_to_path_id(&mut st.cx.paths, &url)?;
     let range = convert::analysis_range(params.range);
     let res: Vec<_> = st
       .analysis

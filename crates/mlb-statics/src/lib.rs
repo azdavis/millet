@@ -345,7 +345,10 @@ fn get_source_file(
 
 /// Processes a single group file.
 fn get_group_file(st: &mut St<'_>, cx: Cx<'_>, ac: &mut MBasis, path: paths::PathId) {
-  let dec = cx.bas_decs.get(&path).expect("no bas dec");
+  let Some(dec) = cx.bas_decs.get(&path) else {
+    cov_mark::hit("no_bas_dec");
+    return;
+  };
   let mut path_ac = MBasis::default();
   get_bas_dec(st, cx, path, cx.std_basis, &mut path_ac, dec);
   st.bases.insert(path, path_ac.clone());

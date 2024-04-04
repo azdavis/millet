@@ -12,7 +12,7 @@ pub(crate) enum Mode {
 }
 
 pub(crate) struct Root {
-  pub(crate) path: paths::CanonicalPathBuf,
+  pub(crate) path: paths::CleanPathBuf,
   pub(crate) input: input::Input,
 }
 

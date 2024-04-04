@@ -187,48 +187,19 @@ fn maybe_rel_to_root<'a>(root: &Path, path: &'a Path) -> &'a Path {
   }
 }
 
-pub(crate) fn get_path_id<F>(
-  fs: &F,
-  paths: &mut paths::Store,
-  source: ErrorSource,
-  path: &Path,
-) -> Result<paths::PathId>
-where
-  F: paths::FileSystem,
-{
-  let canonical = canonicalize(fs, path, source)?;
-  Ok(paths.get_id(canonical.as_canonical_path()))
-}
-
-pub(crate) fn get_path_id_in_group<F>(
-  fs: &F,
+pub(crate) fn get_path_id_in_group(
   paths: &mut paths::Store,
   group: &StartedGroup,
   path: &Path,
   range: text_size_util::TextRange,
-) -> Result<(paths::PathId, paths::CanonicalPathBuf, ErrorSource)>
-where
-  F: paths::FileSystem,
-{
+) -> (paths::PathId, paths::CleanPathBuf, ErrorSource) {
   let source = ErrorSource {
     path: Some(group.path.as_path().to_owned()),
     range: group.pos_db.range_utf16(range),
   };
-  let path = group.path.as_path().parent().expect("group path with no parent").join(path);
-  let canonical = canonicalize(fs, path.as_path(), source.clone())?;
-  let id = paths.get_id(canonical.as_canonical_path());
-  Ok((id, canonical, source))
-}
-
-pub(crate) fn canonicalize<F>(
-  fs: &F,
-  path: &Path,
-  source: ErrorSource,
-) -> Result<paths::CanonicalPathBuf>
-where
-  F: paths::FileSystem,
-{
-  fs.canonical(path).map_err(|e| Error::new(source, path.to_owned(), ErrorKind::Io(e)))
+  let path = group.path.as_clean_path().parent().expect("group path with no parent").join(path);
+  let id = paths.get_id(path.as_clean_path());
+  (id, path, source)
 }
 
 pub(crate) fn read_file<F>(fs: &F, source: ErrorSource, path: &Path) -> Result<String>
@@ -263,15 +234,15 @@ pub(crate) struct GroupPathToProcess {
 }
 
 pub(crate) struct StartedGroup {
-  pub(crate) path: paths::CanonicalPathBuf,
+  pub(crate) path: paths::CleanPathBuf,
   pub(crate) contents: String,
   pub(crate) pos_db: text_pos::PositionDb,
 }
 
 /// A type which can be converted into an [`Error`], but is known to be an I/O error.
 pub(crate) struct IoError {
-  error_path: paths::CanonicalPathBuf,
-  source_path: paths::CanonicalPathBuf,
+  error_path: paths::CleanPathBuf,
+  source_path: paths::CleanPathBuf,
   range: Option<RangeUtf16>,
   inner: std::io::Error,
 }

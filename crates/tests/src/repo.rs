@@ -231,7 +231,6 @@ fn licenses() {
     "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
     "Apache-2.0",
     "Apache-2.0/MIT",
-    "CC0-1.0 OR MIT-0 OR Apache-2.0",
     "MIT OR Apache-2.0 OR Zlib",
     "MIT OR Apache-2.0",
     "MIT OR Zlib OR Apache-2.0",

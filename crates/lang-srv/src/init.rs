@@ -32,15 +32,13 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
     sender,
     req_queue: ReqQueue::default(),
   };
-  let mut root = init
-    .root_uri
-    .map(|url| convert::canonical_path_buf(&cx.fs, &url).map_err(|e| (e, url)))
-    .transpose();
+  let mut root =
+    init.root_uri.map(|url| convert::clean_path_buf(&url).map_err(|e| (e, url))).transpose();
   let mut ret = St {
     // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
     mode: match root.as_mut().ok().and_then(Option::take) {
       Some(path) => {
-        let input = cx.get_input(&path);
+        let input = cx.get_input(path.as_clean_path());
         Mode::Root(Box::new(Root { path, input }))
       }
       None => Mode::NoRoot,

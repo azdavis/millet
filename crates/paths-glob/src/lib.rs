@@ -59,7 +59,7 @@ impl FileSystem for paths::MemoryFileSystem {
     Ok(pattern)
   }
 
-  type WalkEntry<'a> = std::path::PathBuf;
+  type WalkEntry<'a> = paths::CleanPathBuf;
 
   type Walk<'a> = std::vec::IntoIter<Result<Self::WalkEntry<'static>, WalkError>>;
 
@@ -70,11 +70,11 @@ impl FileSystem for paths::MemoryFileSystem {
       .inner
       .keys()
       .filter_map(|path| {
-        if cs.len() != path.components().count() {
+        if cs.len() != path.as_path().components().count() {
           return None;
         }
         cs.iter()
-          .zip(path.components())
+          .zip(path.as_path().components())
           .all(|(&c, p)| c == std::path::Component::Normal(std::ffi::OsStr::new("*")) || c == p)
           .then(|| Ok(path.clone()))
       })
