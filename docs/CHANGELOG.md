@@ -6,7 +6,7 @@ Millet technically follows [SemVer][sem-ver], but the major version is zero, and
 
 ## v0.14.4
 
-- Accept implicit type variable scoping in `exception`s within another declaration, as in:
+- Accept implicit type variable scoping in `exception`, `type`, and `datatype` within another declaration. For example, with `exception`:
 
   ```sml
   fun f x =
@@ -27,6 +27,9 @@ Millet technically follows [SemVer][sem-ver], but the major version is zero, and
   ```
 
 - Handle incrementally updating files better.
+- Tweak formatting of `op` with non-alphabetic identifiers, like `op+`. There is now no whitespace between `op` and non-alphabetic identifiers.
+- Modernize handling of path globs.
+- Improve error messages around mismatched record/tuple fields.
 
 ## v0.14.3
 
