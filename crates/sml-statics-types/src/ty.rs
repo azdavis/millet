@@ -274,8 +274,8 @@ impl BoundTyVar {
     &xs[self.0.to_usize()]
   }
 
-  pub(crate) fn name(self, equality: bool) -> sml_hir::TyVarName {
-    sml_hir::TyVarName::new(equality, self.0.to_usize())
+  pub(crate) fn name(self, equality: bool) -> sml_hir::UnutterableTyVar {
+    sml_hir::UnutterableTyVar::new(equality, self.0.to_usize())
   }
 
   pub(crate) fn iter_for<I, T>(xs: I) -> impl Iterator<Item = (Self, T)>

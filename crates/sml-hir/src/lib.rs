@@ -395,19 +395,19 @@ impl fmt::Display for TyVar {
 /// It will **not** be a name of an actual SML type variable that a user can type in real code.
 #[derive(Debug)]
 #[must_use]
-pub struct TyVarName {
+pub struct UnutterableTyVar {
   equality: bool,
   idx: usize,
 }
 
-impl TyVarName {
+impl UnutterableTyVar {
   /// Returns a new one of these.
   pub fn new(equality: bool, idx: usize) -> Self {
     Self { equality, idx }
   }
 }
 
-impl fmt::Display for TyVarName {
+impl fmt::Display for UnutterableTyVar {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let ticks = if self.equality { 2 } else { 1 };
     for c in std::iter::repeat('?').take(ticks).chain(idx_to_name(self.idx)) {
