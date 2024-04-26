@@ -388,8 +388,9 @@ impl fmt::Display for TyVar {
 }
 
 /// A type that when displayed could be a name for a **unutterable** type variable.
+///
 /// It will **not** be a name of an actual SML type variable that a user can type in real code.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[must_use]
 pub struct UnutterableTyVar {
   equality: bool,
