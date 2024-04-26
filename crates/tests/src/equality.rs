@@ -1,6 +1,6 @@
 //! Equality types.
 
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn smoke() {
@@ -156,6 +156,25 @@ fn cmp_eq() {
   check(
     r"
 fun f x y = (x < y, x = 0)
+",
+  );
+}
+
+#[test]
+fn sig_eq_ty_var() {
+  fail(
+    r"
+signature EQ = sig
+  val eq : ''a * ''a -> bool
+end
+
+structure S1 :> EQ = struct
+  fun eq (x, y) = x = y
+end
+
+structure S2 :> EQ = struct
+  val eq = op=
+end
 ",
   );
 }
