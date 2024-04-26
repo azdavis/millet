@@ -376,11 +376,6 @@ impl TyVar {
   }
 
   #[must_use]
-  pub fn as_str(&self) -> &str {
-    self.0.as_str()
-  }
-
-  #[must_use]
   pub fn as_name(&self) -> &Name {
     &self.0
   }
