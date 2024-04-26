@@ -1,7 +1,6 @@
 //! Checking whether type schemes are compatible with each other.
 
 use crate::{error::ErrorKind, st::St, unify::unify_no_emit};
-use sml_statics_types::fmt_util::TyVarName;
 use sml_statics_types::ty::{BoundTyVars, Generalizable, Ty, TyScheme, TyVarKind, TyVarSrc};
 use sml_statics_types::util::{apply_bv, instantiate};
 
@@ -40,7 +39,7 @@ fn fixed_var_subst(st: &mut St<'_>, bound_vars: &BoundTyVars) -> Vec<Ty> {
     .enumerate()
     .map(|(idx, data)| {
       let equality = matches!(data.ty_var_kind(), TyVarKind::Equality);
-      let ty_var = TyVarName::new(equality, idx).to_string();
+      let ty_var = sml_hir::TyVarName::new(equality, idx).to_string();
       st.syms_tys.tys.fixed_var(sml_hir::TyVar::new(ty_var), TyVarSrc::Ty)
     })
     .collect()

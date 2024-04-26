@@ -2,7 +2,7 @@
 
 #![allow(clippy::module_name_repetitions)]
 
-use crate::{data, fmt_util, overload, sym::Sym};
+use crate::{data, overload, sym::Sym};
 use std::collections::BTreeMap;
 
 /// Storage of all the semantic types.
@@ -274,8 +274,8 @@ impl BoundTyVar {
     &xs[self.0.to_usize()]
   }
 
-  pub(crate) fn name(self, equality: bool) -> fmt_util::TyVarName {
-    fmt_util::TyVarName::new(equality, self.0.to_usize())
+  pub(crate) fn name(self, equality: bool) -> sml_hir::TyVarName {
+    sml_hir::TyVarName::new(equality, self.0.to_usize())
   }
 
   pub(crate) fn iter_for<I, T>(xs: I) -> impl Iterator<Item = (Self, T)>

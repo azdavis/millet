@@ -9,7 +9,6 @@ pub mod disallow;
 pub mod display;
 pub mod env;
 pub mod equality;
-pub mod fmt_util;
 pub mod generalize;
 pub mod info;
 pub mod item;
