@@ -2,17 +2,20 @@
 
 use std::fmt;
 
-/// Returns a char iterator that when collected could be a name for a type variable.
-pub fn ty_var_name(equality: bool, idx: usize) -> TyVarName {
-  TyVarName { equality, idx }
-}
-
-/// A char iterator for a type variable name.
+/// A type that when displayed could be a name for a **unutterable** type variable.
+/// It will **not** be a name of an actual SML type variable that a user can type in real code.
 #[derive(Debug)]
 #[must_use]
 pub struct TyVarName {
   equality: bool,
   idx: usize,
+}
+
+impl TyVarName {
+  /// Returns a new one of these.
+  pub fn new(equality: bool, idx: usize) -> Self {
+    Self { equality, idx }
+  }
 }
 
 impl fmt::Display for TyVarName {

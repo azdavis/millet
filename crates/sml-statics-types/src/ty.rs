@@ -275,7 +275,7 @@ impl BoundTyVar {
   }
 
   pub(crate) fn name(self, equality: bool) -> fmt_util::TyVarName {
-    fmt_util::ty_var_name(equality, self.0.to_usize())
+    fmt_util::TyVarName::new(equality, self.0.to_usize())
   }
 
   pub(crate) fn iter_for<I, T>(xs: I) -> impl Iterator<Item = (Self, T)>
