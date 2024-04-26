@@ -33,6 +33,7 @@ fn try_update_input(
     let path_id = cx.paths.get_id(path.as_clean_path());
     if cx.open_paths.contains(&path_id) {
       saw_open_path = true;
+      continue;
     }
     ret.push(path_id);
     let mut entry = match input.sources.entry(path_id) {
@@ -65,8 +66,10 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
           Ok(_) => {
             // TODO use path ids
           }
-          Err(_) => {
-            root.input = st.cx.get_input(root.path.as_clean_path());
+          Err(saw_open_path) => {
+            if !saw_open_path {
+              root.input = st.cx.get_input(root.path.as_clean_path());
+            }
           }
         }
         diagnostics::try_publish(st);
