@@ -168,11 +168,11 @@ signature EQ = sig
   val eq : ''a * ''a -> bool
 end
 
-structure S1 :> EQ = struct
+structure Eq1 :> EQ = struct
   fun eq (x, y) = x = y
 end
 
-structure S2 :> EQ = struct
+structure Eq2 :> EQ = struct
   val eq = op=
 end
 ",
