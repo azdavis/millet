@@ -3,13 +3,14 @@
 use crate::common::{forbid_opaque_asc, get_lab, get_path};
 use crate::util::{ErrorKind, Sep, St};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
+use str_util::Name;
 
 pub(crate) fn get(st: &mut St<'_>, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
   let ty = ty?;
   let ptr = SyntaxNodePtr::new(ty.syntax());
   let ret = match ty {
     ast::Ty::HoleTy(_) | ast::Ty::WildcardTy(_) => sml_hir::Ty::Hole,
-    ast::Ty::TyVarTy(ty) => sml_hir::Ty::Var(sml_hir::TyVar::new(ty.ty_var()?.text())),
+    ast::Ty::TyVarTy(ty) => sml_hir::Ty::Var(sml_hir::TyVar::name(Name::new(ty.ty_var()?.text()))),
     ast::Ty::RecordTy(ty) => {
       if let Some(s) = ty.ty_rows().last().and_then(|x| x.comma()) {
         st.err_tok(&s, ErrorKind::Trailing(Sep::Comma));
@@ -82,6 +83,6 @@ pub(crate) fn var_seq(st: &mut St<'_>, tvs: Option<ast::TyVarSeq>) -> Vec<sml_hi
     .into_iter()
     .flat_map(|x| x.ty_var_args())
     .filter_map(|x| x.ty_var())
-    .map(|tok| sml_hir::TyVar::new(tok.text()))
+    .map(|tok| sml_hir::TyVar::name(Name::new(tok.text())))
     .collect()
 }

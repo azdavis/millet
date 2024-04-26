@@ -9,7 +9,7 @@
 use la_arena::Arena;
 use sml_path::Path;
 use std::fmt;
-use str_util::{Name, SmolStr};
+use str_util::Name;
 
 pub use la_arena;
 pub use sml_lab::Lab;
@@ -369,11 +369,8 @@ pub struct TyVar(TyVarRepr);
 
 impl TyVar {
   #[must_use]
-  pub fn new<S>(s: S) -> Self
-  where
-    S: Into<SmolStr>,
-  {
-    Self(TyVarRepr::Name(Name::new(s)))
+  pub fn name(name: Name) -> Self {
+    Self(TyVarRepr::Name(name))
   }
 
   #[must_use]
