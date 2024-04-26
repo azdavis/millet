@@ -359,7 +359,13 @@ pub enum Ty {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct TyVar(Name);
+enum TyVarRepr {
+  Name(Name),
+  Unutterable(UnutterableTyVar),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TyVar(TyVarRepr);
 
 impl TyVar {
   #[must_use]
@@ -367,23 +373,37 @@ impl TyVar {
   where
     S: Into<SmolStr>,
   {
-    Self(Name::new(s))
+    Self(TyVarRepr::Name(Name::new(s)))
+  }
+
+  #[must_use]
+  pub fn unutterable(un: UnutterableTyVar) -> Self {
+    Self(TyVarRepr::Unutterable(un))
   }
 
   #[must_use]
   pub fn is_equality(&self) -> bool {
-    self.0.as_str().as_bytes().get(1) == Some(&b'\'')
+    match &self.0 {
+      TyVarRepr::Name(name) => name.as_str().as_bytes().get(1) == Some(&b'\''),
+      TyVarRepr::Unutterable(un) => un.equality,
+    }
   }
 
   #[must_use]
   pub fn into_name(self) -> Name {
-    self.0
+    match self.0 {
+      TyVarRepr::Name(name) => name,
+      TyVarRepr::Unutterable(un) => Name::new(un.to_string()),
+    }
   }
 }
 
 impl fmt::Display for TyVar {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}", self.0)
+    match &self.0 {
+      TyVarRepr::Name(name) => name.fmt(f),
+      TyVarRepr::Unutterable(un) => un.fmt(f),
+    }
   }
 }
 

@@ -1,6 +1,6 @@
 //! Equality types.
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn smoke() {
@@ -162,7 +162,7 @@ fun f x y = (x < y, x = 0)
 
 #[test]
 fn sig_eq_ty_var() {
-  fail(
+  check(
     r"
 signature EQ = sig
   val eq : ''a * ''a -> bool
