@@ -362,6 +362,7 @@ pub enum Ty {
 pub struct TyVar(Name);
 
 impl TyVar {
+  #[must_use]
   pub fn new<S>(s: S) -> Self
   where
     S: Into<SmolStr>,
