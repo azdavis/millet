@@ -25,25 +25,31 @@ fn try_update_input(
   cx: &mut Cx,
   input: &mut input::Input,
   changes: Vec<lsp_types::FileEvent>,
-) -> Result<Vec<paths::PathId>> {
+) -> Result<Vec<paths::PathId>, bool> {
   let mut ret = Vec::<paths::PathId>::with_capacity(changes.len());
+  let mut saw_open_path = false;
   for change in changes {
-    let path = convert::clean_path_buf(&change.uri)?;
+    let Ok(path) = convert::clean_path_buf(&change.uri) else { return Err(saw_open_path) };
     let path_id = cx.paths.get_id(path.as_clean_path());
+    if cx.open_paths.contains(&path_id) {
+      saw_open_path = true;
+    }
     ret.push(path_id);
     let mut entry = match input.sources.entry(path_id) {
       Entry::Occupied(x) => x,
-      Entry::Vacant(_) => bail!("file {} was not a pre-existing source", path.as_path().display()),
+      Entry::Vacant(_) => return Err(saw_open_path),
     };
     if change.typ == lsp_types::FileChangeType::CREATED
       || change.typ == lsp_types::FileChangeType::CHANGED
     {
-      let new_contents = cx.fs.read_to_string(path.as_path())?;
+      let Ok(new_contents) = cx.fs.read_to_string(path.as_path()) else {
+        return Err(saw_open_path);
+      };
       entry.insert(new_contents);
     } else if change.typ == lsp_types::FileChangeType::DELETED {
       entry.remove();
     } else {
-      bail!("unknown file change type {:?}", change.typ);
+      return Err(saw_open_path);
     }
   }
   ret.shrink_to_fit();
@@ -59,7 +65,9 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
           Ok(_) => {
             // TODO use path ids
           }
-          Err(_) => root.input = st.cx.get_input(root.path.as_clean_path()),
+          Err(_) => {
+            root.input = st.cx.get_input(root.path.as_clean_path());
+          }
         }
         diagnostics::try_publish(st);
       }
