@@ -14,6 +14,18 @@ Millet technically follows [SemVer][sem-ver], but the major version is zero, and
     in raise Poly x end
   ```
 
+- Fix an issue with equality type variables in signatures. The following code is now correctly accepted:
+
+  ```sml
+  signature EQ = sig
+    val eq : ''a * ''a -> bool
+  end
+
+  structure Eq :> EQ = struct
+    val eq = op=
+  end
+  ```
+
 ## v0.14.3
 
 - Try to crash less when incrementally updating a file.
