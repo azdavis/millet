@@ -26,6 +26,8 @@ Millet technically follows [SemVer][sem-ver], but the major version is zero, and
   end
   ```
 
+- Handle incrementally updating files better.
+
 ## v0.14.3
 
 - Try to crash less when incrementally updating a file.
