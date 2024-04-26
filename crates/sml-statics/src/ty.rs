@@ -32,7 +32,7 @@ pub(crate) fn get(
     // @def(44)
     sml_hir::Ty::Var(v) => match cx.fixed.get(v) {
       None => {
-        st.err(ty, ErrorKind::Undefined(Item::TyVar, v.as_name().clone()));
+        st.err(ty, ErrorKind::Undefined(Item::TyVar, v.clone().into_name()));
         Ty::NONE
       }
       Some(fv) => {

@@ -644,7 +644,7 @@ fn get_ty_desc(
   let started = st.syms_tys.syms.start(st.mk_path(ty_desc.name.clone()));
   for ty_var in &ty_desc.ty_vars {
     if !ty_vars.insert(ty_var) {
-      let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
+      let e = ErrorKind::Duplicate(Item::TyVar, ty_var.clone().into_name());
       st.err(idx, e);
     }
   }

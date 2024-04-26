@@ -277,7 +277,7 @@ pub(crate) fn add_fixed_ty_vars(
   for ty_var in ty_vars {
     let fv = st.syms_tys.tys.fixed_var(ty_var.clone(), src);
     if cx.fixed.insert(ty_var.clone(), fv).is_some() {
-      let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
+      let e = ErrorKind::Duplicate(Item::TyVar, ty_var.clone().into_name());
       st.err(idx, e);
     }
     ret.push(fv);
@@ -381,7 +381,7 @@ pub(crate) fn get_dat_binds(
         _ => unreachable!("not a fixed var"),
       };
       if cx.fixed.insert(ty_var.clone(), fv).is_some() {
-        let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
+        let e = ErrorKind::Duplicate(Item::TyVar, ty_var.clone().into_name());
         st.err(idx, e);
       }
     }

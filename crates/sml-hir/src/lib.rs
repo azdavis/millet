@@ -376,8 +376,8 @@ impl TyVar {
   }
 
   #[must_use]
-  pub fn as_name(&self) -> &Name {
-    &self.0
+  pub fn into_name(self) -> Name {
+    self.0
   }
 }
 
