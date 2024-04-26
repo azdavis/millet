@@ -28,6 +28,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
     options,
     registered_for_watched_files: false,
     paths: paths::Store::new(),
+    open_paths: paths::PathSet::default(),
     fs: paths::RealFileSystem::default(),
     sender,
     req_queue: ReqQueue::default(),

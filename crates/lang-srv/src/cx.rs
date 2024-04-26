@@ -16,6 +16,7 @@ pub(crate) struct Cx {
   pub(crate) options: config::init::Options,
   pub(crate) registered_for_watched_files: bool,
   pub(crate) paths: paths::Store,
+  pub(crate) open_paths: paths::PathSet,
   pub(crate) fs: paths::RealFileSystem,
   pub(crate) sender: Sender<Message>,
   pub(crate) req_queue: ReqQueue<(), Option<Code>>,

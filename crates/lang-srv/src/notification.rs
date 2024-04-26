@@ -102,5 +102,17 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
     }
     Ok(())
   })?;
+  n = helpers::try_notif::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
+    let url = params.text_document.uri;
+    let path = convert::url_to_path_id(&mut st.cx.paths, &url)?;
+    st.cx.open_paths.insert(path);
+    Ok(())
+  })?;
+  n = helpers::try_notif::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
+    let url = params.text_document.uri;
+    let path = convert::url_to_path_id(&mut st.cx.paths, &url)?;
+    st.cx.open_paths.remove(&path);
+    Ok(())
+  })?;
   ControlFlow::Continue(n)
 }
