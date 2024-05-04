@@ -177,7 +177,7 @@ impl<'a> St<'a> {
         self.err(idx, ErrorKind::CanEtaReduce(name));
       }
       for (idx, name, old, new) in std::mem::take(&mut self.shadows) {
-        if compatible::eq_ty_scheme(self, &old, &new).is_ok() {
+        if compatible::eq_ty_scheme(self.syms_tys, self.info.mode, &old, &new).is_ok() {
           self.err(idx, ErrorKind::ShadowInCaseWithSameTy(name, old));
         }
       }

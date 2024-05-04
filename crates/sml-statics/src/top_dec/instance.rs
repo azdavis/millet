@@ -16,7 +16,7 @@ pub(crate) fn env_of_sig(
     let mut path = Vec::<&str_util::Name>::new();
     let bound_vars = st.syms_tys.syms.get(sym).unwrap().ty_info.ty_scheme.bound_vars.clone();
     let ty_scheme = n_ary_con(&mut st.syms_tys.tys, bound_vars, sym);
-    if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
+    if !bound_ty_name_to_path(st.syms_tys, st.info.mode, &mut path, &sig.env, &ty_scheme) {
       // there should have already been an error emitted for this
       cov_mark::hit("no_path_to_sym");
       return;
@@ -57,20 +57,21 @@ pub(crate) fn env_of_sig(
 /// this seems slightly questionable, but I'm not actually sure if it's an issue. I mean, it says
 /// right there that they should be equal anyway.
 fn bound_ty_name_to_path<'e>(
-  st: &mut St<'_>,
+  st: &mut sml_statics_types::St,
+  mode: sml_statics_types::mode::Mode,
   ac: &mut Vec<&'e str_util::Name>,
   env: &'e Env,
   ty_scheme: &TyScheme,
 ) -> bool {
   for (name, ty_info) in env.ty_env.iter() {
-    if eq_ty_fn_no_emit(st, ty_info.ty_scheme.clone(), ty_scheme.clone()).is_ok() {
+    if eq_ty_fn_no_emit(st, mode, ty_info.ty_scheme.clone(), ty_scheme.clone()).is_ok() {
       ac.push(name);
       return true;
     }
   }
   for (name, env) in env.str_env.iter() {
     ac.push(name);
-    if bound_ty_name_to_path(st, ac, env, ty_scheme) {
+    if bound_ty_name_to_path(st, mode, ac, env, ty_scheme) {
       return true;
     }
     ac.pop();
