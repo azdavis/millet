@@ -48,7 +48,7 @@ pub enum Composite {
   RealInt,
   /// All kinds of numbers.
   Num,
-  /// equality-only subset of NumTxt. not explicitly mentioned in the Definition. used only for
+  /// equality-only subset of `NumTxt`. not explicitly mentioned in the Definition. used only for
   /// unification.
   WordIntTxt,
   /// All kinds of numbers and textual types (char and string).

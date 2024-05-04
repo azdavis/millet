@@ -233,7 +233,7 @@ impl std::ops::IndexMut<overload::Basic> for Overloads {
 /// even built-in items like `type int` and `exception Bind`.
 #[derive(Debug, Default, Clone)]
 pub struct Syms {
-  /// always use Sym::idx to index
+  /// always use `Sym::idx` to index
   syms: Vec<SymInfo>,
   exns: Vec<ExnInfo>,
   overloads: Overloads,

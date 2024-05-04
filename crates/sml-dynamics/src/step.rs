@@ -156,7 +156,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
             rec_fn_names(cx.ars, &mut this, pat);
             let Val::Closure(mut clos) = val else { unreachable!("val rec value must be Closure") };
             assert!(clos.this.is_empty());
-            clos.this = this.clone();
+            clos.this.clone_from(&this);
             for name in this {
               ac.insert(name, Val::Closure(clos.clone()));
             }

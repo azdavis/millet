@@ -5,7 +5,7 @@ use std::{collections::BTreeMap, fmt};
 /// A map from regions to expectations.
 #[derive(Debug)]
 pub(crate) struct File {
-  /// this is a BTreeMap because the iteration order matters for defs and uses.
+  /// this is a `BTreeMap` because the iteration order matters for defs and uses.
   inner: BTreeMap<Region, Expect>,
 }
 
