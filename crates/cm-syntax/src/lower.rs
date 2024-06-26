@@ -16,6 +16,8 @@ pub(crate) fn get(root: ParseRoot) -> Result<CmFile> {
     let kind = match cls {
       Some(class) => match class.val {
         Class::Sml(k) => PathKind::Sml(k),
+        Class::MlLex => PathKind::MlLex,
+        Class::MlYacc => PathKind::MlYacc,
         Class::Cm => PathKind::Cm,
         Class::Other(s) => {
           return Err(Error::new(ErrorKind::UnsupportedClass(path, s), class.range))

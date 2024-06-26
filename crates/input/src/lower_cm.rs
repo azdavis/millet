@@ -6,7 +6,8 @@ use crate::util::{
   StartedGroup,
 };
 use fast_hash::FxHashSet;
-use paths::PathMap;
+use paths::{CleanPathBuf, PathMap};
+use sml_file::Kind;
 use std::collections::BTreeMap;
 use text_size_util::{TextRange, WithRange};
 
@@ -108,6 +109,13 @@ where
   Ok(())
 }
 
+/// Append a second extension to a path (keeping the original extension)
+fn append_extension(path: &std::path::Path, extension2: &str) -> Option<CleanPathBuf> {
+  let path =
+    path.extension()?.to_str().map(|ext| path.with_extension(format!("{ext}.{extension2}")));
+  CleanPathBuf::new(path?)
+}
+
 fn get_one_cm_file<F>(
   st: &mut St<'_, F>,
   ret: &mut CmFile,
@@ -130,6 +138,50 @@ fn get_one_cm_file<F>(
         };
         st.sources.insert(path_id, contents);
         ret.sml_paths.insert((path_id, kind));
+      }
+      cm_syntax::PathKind::MlLex => {
+        let Some(lex_sml_path) = append_extension(path.as_path(), "sml") else {
+          continue;
+        };
+        let contents = match read_file(st.fs, source, lex_sml_path.as_path()) {
+          Ok(x) => x,
+          Err(e) => {
+            st.errors.push(e);
+            continue;
+          }
+        };
+        let path_id = st.paths.get_id_owned(lex_sml_path);
+        st.sources.insert(path_id, contents);
+        ret.sml_paths.insert((path_id, Kind::Sml));
+      }
+      cm_syntax::PathKind::MlYacc => {
+        let Some(yacc_sig_path) = append_extension(path.as_path(), "sig") else {
+          continue;
+        };
+        let contents = match read_file(st.fs, source.clone(), yacc_sig_path.as_path()) {
+          Ok(x) => x,
+          Err(e) => {
+            st.errors.push(e);
+            continue;
+          }
+        };
+        let path_id = st.paths.get_id_owned(yacc_sig_path);
+        st.sources.insert(path_id, contents);
+        ret.sml_paths.insert((path_id, Kind::Sig));
+
+        let Some(yacc_sml_path) = append_extension(path.as_path(), "sml") else {
+          continue;
+        };
+        let contents = match read_file(st.fs, source, yacc_sml_path.as_path()) {
+          Ok(x) => x,
+          Err(e) => {
+            st.errors.push(e);
+            continue;
+          }
+        };
+        let path_id = st.paths.get_id_owned(yacc_sml_path);
+        st.sources.insert(path_id, contents);
+        ret.sml_paths.insert((path_id, Kind::Sml));
       }
       cm_syntax::PathKind::Cm => {
         let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
