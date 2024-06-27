@@ -47,8 +47,8 @@ After opening your editor onto a folder, Millet will look for a "group file" dir
 
 A group file is either:
 
-- a [ML Basis][mlb] file (`.mlb`), or
-- a [SML/NJ Compilation Manager][cm] file (`.cm`).
+- a [ML Basis][mlb] (MLB) file (`.mlb`), or
+- a [SML/NJ Compilation Manager][cm] (CM) file (`.cm`).
 
 These files list out SML source files and other group files to organize the project.
 
@@ -57,6 +57,25 @@ For more exotic projects, you may wish to create an optional [`millet.toml`](#mi
 Note that a group file, or a `millet.toml` file pointing to a group file, **must** be present **directly** in the directory that you open your editor onto. It can't be in subdirectories, because Millet will not look in subdirectories, unless you tell it to via `millet.toml`.
 
 If a file is not transitively reachable from the root group file, it **will not** be analyzed.
+
+### ML Basis
+
+This group file syntax is often used with [MLton](http://mlton.org). Its documentation is [here](http://mlton.org/MLBasis).
+
+Generally, the syntax of ML Basis files is more similar to SML's own syntax than SML/NJ CM. MLB also has fewer and different features than CM.
+
+### SML/NJ Compilation Manager
+
+This group file syntax is used with SML/NJ. Its documentation is [here](https://www.smlnj.org/doc/CM/new.pdf).
+
+One notable feature of CM that Millet supports is special treatment for ML-Lex and ML-Yacc files. For these files, there are short and long file extensions:
+
+| Kind    | Short | Long   |
+| ------- | ----- | ------ |
+| ML-Lex  | `.l`  | `.lex` |
+| ML-Yacc | `.y`  | `.grm` |
+
+Millet understands that CM will generate a corresponding SML file from a given one of these source files. The SML filename will be the same as the input filename with an extra `.sml` extension at the end.
 
 ## Configuration
 
