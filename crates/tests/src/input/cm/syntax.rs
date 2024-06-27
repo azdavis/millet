@@ -135,6 +135,70 @@ is
 }
 
 #[test]
+fn ml_lex_file() {
+  check(
+    r"
+Library
+  functor TigerLexerFun
+is
+  lexer.lex
+",
+    vec![mk_name(Namespace::Functor, "TigerLexerFun")],
+    &[("lexer.lex", PathKind::MlLex)],
+  );
+}
+
+#[test]
+fn ml_lex_l_file() {
+  check(
+    r"
+Library
+  functor TigerLexerFun
+is
+  lexer.l
+",
+    vec![mk_name(Namespace::Functor, "TigerLexerFun")],
+    &[("lexer.l", PathKind::MlLex)],
+  );
+}
+
+#[test]
+fn ml_yacc_file() {
+  check(
+    r"
+Library
+  functor TigerLrValsFun
+  signature Tiger_TOKENS
+is
+  parser.grm
+",
+    vec![
+      mk_name(Namespace::Functor, "TigerLrValsFun"),
+      mk_name(Namespace::Signature, "Tiger_TOKENS"),
+    ],
+    &[("parser.grm", PathKind::MlYacc)],
+  );
+}
+
+#[test]
+fn ml_yacc_y_file() {
+  check(
+    r"
+Library
+  functor TigerLrValsFun
+  signature Tiger_TOKENS
+is
+  parser.y
+",
+    vec![
+      mk_name(Namespace::Functor, "TigerLrValsFun"),
+      mk_name(Namespace::Signature, "Tiger_TOKENS"),
+    ],
+    &[("parser.y", PathKind::MlYacc)],
+  );
+}
+
+#[test]
 fn unknown_class() {
   let e =
     cm_syntax::get(r"Group is foo.sml : succ-ml", &slash_var_path::Env::default()).unwrap_err();

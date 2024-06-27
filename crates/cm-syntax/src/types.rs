@@ -122,6 +122,10 @@ pub enum CmFileKind {
 pub enum PathKind {
   /// SML files.
   Sml(sml_file::Kind),
+  /// ML-Lex files.
+  MlLex,
+  /// ML-Yacc files.
+  MlYacc,
   /// CM files.
   Cm,
 }
@@ -221,6 +225,10 @@ impl Member {
 pub enum Class {
   /// SML files.
   Sml(sml_file::Kind),
+  /// ML-Lex files.
+  MlLex,
+  /// ML-Yacc files.
+  MlYacc,
   /// CM files.
   Cm,
   /// Some other class.
@@ -230,8 +238,15 @@ pub enum Class {
 impl Class {
   fn from_path(path: &Path) -> Option<Self> {
     let ext = path.extension()?.to_str()?;
-    let ret = if ext == "cm" { Self::Cm } else { Self::Sml(ext.parse().ok()?) };
-    Some(ret)
+    match ext.parse::<sml_file::Kind>() {
+      Ok(kind) => Some(Self::Sml(kind)),
+      Err(_) => match ext {
+        "cm" => Some(Self::Cm),
+        "y" | "grm" => Some(Self::MlYacc),
+        "l" | "lex" => Some(Self::MlLex),
+        _ => None,
+      },
+    }
   }
 }
 
@@ -252,6 +267,8 @@ impl fmt::Display for Class {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Class::Sml(_) => f.write_str("sml"),
+      Class::MlLex => f.write_str("lex"),
+      Class::MlYacc => f.write_str("grm"),
       Class::Cm => f.write_str("cm"),
       Class::Other(s) => f.write_str(s),
     }
