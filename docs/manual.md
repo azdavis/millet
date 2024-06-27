@@ -68,14 +68,27 @@ Generally, the syntax of ML Basis files is more similar to SML's own syntax than
 
 This group file syntax is used with SML/NJ. Its documentation is [here](https://www.smlnj.org/doc/CM/new.pdf).
 
-One notable feature of CM that Millet supports is special treatment for ML-Lex and ML-Yacc files. For these files, there are short and long file extensions:
+One notable feature of CM that Millet supports is special treatment for ML-Lex and ML-Yacc files.
 
-| Kind    | Short | Long   |
-| ------- | ----- | ------ |
-| ML-Lex  | `.l`  | `.lex` |
-| ML-Yacc | `.y`  | `.grm` |
+- ML-Lex files end in `.l` or `.lex`.
+- ML-Yacc files end in `.y` or `.grm`.
 
-Millet understands that CM will generate a corresponding SML file from a given one of these source files. The SML filename will be the same as the input filename with an extra `.sml` extension at the end.
+Millet understands that CM will generate corresponding SML files from a given one of these source files.
+
+- For ML-Lex files, there will be a `.sml` file generated.
+- For ML-Yacc files, there will be both a `.sml` and `.sig` file generated.
+
+The SML filename will be the same as the input filename with an extra `.sml` or `.sig` extension at the end. This is in addition to the existing extension of the input filename.
+
+- Example: `Foo.l` will produce `Foo.l.sml`.
+- Example: `Bar.grm` will produce `Bar.grm.sml` and `Bar.grm.sig`.
+
+The information is summarized in the table below:
+
+| Kind    | Short ext | Long ext | Produces `.sml` | Produces `.sig` |
+| ------- | --------- | -------- | --------------- | --------------- |
+| ML-Lex  | `.l`      | `.lex`   | Yes             | No              |
+| ML-Yacc | `.y`      | `.grm`   | Yes             | Yes             |
 
 ## Configuration
 
