@@ -130,6 +130,40 @@ pub enum PathKind {
   Cm,
 }
 
+impl FromStr for PathKind {
+  type Err = sml_file::KindFromStrError;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    if s.eq_ignore_ascii_case("cm") {
+      return Ok(Self::Cm);
+    }
+    if s.eq_ignore_ascii_case("y") || s.eq_ignore_ascii_case("grm") {
+      return Ok(Self::MlYacc);
+    }
+    if s.eq_ignore_ascii_case("l") || s.eq_ignore_ascii_case("lex") {
+      return Ok(Self::MlLex);
+    }
+    Ok(Self::Sml(s.parse::<sml_file::Kind>()?))
+  }
+}
+
+impl fmt::Display for PathKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      PathKind::Sml(k) => k.fmt(f),
+      PathKind::MlLex => f.write_str("lex"),
+      PathKind::MlYacc => f.write_str("grm"),
+      PathKind::Cm => f.write_str("cm"),
+    }
+  }
+}
+
+impl PathKind {
+  fn from_path(path: &Path) -> Option<Self> {
+    path.extension()?.to_str()?.parse().ok()
+  }
+}
+
 /// A parsed path.
 #[derive(Debug)]
 pub struct ParsedPath {
@@ -214,7 +248,9 @@ pub(crate) struct Member {
 impl Member {
   pub(crate) fn class(&self) -> Option<WithRange<Class>> {
     self.class.clone().or_else(|| match &self.pathname.val {
-      PathOrStdBasis::Path(p) => Class::from_path(p.as_path()).map(|x| self.pathname.wrap(x)),
+      PathOrStdBasis::Path(p) => {
+        PathKind::from_path(p.as_path()).map(|x| self.pathname.wrap(Class::PathKind(x)))
+      }
       PathOrStdBasis::StdBasis => None,
     })
   }
@@ -223,54 +259,25 @@ impl Member {
 /// A class of file that may appear in a CM file.
 #[derive(Debug, Clone)]
 pub enum Class {
-  /// SML files.
-  Sml(sml_file::Kind),
-  /// ML-Lex files.
-  MlLex,
-  /// ML-Yacc files.
-  MlYacc,
-  /// CM files.
-  Cm,
-  /// Some other class.
+  /// A path kind.
+  PathKind(PathKind),
+  /// Some other custom class.
   Other(String),
-}
-
-impl Class {
-  fn from_path(path: &Path) -> Option<Self> {
-    let ext = path.extension()?.to_str()?;
-    match ext.parse::<sml_file::Kind>() {
-      Ok(kind) => Some(Self::Sml(kind)),
-      Err(_) => match ext {
-        "cm" => Some(Self::Cm),
-        "y" | "grm" => Some(Self::MlYacc),
-        "l" | "lex" => Some(Self::MlLex),
-        _ => None,
-      },
-    }
-  }
 }
 
 impl FromStr for Class {
   type Err = std::convert::Infallible;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let ret = match s.to_ascii_lowercase().as_str() {
-      "sml" => Self::Sml(sml_file::Kind::Sml),
-      "cm" | "cmfile" => Self::Cm,
-      s => Self::Other(s.to_owned()),
-    };
-    Ok(ret)
+    Ok(s.parse::<PathKind>().map_or_else(|_| Self::Other(s.to_owned()), Self::PathKind))
   }
 }
 
 impl fmt::Display for Class {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Class::Sml(_) => f.write_str("sml"),
-      Class::MlLex => f.write_str("lex"),
-      Class::MlYacc => f.write_str("grm"),
-      Class::Cm => f.write_str("cm"),
-      Class::Other(s) => f.write_str(s),
+      Class::PathKind(k) => k.fmt(f),
+      Class::Other(c) => f.write_str(c.as_str()),
     }
   }
 }

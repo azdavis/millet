@@ -1,5 +1,7 @@
 //! Handling different kinds of SML files.
 
+use std::fmt;
+
 /// A kind of SML file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Kind {
@@ -18,6 +20,7 @@ impl Kind {
     matches!(*self, Self::Sig | Self::Fun)
   }
 }
+
 /// The error returned from `from_str` for [`Kind`].
 #[derive(Debug)]
 pub struct KindFromStrError(());
@@ -26,12 +29,26 @@ impl std::str::FromStr for Kind {
   type Err = KindFromStrError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    let ret = match s {
-      "sml" => Kind::Sml,
-      "sig" => Kind::Sig,
-      "fun" => Kind::Fun,
-      _ => return Err(KindFromStrError(())),
+    if s.eq_ignore_ascii_case("sml") {
+      return Ok(Kind::Sml);
+    }
+    if s.eq_ignore_ascii_case("sig") {
+      return Ok(Kind::Sig);
+    }
+    if s.eq_ignore_ascii_case("fun") {
+      return Ok(Kind::Fun);
+    }
+    Err(KindFromStrError(()))
+  }
+}
+
+impl fmt::Display for Kind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let s = match self {
+      Kind::Sml => "sml",
+      Kind::Sig => "sig",
+      Kind::Fun => "fun",
     };
-    Ok(ret)
+    f.write_str(s)
   }
 }

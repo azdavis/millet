@@ -1,7 +1,7 @@
 //! Lowering a parsed CM file and check it for validity.
 
 use crate::types::{
-  Class, CmFile, Error, ErrorKind, ParseRoot, ParsedPath, PathKind, PathOrStdBasis, Result,
+  Class, CmFile, Error, ErrorKind, ParseRoot, ParsedPath, PathOrStdBasis, Result,
 };
 use text_size_util::WithRange;
 
@@ -15,10 +15,7 @@ pub(crate) fn get(root: ParseRoot) -> Result<CmFile> {
     };
     let kind = match cls {
       Some(class) => match class.val {
-        Class::Sml(k) => PathKind::Sml(k),
-        Class::MlLex => PathKind::MlLex,
-        Class::MlYacc => PathKind::MlYacc,
-        Class::Cm => PathKind::Cm,
+        Class::PathKind(k) => k,
         Class::Other(s) => {
           return Err(Error::new(ErrorKind::UnsupportedClass(path, s), class.range))
         }
