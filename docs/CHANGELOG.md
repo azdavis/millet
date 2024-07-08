@@ -4,6 +4,10 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 Millet technically follows [SemVer][sem-ver], but the major version is zero, and it probably will be [for a while][zero-ver].
 
+## main
+
+- Support ML-Lex and ML-Yacc in CM files.
+
 ## v0.14.4
 
 - Accept implicit type variable scoping in `exception`, `type`, and `datatype` within another declaration. For example, with `exception`:
