@@ -4,6 +4,10 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 Millet technically follows [SemVer][sem-ver], but the major version is zero, and it probably will be [for a while][zero-ver].
 
+## v0.14.6
+
+No major changes in this version. This tag only exists because there were some issues with the previous version in CI.
+
 ## v0.14.5
 
 - Support ML-Lex and ML-Yacc in CM files.
