@@ -12,9 +12,11 @@ pub(crate) enum InfixErr {
 }
 
 /// similar to `many_sep`, but:
+///
 /// - always uses `;` as the separator
 /// - allows the separator to not be present
 /// - in return, `f` must say whether it parsed anything
+///
 /// returns whether it advanced at all.
 pub(crate) fn maybe_semi_sep<'a, F>(p: &mut Parser<'a>, wrap: SK, mut f: F) -> bool
 where
