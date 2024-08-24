@@ -23,7 +23,6 @@ lsp-server = "0.7.5"
 lsp-types = { version = "0.95.0", features = ["proposed"] }
 num-bigint = "0.4.4"
 num-traits = "0.2.17"
-once_cell = "1.19.0"
 pico-args = "0.5.0"
 pretty_assertions = "1.4.0"
 proc-macro2 = "1.0.70"

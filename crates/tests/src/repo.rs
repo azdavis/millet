@@ -2,11 +2,9 @@
 
 use crate::check::raw::env_var_enabled;
 use fast_hash::{FxHashMap, FxHashSet};
-use once_cell::sync::Lazy;
-use std::collections::hash_map::Entry;
-use std::collections::BTreeSet;
+use std::collections::{hash_map::Entry, BTreeSet};
 use std::fmt::{self, Write as _};
-use std::{env, fs, path::Path, process::Command};
+use std::{env, fs, path::Path, process::Command, sync::LazyLock};
 
 fn eq_sets<T>(lhs: &BTreeSet<T>, rhs: &BTreeSet<T>, only_lhs: &str, only_rhs: &str)
 where
@@ -216,7 +214,7 @@ fn changelog() {
   eq_sets(&in_git, &in_doc, "tags that have no changelog entry", "changelog entries without a tag");
 }
 
-static METADATA: Lazy<serde_json::Map<String, serde_json::Value>> = Lazy::new(|| {
+static METADATA: LazyLock<serde_json::Map<String, serde_json::Value>> = LazyLock::new(|| {
   let out = output(root_cmd("cargo").args(["metadata", "--format-version", "1"]));
   serde_json::from_str(&out).unwrap()
 });

@@ -210,7 +210,6 @@ name = "cov-mark"
 version = "0.14.6"
 dependencies = [
  "fast-hash",
- "once_cell",
 ]
 
 [[package]]
@@ -1036,7 +1035,6 @@ name = "sml-fixity"
 version = "0.14.6"
 dependencies = [
  "fast-hash",
- "once_cell",
  "str-util",
 ]
 
@@ -1171,7 +1169,6 @@ dependencies = [
  "fast-hash",
  "fmt-util",
  "idx",
- "once_cell",
  "paths",
  "sml-hir",
  "sml-path",
@@ -1283,7 +1280,6 @@ dependencies = [
  "input",
  "log",
  "mlb-syntax",
- "once_cell",
  "paths",
  "pretty_assertions",
  "proc-macro2",

@@ -19,7 +19,6 @@ drop_bomb.workspace = true
 fast-hash.workspace = true
 fmt-util.workspace = true
 idx.workspace = true
-once_cell.workspace = true
 paths.workspace = true
 str-util.workspace = true
 

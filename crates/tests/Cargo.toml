@@ -20,7 +20,6 @@ write-rs-tokens.workspace = true
 diagnostic.workspace = true
 fast-hash.workspace = true
 log.workspace = true
-once_cell.workspace = true
 paths.workspace = true
 pretty_assertions.workspace = true
 pulldown-cmark.workspace = true

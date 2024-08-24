@@ -1,11 +1,10 @@
 //! Coverage markers.
 
 use fast_hash::FxHashSet;
-use once_cell::sync::Lazy;
-use std::sync::Mutex;
+use std::sync::{LazyLock, Mutex};
 
 thread_local! {
-  static MAP: Lazy<Mutex<FxHashSet<&'static str>>> = Lazy::new(|| Mutex::new(FxHashSet::default()));
+  static MAP: LazyLock<Mutex<FxHashSet<&'static str>>> = LazyLock::new(|| Mutex::new(FxHashSet::default()));
 }
 
 /// Hit the named marker.

@@ -1,7 +1,7 @@
 //! Def-related types.
 
 use fast_hash::FxHashMap;
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 
 /// A definition site.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -126,7 +126,7 @@ impl Primitive {
   }
 }
 
-static PRIMITIVE_DOC: Lazy<FxHashMap<Primitive, String>> = Lazy::new(|| {
+static PRIMITIVE_DOC: LazyLock<FxHashMap<Primitive, String>> = LazyLock::new(|| {
   let raw = code_h2_md_map::get(include_str!("../../../docs/primitives.md"), |_| String::new());
   raw.into_iter().map(|(k, v)| (k.parse().expect("not a primitive kind"), v)).collect()
 });

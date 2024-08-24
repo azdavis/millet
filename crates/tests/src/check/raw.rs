@@ -2,8 +2,7 @@
 
 use crate::check::{expect, input, reason, show};
 use fast_hash::FxHashMap;
-use once_cell::sync::Lazy;
-use std::collections::BTreeSet;
+use std::{collections::BTreeSet, sync::LazyLock};
 
 /// A std basis.
 #[derive(Debug, Clone, Copy)]
@@ -268,4 +267,4 @@ pub(crate) fn env_var_enabled(s: &str) -> bool {
   std::env::var_os(s).map_or(false, |x| x == "1")
 }
 
-static FULL: Lazy<analysis::StdBasis> = Lazy::new(analysis::StdBasis::full);
+static FULL: LazyLock<analysis::StdBasis> = LazyLock::new(analysis::StdBasis::full);

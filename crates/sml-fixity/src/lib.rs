@@ -1,13 +1,13 @@
 //! Types concerning SML infix operators, precedence, and associativity.
 
 use fast_hash::{map_with_capacity, FxHashMap};
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 
 /// A mapping from names to (in)fixities.
 pub type Env = FxHashMap<str_util::Name, Infix>;
 
 /// The default infix operators in the std basis.
-pub static STD_BASIS: Lazy<Env> = Lazy::new(|| {
+pub static STD_BASIS: LazyLock<Env> = LazyLock::new(|| {
   let ops_arr: [(Infix, &[&str]); 6] = [
     (Infix::left(7), &["*", "/", "div", "mod"]),
     (Infix::left(6), &["+", "-", "^"]),
