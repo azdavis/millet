@@ -58,9 +58,12 @@ write-rs-tokens.git = "https://github.com/azdavis/language-util.git"
 sml-libs.git = "https://github.com/azdavis/sml-libs.git"
 
 [workspace.lints.rust]
-rust_2018_idioms = "deny"
-missing_debug_implementations = { level = "deny", priority = 1 }
-missing_docs = { level = "deny", priority = 1 }
+elided-lifetimes-in-paths = "deny"
+explicit-outlives-requirements = "deny"
+missing-debug-implementations = "deny"
+missing-docs = "deny"
+unused-extern-crates = "deny"
+
 [workspace.lints.clippy]
 pedantic = "deny"
 
