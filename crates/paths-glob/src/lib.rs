@@ -5,7 +5,7 @@ pub use wax::{BuildError, WalkError};
 /// An extended fs trait for globs.
 pub trait FileSystem: paths::FileSystem {
   /// The type of globs.
-  type Glob<'a>
+  type Glob<'a>: std::fmt::Debug
   where
     Self: 'a;
 
