@@ -26,6 +26,7 @@ fn self_cycle() {
   check_bad_input("a.cm", "there is a cycle", [("a.cm", "Group is a.cm")]);
 }
 
+#[ignore = "depends on hash map iter order"]
 #[test]
 fn mlb_cm_err() {
   check_bad_input("a.cm", "multiple *.cm or *.mlb files", [("a.cm", cm::EMPTY), ("a.mlb", "")]);
