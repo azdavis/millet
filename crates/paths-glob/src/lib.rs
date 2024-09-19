@@ -1,6 +1,6 @@
 //! Extends the paths file system trait with globs.
 
-pub use wax::{BuildError, WalkError};
+use std::fmt;
 
 /// An extended fs trait for globs.
 pub trait FileSystem: paths::FileSystem {
@@ -9,18 +9,24 @@ pub trait FileSystem: paths::FileSystem {
   where
     Self: 'a;
 
+  /// An error when making a glob.
+  type BuildError: fmt::Debug + fmt::Display;
+
   /// Build a glob.
   ///
   /// # Errors
   ///
   /// When constructing the glob failed e.g. because of invalid pattern syntax.
-  fn glob(pattern: &str) -> Result<Self::Glob<'_>, BuildError>;
+  fn glob(pattern: &str) -> Result<Self::Glob<'_>, Self::BuildError>;
 
   /// A walked entry.
   type WalkEntry<'a>;
 
+  /// An error when walking.
+  type WalkError: fmt::Debug + fmt::Display + Into<std::io::Error>;
+
   /// The iterator type of walks.
-  type Walk<'a>: Iterator<Item = Result<Self::WalkEntry<'static>, WalkError>>
+  type Walk<'a>: Iterator<Item = Result<Self::WalkEntry<'static>, Self::WalkError>>
   where
     Self: 'a;
 
@@ -34,13 +40,17 @@ pub trait FileSystem: paths::FileSystem {
 impl FileSystem for paths::RealFileSystem {
   type Glob<'a> = wax::Glob<'a>;
 
-  fn glob(pattern: &str) -> Result<Self::Glob<'_>, BuildError> {
+  type BuildError = wax::BuildError;
+
+  fn glob(pattern: &str) -> Result<Self::Glob<'_>, Self::BuildError> {
     wax::Glob::new(pattern)
   }
 
   type WalkEntry<'a> = wax::WalkEntry<'a>;
 
   type Walk<'a> = wax::Walk<'a>;
+
+  type WalkError = wax::WalkError;
 
   fn walk<'g>(&self, glob: &'g Self::Glob<'_>) -> Self::Walk<'g> {
     glob.walk(".")
@@ -52,16 +62,36 @@ impl FileSystem for paths::RealFileSystem {
   }
 }
 
+/// A type with no values.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Never(std::convert::Infallible);
+
+impl From<Never> for std::io::Error {
+  fn from(value: Never) -> Self {
+    match value.0 {}
+  }
+}
+
+impl fmt::Display for Never {
+  fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self.0 {}
+  }
+}
+
 impl FileSystem for paths::MemoryFileSystem {
   type Glob<'a> = &'a str;
 
-  fn glob(pattern: &str) -> Result<Self::Glob<'_>, BuildError> {
+  type BuildError = Never;
+
+  fn glob(pattern: &str) -> Result<Self::Glob<'_>, Self::BuildError> {
     Ok(pattern)
   }
 
   type WalkEntry<'a> = paths::CleanPathBuf;
 
-  type Walk<'a> = std::vec::IntoIter<Result<Self::WalkEntry<'static>, WalkError>>;
+  type WalkError = Never;
+
+  type Walk<'a> = std::vec::IntoIter<Result<Self::WalkEntry<'static>, Self::WalkError>>;
 
   fn walk<'g>(&self, glob: &'g Self::Glob<'_>) -> Self::Walk<'g> {
     let cs: Vec<_> = std::path::Path::new(glob).components().collect();

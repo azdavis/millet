@@ -228,7 +228,7 @@ fn glob_root_group_paths<F>(
       errors.push(Error::new(
         ErrorSource::default(),
         config_path.to_owned(),
-        ErrorKind::GlobPattern(e),
+        ErrorKind::GlobPattern(e.to_string()),
       ));
       return;
     }

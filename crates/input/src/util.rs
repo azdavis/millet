@@ -20,7 +20,9 @@ pub(crate) enum ErrorKind {
   Duplicate(str_util::Name),
   InvalidErrorCode(str_util::SmolStr, diagnostic::ParseCodeError),
   SourcePathNotInFiles,
-  GlobPattern(paths_glob::BuildError),
+  /// NOTE the string isn't the greatest (have to allocate) but easier then carting around generic
+  /// arguments for the glob build error
+  GlobPattern(String),
   EmptyGlob(str_util::SmolStr),
   FunSig,
   NonUtf8Path,
