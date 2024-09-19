@@ -222,7 +222,7 @@ fn glob_root_group_paths<F>(
       return;
     }
   };
-  let paths = match F::glob(glob) {
+  let mut paths = match F::glob(glob) {
     Ok(x) => x,
     Err(e) => {
       errors.push(Error::new(
@@ -233,7 +233,7 @@ fn glob_root_group_paths<F>(
       return;
     }
   };
-  for path in fs.walk(&paths) {
+  for path in fs.walk(&mut paths) {
     let path = match path {
       Ok(x) => x,
       Err(e) => {

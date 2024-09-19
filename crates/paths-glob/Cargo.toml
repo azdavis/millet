@@ -13,5 +13,6 @@ test = false
 doctest = false
 
 [dependencies]
+glob.workspace = true
 paths.workspace = true
 wax.workspace = true

@@ -32,7 +32,9 @@ rowan = "0.15.15"
 serde = { version = "1.0.193", features = ["derive"] }
 serde_json = "1.0.108"
 toml = "0.8.8"
+# TODO decide between wax/glob
 wax = "0.6.0"
+glob = "0.3.1"
 # language-util
 chain-map.git = "https://github.com/azdavis/language-util.git"
 code-h2-md-map.git = "https://github.com/azdavis/language-util.git"
