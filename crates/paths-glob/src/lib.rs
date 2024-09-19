@@ -56,7 +56,6 @@ impl FileSystem for paths::RealFileSystem {
     glob.walk(".")
   }
 
-  /// Turns an entry into its path.
   fn entry_path<'e>(entry: &'e Self::WalkEntry<'_>) -> &'e std::path::Path {
     entry.path()
   }
