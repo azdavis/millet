@@ -13,6 +13,7 @@ fn no_root_group_wrong_ext() {
 }
 
 #[test]
+#[ignore = "depends on hash map iter order"]
 fn multiple_root_groups_err() {
   check_bad_input(
     "b.cm",

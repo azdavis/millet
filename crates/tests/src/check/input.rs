@@ -1,6 +1,6 @@
 //! Text input with in-memory files.
 
-use fast_hash::FxHashMap;
+use std::collections::BTreeMap;
 use std::sync::LazyLock;
 
 /// Get an input and path store from an iterator of (filename, contents).
@@ -9,7 +9,7 @@ where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
   _ = env_logger::builder().is_test(true).try_init();
-  let mut map = FxHashMap::<paths::CleanPathBuf, String>::default();
+  let mut map = BTreeMap::<paths::CleanPathBuf, String>::default();
   for (name, contents) in iter {
     let path = ROOT.as_clean_path().join(name);
     assert!(map.insert(path, contents.to_owned()).is_none(), "duplicate key: {name}");

@@ -37,7 +37,7 @@ impl Cx {
   }
 
   pub(crate) fn send_response(&mut self, res: Response) {
-    match self.req_queue.incoming.complete(res.id.clone()) {
+    match self.req_queue.incoming.complete(&res.id) {
       Some(()) => self.send(res.into()),
       None => log::warn!("tried to respond to a non-queued request: {res:?}"),
     }
