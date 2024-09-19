@@ -13,10 +13,9 @@ fn no_root_group_wrong_ext() {
 }
 
 #[test]
-#[ignore = "depends on hash map iter order"]
 fn multiple_root_groups_err() {
   check_bad_input(
-    "b.cm",
+    "a.cm",
     "multiple *.cm or *.mlb files",
     [("a.cm", cm::EMPTY), ("b.cm", cm::EMPTY)],
   );
@@ -27,7 +26,6 @@ fn self_cycle() {
   check_bad_input("a.cm", "there is a cycle", [("a.cm", "Group is a.cm")]);
 }
 
-#[ignore = "depends on hash map iter order"]
 #[test]
 fn mlb_cm_err() {
   check_bad_input("a.cm", "multiple *.cm or *.mlb files", [("a.cm", cm::EMPTY), ("a.mlb", "")]);

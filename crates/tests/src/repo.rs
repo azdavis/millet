@@ -122,13 +122,11 @@ fn attr_test(word: &str) {
 }
 
 #[test]
-#[should_panic = "input/misc.rs"]
 fn no_ignore() {
   attr_test("ignore");
 }
 
 #[test]
-#[should_panic = "repo.rs"]
 fn no_should_panic() {
   attr_test("should_panic");
 }
