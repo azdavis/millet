@@ -4,6 +4,42 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 Millet technically follows [SemVer][sem-ver], but the major version is zero, and it probably will be [for a while][zero-ver].
 
+## main
+
+Improve glob handling behavior for `workspace.root`.
+
+Given this directory structure:
+
+```
+.
+\_ millet.toml
+\_ a
+  \_ sources.mlb
+  \_ main.sml
+\_ b
+  \_ sources.mlb
+  \_ main.sml
+\_ c
+  \_ d
+    \_ sources.mlb
+    \_ main.sml
+```
+
+Where `millet.toml` contains:
+
+```toml
+version = 1
+workspace.root = "**/sources.mlb"
+```
+
+And each `sources.mlb` contains:
+
+```
+main.sml
+```
+
+All three `sources.mlb`s and thus `main.sml`s are now picked up by Millet. Whereas before, the `**/sources.mlb` workspace root glob was not properly handled.
+
 ## v0.14.6
 
 No major changes in this version. This tag only exists because there were some issues with the previous version in CI.
