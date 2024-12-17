@@ -107,7 +107,7 @@ struct St<'a> {
   report_diagnostics: bool,
 }
 
-impl<'a> St<'a> {
+impl St<'_> {
   fn undef(
     &mut self,
     path: paths::PathId,

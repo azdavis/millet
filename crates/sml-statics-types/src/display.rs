@@ -93,7 +93,7 @@ struct TyDisplay<'a> {
   pretty: Option<Pretty>,
 }
 
-impl<'a> TyDisplay<'a> {
+impl TyDisplay<'_> {
   fn with(&self, ty: Ty, prec: TyPrec, pretty: Option<Pretty>) -> Self {
     Self { ty, cx: self.cx, prec, pretty }
   }

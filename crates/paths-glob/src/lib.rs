@@ -89,7 +89,7 @@ impl FileSystem for WaxFileSystem {
 #[derive(Debug)]
 pub struct Walk<'a>(&'a mut glob::Paths);
 
-impl<'a> Iterator for Walk<'a> {
+impl Iterator for Walk<'_> {
   type Item = Result<std::path::PathBuf, WalkError>;
 
   fn next(&mut self) -> Option<Self::Item> {

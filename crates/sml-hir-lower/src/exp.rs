@@ -177,7 +177,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       }
       let lhs = exp.lhs();
       let rhs = exp.rhs();
-      if is_bool_lit(&lhs) || is_bool_lit(&rhs) {
+      if is_bool_lit(lhs.as_ref()) || is_bool_lit(rhs.as_ref()) {
         st.err(exp.syntax(), ErrorKind::ComplexBoolExp);
       }
       let cond = get(st, lhs);
@@ -191,7 +191,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       }
       let lhs = exp.lhs();
       let rhs = exp.rhs();
-      if is_bool_lit(&lhs) || is_bool_lit(&rhs) {
+      if is_bool_lit(lhs.as_ref()) || is_bool_lit(rhs.as_ref()) {
         st.err(exp.syntax(), ErrorKind::ComplexBoolExp);
       }
       let cond = get(st, lhs);
@@ -220,7 +220,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let cond = exp.cond();
       let yes = exp.yes();
       let no = exp.no();
-      if is_bool_lit(&cond) || is_bool_lit(&yes) || is_bool_lit(&no) {
+      if is_bool_lit(cond.as_ref()) || is_bool_lit(yes.as_ref()) || is_bool_lit(no.as_ref()) {
         st.err(exp.syntax(), ErrorKind::ComplexBoolExp);
       }
       let cond = get(st, cond);
@@ -271,7 +271,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
   st.exp(ret, ptr)
 }
 
-fn is_bool_lit(exp: &Option<ast::Exp>) -> bool {
+fn is_bool_lit(exp: Option<&ast::Exp>) -> bool {
   let Some(exp) = exp else { return false };
   match exp {
     ast::Exp::PathExp(exp) => exp.path().map_or(false, |p| {
@@ -282,9 +282,9 @@ fn is_bool_lit(exp: &Option<ast::Exp>) -> bool {
         .map_or(false, |x| matches!(x.token.text(), "true" | "false"));
       is_true_or_false && iter.next().is_none()
     }),
-    ast::Exp::ParenExp(exp) => is_bool_lit(&exp.exp()),
-    ast::Exp::TypedExp(exp) => is_bool_lit(&exp.exp()),
-    ast::Exp::HandleExp(exp) => is_bool_lit(&exp.exp()),
+    ast::Exp::ParenExp(exp) => is_bool_lit(exp.exp().as_ref()),
+    ast::Exp::TypedExp(exp) => is_bool_lit(exp.exp().as_ref()),
+    ast::Exp::HandleExp(exp) => is_bool_lit(exp.exp().as_ref()),
     _ => false,
   }
 }
