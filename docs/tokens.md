@@ -821,6 +821,24 @@ val { year, ... } = tvShow
    val (n, s) = tup
    ```
 
+3. Begin a list of type arguments or parameters.
+
+   ```sml
+   datatype ('t, 'e) result =
+     Ok of 't
+   | Err of 'e
+
+   fun ('t, 'e, 'u) map
+     (f : 't -> 'u)
+     (res : ('t, 'e) result)
+     : ('u, 'e) result =
+     case res of
+       Ok x => Ok (f x)
+     | Err e => Err e
+
+   val x : (int, string) result = Ok 3
+   ```
+
 ## `)`
 
 The companion of `(`.
