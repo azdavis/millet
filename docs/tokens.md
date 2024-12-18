@@ -868,7 +868,7 @@ val lst = [1, 4, 3]
 type ('a, 'b) parser = 'a -> ('a * 'b) option
 ```
 
-Compare with `;`, which can also separate expressions, but ignores all but the last one.
+Compare with `;`, which can also separate expressions, but discards the value of all but the last one.
 
 ## `.`
 
