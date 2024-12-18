@@ -424,7 +424,7 @@ impl<'a> St<'a> {
   }
 
   pub(crate) fn pop_fun_name(&mut self) {
-    self.fun_names.pop().expect("no fun name to pop");
+    self.fun_names.pop().expect("should have pushed a fun name");
   }
 
   pub(crate) fn is_name_of_cur_fun(&self, name: &str) -> bool {
@@ -444,7 +444,7 @@ impl<'a> St<'a> {
   }
 
   pub(crate) fn dec_level(&mut self) {
-    self.level = self.level.checked_sub(1).expect("already at top level");
+    self.level = self.level.checked_sub(1).expect("should have inc'd a level");
   }
 
   pub(crate) fn is_top_level(&self) -> bool {

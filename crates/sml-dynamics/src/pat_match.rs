@@ -5,7 +5,7 @@ use sml_hir::SCon;
 use sml_statics_types::info::IdStatus;
 
 pub(crate) fn get(ac: &mut ValEnv, cx: Cx<'_>, pat: sml_hir::PatIdx, val: &Val) -> bool {
-  let pat = pat.expect("no pat");
+  let pat = pat.expect("should have a pat");
   match (&cx.ars.pat[pat], val) {
     (sml_hir::Pat::Wild, _) => true,
     (sml_hir::Pat::Con(path, pat_arg), _) => match &cx.pat[pat] {

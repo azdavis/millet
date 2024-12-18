@@ -315,7 +315,7 @@ where
   F: paths::FileSystem,
 {
   for (path_id, _) in cx.sml_paths {
-    let contents = st.sources.get(path_id).expect("sml file should be set").as_str();
+    let contents = st.sources.get(path_id).expect("should have sml contents for path").as_str();
     get_top_defs(contents, ac, range);
   }
 }
@@ -352,7 +352,7 @@ fn extend_with<F>(st: &mut St<'_, F>, path: paths::PathId, range: TextRange, ac:
 where
   F: paths::FileSystem,
 {
-  let other = st.cm_files.get(&path).expect("cm file should be set after successful get_one");
+  let other = st.cm_files.get(&path).expect("should set cm file after successful get_one");
   ac.extend(other.exports.keys().map(|ex| (ex.clone(), range)));
 }
 

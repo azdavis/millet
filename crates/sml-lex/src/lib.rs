@@ -99,7 +99,7 @@ pub fn get(s: &str) -> Lex<'_> {
     let start = st.i;
     let kind = go(&mut st, bs);
     assert!(start < st.i, "lexer failed to advance");
-    let text = std::str::from_utf8(&bs[start..st.i]).expect("not a str");
+    let text = std::str::from_utf8(&bs[start..st.i]).expect("should get utf-8");
     tokens.push(Token { kind, text });
   }
   Lex { tokens, errors: st.errors }

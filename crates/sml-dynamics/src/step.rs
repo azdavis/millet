@@ -25,7 +25,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
           (Step::Val(Val::Con(Con::empty(path.last().clone(), ConKind::Exn(except)))), false)
         }
         IdStatus::Val => {
-          let env = st.env.get(path.prefix()).expect("no env");
+          let env = st.env.get(path.prefix()).expect("should have an env");
           let val = env.val[path.last()].clone();
           let visible = match &val {
             Val::SCon(_) | Val::Record(_) | Val::Closure(_) => true,
@@ -142,9 +142,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
           (Step::Val(Val::Con(Con { name, kind, arg: Some(Box::new(val)) })), false)
         }
         FrameKind::Raise => match val {
-          Val::Con(con) => {
-            (Step::Raise(con.try_into().expect("Raise Con but not Exception")), false)
-          }
+          Val::Con(con) => (Step::Raise(con.try_into().expect("should raise an Exception")), false),
           _ => unreachable!("Raise not Con"),
         },
         // handle wasn't needed, as head didn't raise
@@ -299,7 +297,7 @@ fn step_dec(st: &mut St) -> (Step, bool) {
 }
 
 fn rec_fn_names(ars: &sml_hir::Arenas, ac: &mut FxHashSet<Name>, pat: sml_hir::PatIdx) {
-  match &ars.pat[pat.expect("no pat")] {
+  match &ars.pat[pat.expect("should have a pat")] {
     sml_hir::Pat::Wild => {}
     sml_hir::Pat::SCon(_) => unreachable!("SCon pat cannot match fn"),
     sml_hir::Pat::Con(path, argument) => {

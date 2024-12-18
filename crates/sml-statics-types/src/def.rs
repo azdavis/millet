@@ -122,13 +122,13 @@ impl Primitive {
   #[must_use]
   pub fn doc(self) -> &'static str {
     cov_mark::hit("primitive_doc");
-    PRIMITIVE_DOC.get(&self).expect("no doc for this primitive").as_ref()
+    PRIMITIVE_DOC.get(&self).expect("should have doc for all primitives").as_ref()
   }
 }
 
 static PRIMITIVE_DOC: LazyLock<FxHashMap<Primitive, String>> = LazyLock::new(|| {
   let raw = code_h2_md_map::get(include_str!("../../../docs/primitives.md"), |_| String::new());
-  raw.into_iter().map(|(k, v)| (k.parse().expect("not a primitive kind"), v)).collect()
+  raw.into_iter().map(|(k, v)| (k.parse().expect("should only doc primitives"), v)).collect()
 });
 
 impl From<Primitive> for Def {

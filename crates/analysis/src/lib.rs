@@ -90,7 +90,7 @@ impl Analysis {
     std::iter::empty()
       .chain(res.mlb_errors.into_iter().filter_map(|err| {
         let path = err.path();
-        let group = input.groups.get(&path).expect("no such group");
+        let group = input.groups.get(&path).expect("should have a group for path");
         let err = Diagnostic {
           range: f(&group.pos_db, err.range())?,
           message: err.to_string(),
@@ -124,8 +124,8 @@ impl Analysis {
   ///
   /// If we couldn't find the source file for this path.
   pub fn update_one(&mut self, input: &input::Input, path: paths::PathId) {
-    let source_file = self.source_files.get_mut(&path).expect("no source file");
-    let contents = input.sources.get(&path).expect("no contents");
+    let source_file = self.source_files.get_mut(&path).expect("should have a source file for path");
+    let contents = input.sources.get(&path).expect("should have source for path");
     mlb_statics::update_one(&mut self.syms_tys, &input.lang, source_file, path, contents);
   }
 

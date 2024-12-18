@@ -126,7 +126,7 @@ impl<'a> St<'a> {
     if self.info.mode.is_path_order() {
       return;
     }
-    self.cur_prefix.pop().expect("no matching push_structure");
+    self.cur_prefix.pop().expect("should have pushed prefix");
   }
 
   // returns whether given the current mode and prefix, a type should be reported unqualified.

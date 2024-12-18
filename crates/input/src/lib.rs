@@ -50,7 +50,7 @@ impl Input {
     ret.lang = root.config.lang;
     for group in root.groups {
       let path = paths.get_path(group.path).as_path();
-      let parent = path.parent().expect("group path with no parent");
+      let parent = path.parent().expect("should have parent for group path");
       let parent = match util::str_path(ErrorSource::default(), parent) {
         Ok(x) => x,
         Err(e) => {

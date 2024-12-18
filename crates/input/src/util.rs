@@ -199,7 +199,8 @@ pub(crate) fn get_path_id_in_group(
     path: Some(group.path.as_path().to_owned()),
     range: group.pos_db.range_utf16(range),
   };
-  let path = group.path.as_clean_path().parent().expect("group path with no parent").join(path);
+  let path =
+    group.path.as_clean_path().parent().expect("should have parent for group path").join(path);
   let id = paths.get_id(path.as_clean_path());
   (id, path, source)
 }

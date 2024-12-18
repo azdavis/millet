@@ -77,8 +77,8 @@ pub fn get_fixed(tys: &mut Tys, mut fixed: FixedTyVars, ty: Ty) -> TyScheme {
     *bv = Some(new_bv);
   }
   let mut st = St { fixed, meta: FxHashMap::default(), bound, tys };
-  let ty = go(&mut st, ty).expect("there should be no meta vars at all, much less record ones");
-  assert!(st.meta.is_empty(), "there should be no meta vars");
+  let ty = go(&mut st, ty).expect("should be no meta vars at all, much less record ones");
+  assert!(st.meta.is_empty(), "should be no meta vars");
   TyScheme { bound_vars: st.bound, ty }
 }
 

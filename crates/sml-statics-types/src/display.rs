@@ -104,7 +104,7 @@ impl fmt::Display for TyDisplay<'_> {
     match self.cx.st.tys.data(self.ty) {
       TyData::None => f.write_str("_")?,
       TyData::BoundVar(bv) => {
-        let vars = self.cx.bound_vars.expect("bound ty var without a BoundTyVars");
+        let vars = self.cx.bound_vars.expect("should only find BoundVar with a BoundTyVars");
         match bv.index_into(vars) {
           BoundTyVarData::Kind(kind) => match kind {
             // NOTE this can clash with explicitly named ty vars, but currently they do not mix

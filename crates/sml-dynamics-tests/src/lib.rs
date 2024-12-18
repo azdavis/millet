@@ -44,7 +44,8 @@ fn check(s: &str, steps: &[&str]) {
     bind,
     match_,
   };
-  let mut dynamics = sml_dynamics::Dynamics::new(cx, sf.lower.root.clone()).expect("no str decs");
+  let mut dynamics =
+    sml_dynamics::Dynamics::new(cx, sf.lower.root.clone()).expect("should have str decs");
   let mut stdin = std::io::stdin().lock();
   let mut buf = String::new();
   let mut steps = steps.iter();
@@ -59,11 +60,11 @@ fn check(s: &str, steps: &[&str]) {
       println!("{dynamics:#}");
     }
     if manually_advance {
-      stdin.read_line(&mut buf).expect("couldn't read");
+      stdin.read_line(&mut buf).expect("should be able to read line");
       buf.clear();
     }
     if check_steps {
-      let want = rm_whitespace(steps.next().expect("missing step").trim());
+      let want = rm_whitespace(steps.next().expect("should not be missing step").trim());
       let got = rm_whitespace(&dynamics.to_string());
       pretty_assertions::assert_str_eq!(want, got);
     }

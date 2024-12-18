@@ -21,8 +21,8 @@ impl Val {
     match self {
       Val::Record(mut rows) => {
         assert_eq!(rows.len(), 2);
-        let fst = rows.remove(&Lab::tuple(0)).expect("no fst");
-        let snd = rows.remove(&Lab::tuple(1)).expect("no snd");
+        let fst = rows.remove(&Lab::tuple(0)).expect("should have fst");
+        let snd = rows.remove(&Lab::tuple(1)).expect("should have snd");
         [fst, snd]
       }
       _ => unreachable!("not Record: {self:?}"),
@@ -118,7 +118,7 @@ pub(crate) enum Step {
 
 impl Step {
   pub(crate) fn exp(idx: sml_hir::ExpIdx) -> Self {
-    Self::Exp(idx.expect("no exp"))
+    Self::Exp(idx.expect("should have exp"))
   }
 }
 

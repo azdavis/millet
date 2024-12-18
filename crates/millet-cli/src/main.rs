@@ -216,8 +216,9 @@ impl<'a> codespan_reporting::files::Files<'a> for Files<'a> {
     if end.line > file_end.line || end.line == file_end.line && end.col > file_end.col {
       end = file_end;
     }
-    let tr =
-      db.text_range_utf16(text_pos::RangeUtf16 { start, end }).expect("line range out of range");
+    let tr = db
+      .text_range_utf16(text_pos::RangeUtf16 { start, end })
+      .expect("should have line range be in range");
     Ok(tr.into())
   }
 }

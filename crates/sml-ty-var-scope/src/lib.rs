@@ -221,7 +221,7 @@ fn get_dec_one(
           //
           // > A free occurrence of a ty var in a val dec is said to be unguarded if the occurrence
           // > is not part of a smaller val dec within that value declaration. In this case we say
-          // > that 'a occurs unguarded in the val dec.
+          // > that the ty var occurs unguarded in the val dec.
           let mut mode = Mode::GetUnguarded(TyVarSet::default());
           for val_bind in val_binds {
             match &mut mode {
@@ -250,7 +250,7 @@ fn get_dec_one(
           //
           // here we get the ty vars, which are currently exactly the unguarded variables for this
           // dec, fulfilling condition 1.
-          let ty_vars = st.val_dec.get_mut(&dec).expect("didn't GetUnguarded");
+          let ty_vars = st.val_dec.get_mut(&dec).expect("should have done GetUnguarded first");
           // we then mutate to remove any variables implicitly scoped by any val decs that contain
           // this one, fulfilling condition 2.
           //

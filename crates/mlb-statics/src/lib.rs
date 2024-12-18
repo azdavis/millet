@@ -245,7 +245,7 @@ fn get_bas_dec(
     },
     mlb_hir::BasDec::Path(path, kind) => match kind {
       mlb_hir::PathKind::Source(file_kind) => {
-        let contents = cx.source_file_contents.get(path).expect("no source file");
+        let contents = cx.source_file_contents.get(path).expect("should have source file for path");
         let mut fix_env = scope.fix_env.clone();
         let syntax = SourceFileSyntax::new(&mut fix_env, cx.lang, *file_kind, contents);
         get_source_file(st, cx.lang, *path, scope, ac, fix_env, syntax);
@@ -259,7 +259,8 @@ fn get_bas_dec(
       let mut syntaxes: paths::PathMap<_> = paths
         .iter()
         .map(|&(path, kind)| {
-          let contents = cx.source_file_contents.get(&path).expect("no source file");
+          let contents =
+            cx.source_file_contents.get(&path).expect("should have source file for path");
           let mut fix_env = scope.fix_env.clone();
           let syntax = SourceFileSyntax::new(&mut fix_env, cx.lang, kind, contents);
           (path, (fix_env, syntax))
@@ -278,7 +279,8 @@ fn get_bas_dec(
       let mut scope = scope.clone();
       for path in order {
         let mut one_m_basis = MBasis::default();
-        let (fix_env, syntax) = syntaxes.remove(&path).expect("path from order is in syntaxes");
+        let (fix_env, syntax) =
+          syntaxes.remove(&path).expect("should have path from order be present");
         get_source_file(st, cx.lang, path, &scope, &mut one_m_basis, fix_env, syntax);
         scope.append(one_m_basis.clone());
         ac.append(one_m_basis);
@@ -371,7 +373,7 @@ pub fn add_all_doc_comments(
     .chain(low.arenas.str_dec.iter().map(|(x, _)| sml_hir::Idx::StrDec(x)))
     .chain(low.arenas.spec.iter().map(|(x, _)| sml_hir::Idx::Spec(x)));
   for idx in indices {
-    let ptr = low.ptrs.hir_to_ast(idx).expect("no syntax ptr");
+    let ptr = low.ptrs.hir_to_ast(idx).expect("should have syntax ptr");
     let node = ptr.to_node(root);
     if let Some(doc) = sml_comment::doc_comment_above(&node) {
       info.add_doc(idx, doc);

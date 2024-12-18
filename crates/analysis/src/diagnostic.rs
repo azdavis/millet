@@ -78,7 +78,7 @@ where
   if !ignore_after_syntax || !has_any_error {
     ret.extend(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
-      let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
+      let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("should have a pointer for idx");
       let node = syntax.to_node(file.syntax.parse.root.syntax());
       let range = f(&file.syntax.pos_db, sml_syntax::node_range(&node))?;
       let message = err.display(syms_tys, options.lines).to_string();

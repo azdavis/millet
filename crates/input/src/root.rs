@@ -198,7 +198,7 @@ fn disallow(
       continue;
     };
     if !allowed {
-      let p = sml_path::Path::try_new(parts).expect("split always returns non-empty iter");
+      let p = sml_path::Path::try_new(parts).expect("should not get empty iter from split");
       set.insert(p);
     }
   }

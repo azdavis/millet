@@ -29,7 +29,7 @@ impl<'a> Dynamics<'a> {
   /// If this was already finished.
   #[must_use]
   pub fn step(mut self) -> Progress<'a> {
-    let mut s = self.step.take().expect("no step");
+    let mut s = self.step.take().expect("should not be finished");
     loop {
       let (new_s, change) = step(&mut self.st, self.cx, s);
       s = new_s;

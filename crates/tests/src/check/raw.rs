@@ -76,7 +76,7 @@ where
     (ExpectedInput::Good, None) => {}
     (ExpectedInput::Good, Some(e)) => {
       let got_path =
-        e.abs_path().strip_prefix(input::ROOT.as_path()).expect("could not strip ROOT prefix");
+        e.abs_path().strip_prefix(input::ROOT.as_path()).expect("should strip ROOT prefix");
       let msg = e.display(input::ROOT.as_path()).to_string();
       ck.reasons.push(reason::Reason::UnexpectedlyBadInput(got_path.to_owned(), msg));
     }
@@ -87,7 +87,7 @@ where
     }
     (ExpectedInput::Bad { path, msg }, Some(e)) => {
       let got_path =
-        e.abs_path().strip_prefix(input::ROOT.as_path()).expect("could not strip ROOT prefix");
+        e.abs_path().strip_prefix(input::ROOT.as_path()).expect("should strip ROOT prefix");
       let path = std::path::Path::new(path);
       if path != got_path {
         ck.reasons.push(reason::Reason::WrongInputErrPath(path.to_owned(), got_path.to_owned()));

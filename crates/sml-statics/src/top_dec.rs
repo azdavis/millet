@@ -260,7 +260,7 @@ fn get_str_exp(
       }
       enrich_defs(&str_exp_env, &mut to_add);
       if let Some(ov) = ov {
-        let ty_info = to_add.ty_env.get(ov.as_str()).expect("no overloaded ty");
+        let ty_info = to_add.ty_env.get(ov.as_str()).expect("should get overloaded ty");
         match st.syms_tys.tys.data(ty_info.ty_scheme.ty) {
           TyData::Con(data) => {
             assert!(data.args.is_empty());
@@ -475,7 +475,7 @@ fn get_spec_one(
       for val_desc in val_descs {
         let ty = ty::get(st, &cx, ars, ty::Mode::Regular, val_desc.ty);
         let ty_scheme = generalize::get(&mut st.syms_tys.tys, fixed.clone(), ty)
-          .expect("no record meta vars because no patterns in specs");
+          .expect("should be no record meta vars because no patterns in specs");
         let vi = ValInfo {
           ty_scheme,
           id_status: IdStatus::Val,
