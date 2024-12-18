@@ -10,6 +10,13 @@ labels: bug
 - Editor version: <!-- e.g. VS Code X.Y.Z -->
 - OS version: <!-- e.g. macOS X.Y.Z -->
 
+## Attestation
+
+To avoid filing duplicate issues, I checked:
+
+- [ ] The [known issues section of the manual](/docs/manual.md#known-issues)
+- [ ] The [existing issue tracker](https://github.com/azdavis/millet/issues)
+
 ## Steps to reproduce
 
 <!-- Please minimize the bug as much as possible. -->
