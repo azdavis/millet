@@ -40,6 +40,7 @@ When using other editors, you will likely need to:
   - String paths (wrapped in quotes) are not supported.
 - The standard basis is made available to all files, regardless of whether files ask for it.
 - Every file is entirely re-analyzed upon a single file change. This can make the server slow.
+- Fixity declarations are not imported across files by default. You can enable importing fixity declarations with [a setting](#languagefixity-across-files), but this may make Millet slower.
 
 ## Usage
 
