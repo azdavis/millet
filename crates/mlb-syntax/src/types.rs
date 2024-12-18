@@ -18,6 +18,7 @@ pub(crate) enum ErrorKind {
   ExpectedName,
   PathNotSmlOrMlb,
   SlashVarPathError(slash_var_path::Error),
+  Hole,
 }
 
 /// An error when processing a ML Basis file.
@@ -47,6 +48,7 @@ impl fmt::Display for Error {
       ErrorKind::ExpectedName => f.write_str("expected a name"),
       ErrorKind::PathNotSmlOrMlb => f.write_str("path is not SML or MLB"),
       ErrorKind::SlashVarPathError(e) => write!(f, "cannot construct path: {e}"),
+      ErrorKind::Hole => f.write_str("hole"),
     }
   }
 }
@@ -67,6 +69,7 @@ pub(crate) enum Token<'a> {
   In,
   Semicolon,
   Eq,
+  Dots,
   String(&'a str),
   Name(&'a str),
   BarePath(&'a str),
@@ -89,6 +92,7 @@ impl fmt::Display for Token<'_> {
       Token::In => f.write_str("in"),
       Token::Semicolon => f.write_str(";"),
       Token::Eq => f.write_str("="),
+      Token::Dots => f.write_str("..."),
       Token::String(s) | Token::Name(s) | Token::BarePath(s) => f.write_str(s),
     }
   }

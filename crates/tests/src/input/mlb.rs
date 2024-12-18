@@ -176,3 +176,12 @@ fn no_path() {
   check_bad_input("s.mlb", "couldn't perform file I/O", [("s.mlb", "no.mlb")]);
   cov_mark::check("no_bas_dec");
 }
+
+#[test]
+fn hole() {
+  let mlb = r"
+local ... in end
+(**   ^^^ hole *)
+";
+  check_bad_input("s.mlb", "hole", [("s.mlb", mlb)]);
+}

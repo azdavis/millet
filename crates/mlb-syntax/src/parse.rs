@@ -162,6 +162,10 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<BasDecOne> {
       p.eat(Token::End)?;
       BasDec::Ann(annotations, bd.into())
     }
+    Token::Dots => {
+      p.bump();
+      return p.err(ErrorKind::Hole);
+    }
     _ => return Ok(BasDecOne::NoStartTok),
   };
   Ok(BasDecOne::Ok(ret))

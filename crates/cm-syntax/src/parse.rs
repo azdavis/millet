@@ -153,6 +153,10 @@ fn at_export(p: &mut Parser<'_>) -> Result<Option<Export>> {
       p.eat(Token::RRound)?;
       Export::Union(es)
     }
+    Token::Dots => {
+      p.bump();
+      return p.err(ErrorKind::Hole);
+    }
     _ => return Ok(None),
   };
   Ok(Some(ret))
@@ -182,7 +186,11 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Export, Vec<Member>)> {
   loop {
     let tok = p.cur_tok();
     let Some(tok) = tok else { break };
-    let Token::String(s) = tok.val else { break };
+    let s = match tok.val {
+      Token::String(s) => s,
+      Token::Dots => return p.err(ErrorKind::Hole),
+      _ => break,
+    };
     p.bump();
     let pathname = path(p, s)?;
     let class = match p.cur() {

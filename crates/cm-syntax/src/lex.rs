@@ -19,7 +19,8 @@ pub(crate) fn get(s: &str) -> Result<Vec<WithRange<Token<'_>>>> {
   Ok(tokens)
 }
 
-const PUNCTUATION: [(&[u8], Token<'_>); 5] = [
+const PUNCTUATION: [(&[u8], Token<'_>); 6] = [
+  (b"...", Token::Dots),
   (b"*", Token::Star),
   (b"-", Token::Minus),
   (b":", Token::Colon),

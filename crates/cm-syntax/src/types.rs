@@ -19,6 +19,7 @@ pub(crate) enum ErrorKind {
   UnsupportedClass(PathBuf, String),
   CouldNotDetermineClass(PathBuf),
   SlashVarPathError(slash_var_path::Error),
+  Hole,
 }
 
 /// An error when processing a CM file.
@@ -51,6 +52,7 @@ impl fmt::Display for Error {
         write!(f, "{}: couldn't determine class", p.display())
       }
       ErrorKind::SlashVarPathError(e) => write!(f, "cannot construct path: {e}"),
+      ErrorKind::Hole => f.write_str("hole"),
     }
   }
 }
@@ -70,6 +72,7 @@ pub(crate) enum Token<'a> {
   Colon,
   LRound,
   RRound,
+  Dots,
   String(&'a str),
 }
 
@@ -89,6 +92,7 @@ impl fmt::Display for Token<'_> {
       Token::Colon => ":",
       Token::LRound => "(",
       Token::RRound => ")",
+      Token::Dots => "...",
       Token::String(s) => s,
     };
     f.write_str(s)

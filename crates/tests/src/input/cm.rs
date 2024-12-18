@@ -179,3 +179,21 @@ workspace.root = "b.cm"
     (config::file::PATH, config),
   ]);
 }
+
+#[test]
+fn hole_member() {
+  let cm = r"
+Library ... is a.sml
+(**     ^^^ hole *)
+";
+  check_bad_input("s.cm", "hole", [("s.cm", cm), ("a.sml", "val x = 3")]);
+}
+
+#[test]
+fn hole_path() {
+  let cm = r"
+Group is ...
+(**      ^^^ hole *)
+";
+  check_bad_input("s.cm", "hole", [("s.cm", cm)]);
+}
