@@ -98,8 +98,8 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
         }
         _ => {
           let ret = st.syms_tys.tys.meta_var(Generalizable::Always);
-          let want = st.syms_tys.tys.fun(arg_ty, ret);
-          unify(st, func.unwrap_or(exp).into(), want, func_ty);
+          let got = st.syms_tys.tys.fun(arg_ty, ret);
+          unify(st, func.unwrap_or(exp).into(), func_ty, got);
           ret
         }
       }
