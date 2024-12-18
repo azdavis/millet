@@ -1,49 +1,45 @@
 {
   "`let` exp": {
     "prefix": "let",
-    "body": ["let", "  ${1:dec}", "in", "  ${2:exp}", "end"]
+    "body": ["let", "  ${1:...}", "in", "  ${2:...}", "end"]
   },
   "`case` exp": {
     "prefix": "case",
-    "body": [
-      "case ${1:exp} of",
-      "  ${2:pat} => ${3:exp}",
-      "| ${4:pat} => ${5:exp}"
-    ]
+    "body": ["case ${1:_} of", "  ${2:_} => ${3:_}", "| ${4:_} => ${5:_}"]
   },
   "`if` exp": {
     "prefix": "if",
-    "body": ["if ${1:exp} then", "  ${2:exp}", "else", "  ${3:exp}"]
+    "body": ["if ${1:_} then", "  ${2:_}", "else", "  ${3:_}"]
   },
   "`handle` exp tail": {
     "prefix": "handle",
-    "body": ["handle", "  ${2:pat} => ${3:exp}", "| ${4:pat} => ${5:exp}"]
+    "body": ["handle", "  ${2:_} => ${3:_}"]
   },
   "`local` dec": {
     "prefix": "local",
-    "body": ["local", "  ${1:dec}", "in", "  ${2:dec}", "end"]
+    "body": ["local", "  ${1:...}", "in", "  ${2:...}", "end"]
   },
   "`datatype` dec": {
     "prefix": "datatype",
-    "body": ["datatype ${1:name} = ${2:Name} | ${3:Name of ty}"]
+    "body": ["datatype ${1:name} = ${2:Name}"]
   },
   "`fun` dec": {
     "prefix": "fun",
-    "body": ["fun ${1:name} (${2:pat} : ${3:ty}) : ${4:ty} = ${5:exp}"]
+    "body": ["fun ${1:name} (${2:_} : ${3:_}) : ${4:_} = ${5:_}"]
   },
   "`structure` dec": {
     "prefix": "structure",
-    "body": ["structure ${1:Name} = struct", "  ${2:dec}", "end"]
+    "body": ["structure ${1:Name} = struct", "  ${2:...}", "end"]
   },
   "`signature` dec": {
     "prefix": "signature",
-    "body": ["signature ${1:NAME} = sig", "  ${2:dec}", "end"]
+    "body": ["signature ${1:NAME} = sig", "  ${2:...}", "end"]
   },
   "`functor` dec": {
     "prefix": "functor",
     "body": [
-      "functor ${1:Name} (${2:Name}: ${3:SIG}) = struct",
-      "  ${4:dec}",
+      "functor ${1:Name} (${2:Arg}: ${3:SIG}) = struct",
+      "  ${4:...}",
       "end"
     ]
   },
