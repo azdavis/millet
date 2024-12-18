@@ -19,7 +19,7 @@ pub(crate) fn get(s: &str) -> Result<Vec<WithRange<Token<'_>>>> {
   Ok(tokens)
 }
 
-const PUNCTUATION: [(u8, Token<'_>); 2] = [(b';', Token::Semicolon), (b'=', Token::Eq)];
+const PUNCTUATION: [(&[u8], Token<'_>); 2] = [(b";", Token::Semicolon), (b"=", Token::Eq)];
 
 fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> {
   let start = *idx;
@@ -38,11 +38,11 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     advance_while(idx, bs, is_whitespace);
     return Ok(None);
   }
-  for (tok_b, tok) in PUNCTUATION {
-    if b == tok_b {
-      *idx += 1;
-      return Ok(Some(tok));
-    }
+  if let Some(&(tok_bs, tok)) =
+    PUNCTUATION.iter().find(|&&(tok_bs, _)| bs.get(*idx..*idx + tok_bs.len()) == Some(tok_bs))
+  {
+    *idx += tok_bs.len();
+    return Ok(Some(tok));
   }
   // TODO support all SML string features
   if b == b'"' {

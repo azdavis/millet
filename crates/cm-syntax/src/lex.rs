@@ -19,12 +19,12 @@ pub(crate) fn get(s: &str) -> Result<Vec<WithRange<Token<'_>>>> {
   Ok(tokens)
 }
 
-const PUNCTUATION: [(u8, Token<'_>); 5] = [
-  (b'*', Token::Star),
-  (b'-', Token::Minus),
-  (b':', Token::Colon),
-  (b'(', Token::LRound),
-  (b')', Token::RRound),
+const PUNCTUATION: [(&[u8], Token<'_>); 5] = [
+  (b"*", Token::Star),
+  (b"-", Token::Minus),
+  (b":", Token::Colon),
+  (b"(", Token::LRound),
+  (b")", Token::RRound),
 ];
 
 fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> {
@@ -55,11 +55,11 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     advance_while(idx, bs, |b| b != b'\n');
     return Ok(None);
   }
-  for (tok_b, tok) in PUNCTUATION {
-    if b == tok_b {
-      *idx += 1;
-      return Ok(Some(tok));
-    }
+  if let Some(&(tok_bs, tok)) =
+    PUNCTUATION.iter().find(|&&(tok_bs, _)| bs.get(*idx..*idx + tok_bs.len()) == Some(tok_bs))
+  {
+    *idx += tok_bs.len();
+    return Ok(Some(tok));
   }
   advance_while(idx, bs, |b| !is_whitespace(b) && !matches!(b, b':' | b'(' | b')' | b';'));
   let ret = match std::str::from_utf8(&bs[start..*idx]).unwrap() {
