@@ -4,6 +4,11 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 Millet technically follows [SemVer][sem-ver], but the major version is zero, and it probably will be [for a while][zero-ver].
 
+## main
+
+- Support holes in CM and MLB.
+- Note another use for the open paren token.
+
 ## v0.14.7
 
 Improve glob handling behavior for `workspace.root`.
