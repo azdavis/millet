@@ -230,7 +230,7 @@ impl Analysis {
       })
       .collect();
     variants.retain(|(name, _)| !con_names_already_present.contains(name));
-    let starting_bar = case.matcher().map_or(false, |x| x.arms().count() > 0);
+    let starting_bar = case.matcher().is_some_and(|x| x.arms().count() > 0);
     let case = matcher::display(starting_bar, &variants);
     Some((range, case.to_string()))
   }

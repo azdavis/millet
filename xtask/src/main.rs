@@ -133,7 +133,7 @@ fn run_ci() -> Result<()> {
 }
 
 fn env_var_enabled(s: &str) -> bool {
-  env::var_os(s).map_or(false, |x| x == "1")
+  env::var_os(s).is_some_and(|x| x == "1")
 }
 
 #[derive(Debug)]

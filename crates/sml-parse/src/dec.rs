@@ -72,7 +72,7 @@ fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> boo
             } else {
               let saw_op = p.at(SK::OpKw);
               let name = p.peek_n(usize::from(saw_op));
-              let is_name_star = name.map_or(false, |tok| matches!(tok.kind, SK::Name | SK::Star));
+              let is_name_star = name.is_some_and(|tok| matches!(tok.kind, SK::Name | SK::Star));
               let infix_name = name
                 .and_then(|tok| fe.contains_key(tok.text).then(|| str_util::Name::new(tok.text)));
               if saw_op {

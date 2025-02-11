@@ -149,7 +149,7 @@ pub(crate) fn path_must(p: &mut Parser<'_>) -> bool {
 /// infix.
 pub(crate) fn path_infix(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
   let bad = !p.at_n(2, SK::Dot)
-    && p.peek_n(1).map_or(false, |tok| {
+    && p.peek_n(1).is_some_and(|tok| {
       matches!(tok.kind, SK::Name | SK::Eq | SK::Star) && !fe.contains_key(tok.text)
     });
   if bad {
@@ -172,7 +172,7 @@ pub(crate) fn path_no_infix(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
 }
 
 pub(crate) fn lab(p: &mut Parser<'_>) {
-  if p.peek().map_or(false, |x| matches!(x.kind, SK::Name | SK::Star | SK::IntLit)) {
+  if p.peek().is_some_and(|x| matches!(x.kind, SK::Name | SK::Star | SK::IntLit)) {
     p.bump();
   } else {
     p.error(ErrorKind::Expected(Expected::Lab));
@@ -181,12 +181,12 @@ pub(crate) fn lab(p: &mut Parser<'_>) {
 
 /// kind of badly named. it means Name, * or =
 pub(crate) fn name_star_eq(p: &mut Parser<'_>) -> bool {
-  p.peek().map_or(false, |x| matches!(x.kind, SK::Name | SK::Star | SK::Eq))
+  p.peek().is_some_and(|x| matches!(x.kind, SK::Name | SK::Star | SK::Eq))
 }
 
 /// kind of badly named. it means `Name` or `*`. the `n` is how far to look ahead.
 pub(crate) fn name_star(p: &mut Parser<'_>, n: usize) -> bool {
-  p.peek_n(n).map_or(false, |x| matches!(x.kind, SK::Name | SK::Star))
+  p.peek_n(n).is_some_and(|x| matches!(x.kind, SK::Name | SK::Star))
 }
 
 /// see [`name_star`].
@@ -201,5 +201,5 @@ pub(crate) fn eat_name_star<'a>(p: &mut Parser<'a>) -> Option<Token<'a, SK>> {
 
 /// `:` or `:>`. in many contexts only `:` is acceptable but we handle that in lowering.
 pub(crate) fn ascription(p: &mut Parser<'_>) -> bool {
-  p.peek().map_or(false, |x| matches!(x.kind, SK::Colon | SK::ColonGt))
+  p.peek().is_some_and(|x| matches!(x.kind, SK::Colon | SK::ColonGt))
 }

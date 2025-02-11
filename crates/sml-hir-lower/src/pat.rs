@@ -141,7 +141,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       sml_hir::Pat::Con(func, Some(arg))
     }
     ast::Pat::TypedPat(pat) => {
-      if pat.pat().map_or(false, has_types) {
+      if pat.pat().is_some_and(has_types) {
         st.err(pat.syntax(), ErrorKind::MultipleTypedPat);
       }
       forbid_opaque_asc(st, pat.ascription());
@@ -196,28 +196,24 @@ fn get_pat_name(st: &mut St<'_>, pat: ast::Pat) -> Option<str_util::Name> {
 fn has_types(pat: ast::Pat) -> bool {
   match pat {
     ast::Pat::WildcardPat(_) | ast::Pat::SConPat(_) => false,
-    ast::Pat::ConPat(pat) => pat.pat().map_or(false, has_types),
+    ast::Pat::ConPat(pat) => pat.pat().is_some_and(has_types),
     ast::Pat::RecordPat(pat) => pat.pat_rows().any(|pat_row| {
-      pat_row.pat_row_inner().map_or(false, |inner| match inner {
+      pat_row.pat_row_inner().is_some_and(|inner| match inner {
         ast::PatRowInner::RestPatRow(_) => false,
-        ast::PatRowInner::LabAndPatPatRow(row) => row.pat().map_or(false, has_types),
+        ast::PatRowInner::LabAndPatPatRow(row) => row.pat().is_some_and(has_types),
         ast::PatRowInner::LabPatRow(lab) => lab.ty_annotation().is_some(),
       })
     }),
-    ast::Pat::ParenPat(pat) => pat.pat().map_or(false, has_types),
+    ast::Pat::ParenPat(pat) => pat.pat().is_some_and(has_types),
     ast::Pat::TuplePat(pat) => pat.pat_args().filter_map(|x| x.pat()).any(has_types),
     ast::Pat::ListPat(pat) => pat.pat_args().filter_map(|x| x.pat()).any(has_types),
     ast::Pat::VectorPat(pat) => {
       pat.list_pat().into_iter().flat_map(|x| x.pat_args()).filter_map(|x| x.pat()).any(has_types)
     }
-    ast::Pat::InfixPat(pat) => {
-      pat.lhs().map_or(false, has_types) || pat.rhs().map_or(false, has_types)
-    }
+    ast::Pat::InfixPat(pat) => pat.lhs().is_some_and(has_types) || pat.rhs().is_some_and(has_types),
     ast::Pat::TypedPat(_) => true,
-    ast::Pat::AsPat(pat) => pat.as_pat_tail().and_then(|x| x.pat()).map_or(false, has_types),
-    ast::Pat::OrPat(pat) => {
-      pat.lhs().map_or(false, has_types) || pat.rhs().map_or(false, has_types)
-    }
+    ast::Pat::AsPat(pat) => pat.as_pat_tail().and_then(|x| x.pat()).is_some_and(has_types),
+    ast::Pat::OrPat(pat) => pat.lhs().is_some_and(has_types) || pat.rhs().is_some_and(has_types),
   }
 }
 

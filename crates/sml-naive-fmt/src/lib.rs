@@ -530,7 +530,7 @@ fn body_exp_needs_newline(exp: &ast::Exp) -> bool {
     | ast::Exp::IfExp(_)
     | ast::Exp::WhileExp(_)
     | ast::Exp::CaseExp(_) => true,
-    ast::Exp::ParenExp(exp) => exp.exp().as_ref().map_or(false, body_exp_needs_newline),
+    ast::Exp::ParenExp(exp) => exp.exp().as_ref().is_some_and(body_exp_needs_newline),
     _ => false,
   }
 }

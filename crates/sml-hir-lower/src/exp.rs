@@ -74,7 +74,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
         st.err(exp.syntax(), ErrorKind::Disallowed(Disallowed::Exp("parentheses")));
       }
       let inner = exp.exp();
-      if inner.as_ref().map_or(false, warn_unnecessary_parens) {
+      if inner.as_ref().is_some_and(warn_unnecessary_parens) {
         st.err(exp.syntax(), ErrorKind::UnnecessaryParens);
       }
       return get(st, inner);
@@ -274,12 +274,12 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
 fn is_bool_lit(exp: Option<&ast::Exp>) -> bool {
   let Some(exp) = exp else { return false };
   match exp {
-    ast::Exp::PathExp(exp) => exp.path().map_or(false, |p| {
+    ast::Exp::PathExp(exp) => exp.path().is_some_and(|p| {
       let mut iter = p.name_star_eq_dots();
       let is_true_or_false = iter
         .next()
         .and_then(|x| x.name_star_eq())
-        .map_or(false, |x| matches!(x.token.text(), "true" | "false"));
+        .is_some_and(|x| matches!(x.token.text(), "true" | "false"));
       is_true_or_false && iter.next().is_none()
     }),
     ast::Exp::ParenExp(exp) => is_bool_lit(exp.exp().as_ref()),

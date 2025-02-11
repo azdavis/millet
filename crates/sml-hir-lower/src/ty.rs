@@ -52,7 +52,7 @@ pub(crate) fn get(st: &mut St<'_>, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
     // @def(48)
     ast::Ty::ParenTy(ty) => {
       let inner = ty.ty();
-      if inner.as_ref().map_or(false, warn_unnecessary_parens) {
+      if inner.as_ref().is_some_and(warn_unnecessary_parens) {
         st.err(ty.syntax(), ErrorKind::UnnecessaryParens);
       }
       return get(st, inner);

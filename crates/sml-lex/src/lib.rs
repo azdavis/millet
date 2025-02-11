@@ -152,7 +152,7 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
     Some(AlphaNum::NumOrUnderscore) | None => {}
   }
   // num lit. note e.g. `~3` is one token but `~ 3` is two
-  if b.is_ascii_digit() || (b == b'~' && bs.get(st.i + 1).map_or(false, u8::is_ascii_digit)) {
+  if b.is_ascii_digit() || (b == b'~' && bs.get(st.i + 1).is_some_and(u8::is_ascii_digit)) {
     let neg = b == b'~';
     let b = if neg {
       st.i += 1;
@@ -234,7 +234,7 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
   if b == b'#' && bs.get(st.i + 1) == Some(&b'"') {
     st.i += 1;
     let s = get_string(st, bs);
-    if s.map_or(false, |x| x.len() != 1) {
+    if s.is_some_and(|x| x.len() != 1) {
       err(st, start, ErrorKind::WrongLenCharLit);
     }
     return SK::CharLit;

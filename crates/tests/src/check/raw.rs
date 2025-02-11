@@ -264,7 +264,7 @@ pub(crate) fn singleton<'a>(config: &'a str, sml: &'a str) -> [(&'a str, &'a str
 
 /// Returns whether the env var is set to `1`.
 pub(crate) fn env_var_enabled(s: &str) -> bool {
-  std::env::var_os(s).map_or(false, |x| x == "1")
+  std::env::var_os(s).is_some_and(|x| x == "1")
 }
 
 static FULL: LazyLock<analysis::StdBasis> = LazyLock::new(analysis::StdBasis::full);

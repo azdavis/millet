@@ -6,7 +6,7 @@
 use std::io::BufRead as _;
 
 fn env_var_enabled(s: &str) -> bool {
-  std::env::var_os(s).map_or(false, |x| x == "1")
+  std::env::var_os(s).is_some_and(|x| x == "1")
 }
 
 #[allow(dead_code)]
