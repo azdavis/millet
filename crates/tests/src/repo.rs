@@ -222,21 +222,20 @@ static METADATA: LazyLock<serde_json::Map<String, serde_json::Value>> = LazyLock
 #[test]
 fn licenses() {
   let allowed = [
-    "(MIT OR Apache-2.0) AND Unicode-DFS-2016",
+    "(MIT OR Apache-2.0) AND Unicode-3.0",
     "0BSD OR MIT OR Apache-2.0",
     "Apache-2.0 OR BSL-1.0",
     "Apache-2.0 OR MIT",
     "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
     "Apache-2.0",
     "Apache-2.0/MIT",
-    "MIT OR Apache-2.0 OR Zlib",
     "MIT OR Apache-2.0",
     "MIT OR Zlib OR Apache-2.0",
     "MIT",
     "MIT/Apache-2.0",
+    "Unicode-3.0",
     "Unlicense OR MIT",
     "Unlicense/MIT",
-    "Zlib OR Apache-2.0 OR MIT",
     "Zlib",
   ];
   let mut allowed: FxHashMap<_, _> = allowed.iter().map(|&x| (x, false)).collect();
@@ -358,10 +357,7 @@ const MANUAL: &str = include_str!("../../../docs/manual.md");
 const COMMENT_CLOSE: &str = " -->";
 
 fn is_section_comment(s: &str, comment_open: &str, section: &str) -> bool {
-  s.trim()
-    .strip_prefix(comment_open)
-    .and_then(|s| s.strip_suffix(COMMENT_CLOSE))
-    .map_or(false, |s| s == section)
+  s.trim().strip_prefix(comment_open).and_then(|s| s.strip_suffix(COMMENT_CLOSE)) == Some(section)
 }
 
 fn get_manual_section(section: &str) -> impl Iterator<Item = &'static str> + '_ {

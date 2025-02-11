@@ -2,7 +2,7 @@
 
 use crate::check::raw;
 use diagnostic::Severity;
-use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
+use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag, TagEnd};
 
 const LANG_NAME: &str = "sml";
 
@@ -31,8 +31,8 @@ pub(crate) fn check(contents: &str) {
           inside = true;
         }
       }
-      Event::End(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
-        if lang.as_ref() == LANG_NAME {
+      Event::End(TagEnd::CodeBlock) => {
+        if inside {
           if !ignore_next {
             raw::get(raw::one_file_fs(ac.as_ref()), opts(limit));
           }

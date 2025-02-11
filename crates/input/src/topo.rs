@@ -3,18 +3,18 @@
 use paths::PathId;
 use std::collections::BTreeSet;
 
-pub(crate) fn check<'a, I>(iter: I) -> Result<(), topo_sort::CycleError<PathId>>
+pub(crate) fn check<'a, I>(iter: I) -> Result<(), topo_sort::graph::CycleError<PathId>>
 where
   I: Iterator<Item = (PathId, &'a mlb_hir::BasDec)>,
 {
-  let graph: topo_sort::Graph<_> = iter
+  let graph: topo_sort::graph::Graph<_> = iter
     .map(|(path, bas_dec)| {
       let mut ac = BTreeSet::<PathId>::new();
       bas_dec_paths(&mut ac, bas_dec);
       (path, ac)
     })
     .collect();
-  topo_sort::get(&graph)?;
+  topo_sort::graph::get(&graph)?;
   Ok(())
 }
 
