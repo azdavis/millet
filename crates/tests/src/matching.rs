@@ -546,3 +546,17 @@ fun parse xs =
 ",
   );
 }
+
+#[test]
+fn non_exhaustive_fail() {
+  check(
+    r#"
+datatype abc = A of {z: {s: int, t: int}, y: int} | B | C
+val _ =
+    case B of
+(** ^^^^^^^^^ non-exhaustive case: missing `C` *)
+    A {z = {s, t}, y} => 0
+  | B => 1
+"#,
+  );
+}
