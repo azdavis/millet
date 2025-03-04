@@ -24,7 +24,7 @@ impl File {
     self.inner.is_empty()
   }
 
-  pub fn iter(&self) -> impl Iterator<Item = (&Region, &Expect)> + '_ {
+  pub fn iter(&self) -> impl Iterator<Item = (&Region, &Expect)> {
     self.inner.iter()
   }
 }

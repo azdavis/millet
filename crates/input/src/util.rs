@@ -169,7 +169,7 @@ impl Error {
   ///
   /// Any paths in the error will be relative to `root` if they are contained in `root`.
   #[must_use]
-  pub fn display<'a>(&'a self, root: &'a Path) -> impl fmt::Display + 'a {
+  pub fn display<'a>(&'a self, root: &'a Path) -> impl fmt::Display {
     ErrorDisplay { err: self, root }
   }
 }

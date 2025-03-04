@@ -131,12 +131,12 @@ impl SymValEnv {
   }
 
   /// Returns an iterator over the key-value pairs in insertion order.
-  pub fn iter(&self) -> impl Iterator<Item = (&str_util::Name, &ValInfo)> + '_ {
+  pub fn iter(&self) -> impl Iterator<Item = (&str_util::Name, &ValInfo)> {
     self.order.iter().map(|k| (k, &self.map[k]))
   }
 
   /// Returns an iterator over the key and mutable value pairs in an arbitrary order.
-  pub fn iter_mut(&mut self) -> impl Iterator<Item = (&str_util::Name, &mut ValInfo)> + '_ {
+  pub fn iter_mut(&mut self) -> impl Iterator<Item = (&str_util::Name, &mut ValInfo)> {
     self.map.iter_mut()
   }
 }

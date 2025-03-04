@@ -356,7 +356,7 @@ fn is_section_comment(s: &str, comment_open: &str, section: &str) -> bool {
   s.trim().strip_prefix(comment_open).and_then(|s| s.strip_suffix(COMMENT_CLOSE)) == Some(section)
 }
 
-fn get_manual_section(section: &str) -> impl Iterator<Item = &'static str> + '_ {
+fn get_manual_section(section: &str) -> impl Iterator<Item = &'static str> {
   let mut iter = MANUAL.lines();
   iter.find(|s| is_section_comment(s, "<!-- @begin ", section));
   iter.take_while(|s| !is_section_comment(s, "<!-- @end ", section))

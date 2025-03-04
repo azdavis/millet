@@ -34,7 +34,7 @@ impl Defs {
     }
   }
 
-  fn with_def(&self, def: def::Def) -> impl Iterator<Item = sml_hir::Idx> + '_ {
+  fn with_def(&self, def: def::Def) -> impl Iterator<Item = sml_hir::Idx> {
     std::iter::empty::<(sml_hir::Idx, &def::Set)>()
       .chain(self.str_exp.iter().map(|(idx, set)| (idx.into(), set)))
       .chain(self.sig_exp.iter().map(|(idx, set)| (idx.into(), set)))
@@ -244,7 +244,7 @@ impl Info {
   }
 
   /// Returns indices that have the given definition.
-  pub fn get_with_def(&self, def: def::Def) -> impl Iterator<Item = sml_hir::Idx> + '_ {
+  pub fn get_with_def(&self, def: def::Def) -> impl Iterator<Item = sml_hir::Idx> {
     self.entries.defs.with_def(def)
   }
 

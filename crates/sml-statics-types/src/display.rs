@@ -12,7 +12,7 @@ use std::fmt;
 impl Ty {
   /// Returns a value that displays this.
   #[must_use]
-  pub fn display(self, st: &St, lines: config::DiagnosticLines) -> impl fmt::Display + '_ {
+  pub fn display(self, st: &St, lines: config::DiagnosticLines) -> impl fmt::Display {
     TyDisplay {
       cx: TyDisplayCx { bound_vars: None, st },
       ty: self,
@@ -25,11 +25,7 @@ impl Ty {
 impl TyScheme {
   /// Returns a value that displays this.
   #[must_use]
-  pub fn display<'a>(
-    &'a self,
-    st: &'a St,
-    lines: config::DiagnosticLines,
-  ) -> impl fmt::Display + 'a {
+  pub fn display<'a>(&'a self, st: &'a St, lines: config::DiagnosticLines) -> impl fmt::Display {
     TyDisplay {
       cx: TyDisplayCx { bound_vars: Some(&self.bound_vars), st },
       ty: self.ty,
@@ -273,7 +269,7 @@ impl fmt::Display for RowDisplay<'_> {
 }
 
 impl Sym {
-  pub(crate) fn display(self, syms: &Syms) -> impl fmt::Display + '_ {
+  pub(crate) fn display(self, syms: &Syms) -> impl fmt::Display {
     SymDisplay { sym: self, syms }
   }
 }
@@ -318,7 +314,7 @@ pub fn record_meta_var<'a>(
   st: &'a St,
   rows: &'a RecordData,
   lines: config::DiagnosticLines,
-) -> impl fmt::Display + 'a {
+) -> impl fmt::Display {
   RecordMetaVarDisplay {
     cx: TyDisplayCx { bound_vars: None, st },
     rows,
@@ -366,7 +362,7 @@ impl fmt::Display for RecordMetaVarDisplay<'_> {
 impl Incompatible {
   /// Returns a value that displays this.
   #[must_use]
-  pub fn display<'a>(&'a self, st: &'a St) -> impl fmt::Display + 'a {
+  pub fn display<'a>(&'a self, st: &'a St) -> impl fmt::Display {
     IncompatibleDisplay { flavor: self, st }
   }
 }

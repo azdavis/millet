@@ -341,7 +341,7 @@ pub struct OrPat {
 
 impl OrPat {
   /// Returns an iterator of all the pats in order.
-  pub fn all_pats(&self) -> impl Iterator<Item = PatIdx> + '_ {
+  pub fn all_pats(&self) -> impl Iterator<Item = PatIdx> {
     std::iter::once(self.first).chain(self.rest.iter().copied())
   }
 }

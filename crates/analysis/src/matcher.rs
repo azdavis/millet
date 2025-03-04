@@ -6,7 +6,7 @@ use std::fmt;
 pub(crate) fn display(
   starting_bar: bool,
   variants: &[(str_util::Name, bool)],
-) -> impl fmt::Display + '_ {
+) -> impl fmt::Display {
   CaseDisplay { starting_bar, variants }
 }
 

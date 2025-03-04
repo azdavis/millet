@@ -244,7 +244,7 @@ impl Error {
     &'a self,
     st: &'a sml_statics_types::St,
     lines: config::DiagnosticLines,
-  ) -> impl fmt::Display + 'a {
+  ) -> impl fmt::Display {
     ErrorKindDisplay { kind: &self.kind, st, lines }
   }
 

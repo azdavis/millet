@@ -26,7 +26,7 @@ impl FixedTyVars {
   }
 
   /// Iterates over the fixed ty vars.
-  pub fn iter(&self) -> impl Iterator<Item = Ty> + '_ {
+  pub fn iter(&self) -> impl Iterator<Item = Ty> {
     self.0.iter().map(|(&idx, _)| Ty { kind: TyKind::FixedVar, idx })
   }
 }
