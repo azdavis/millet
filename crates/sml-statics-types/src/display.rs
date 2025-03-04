@@ -5,7 +5,7 @@ use crate::ty::{
   BoundTyVarData, BoundTyVars, MetaTyVarDisplayData, RecordData, Ty, TyData, TyScheme, TyVarKind,
   UnsolvedMetaTyVarKind,
 };
-use crate::{unify::Incompatible, St};
+use crate::{St, unify::Incompatible};
 use fmt_util::comma_seq;
 use std::fmt;
 

@@ -2,7 +2,7 @@
 
 use crate::types::{Error, ErrorKind, Result, Token};
 use lex_util::{advance_while, block_comment, is_whitespace};
-use text_size_util::{mk_text_size, TextRange, WithRange};
+use text_size_util::{TextRange, WithRange, mk_text_size};
 
 pub(crate) fn get(s: &str) -> Result<Vec<WithRange<Token<'_>>>> {
   let bs = s.as_bytes();
@@ -74,11 +74,7 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     s => {
       let all = s.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'\''));
       let fst = s.as_bytes().first().is_some_and(u8::is_ascii_alphabetic);
-      if all && fst {
-        Token::Name(s)
-      } else {
-        Token::BarePath(s)
-      }
+      if all && fst { Token::Name(s) } else { Token::BarePath(s) }
     }
   };
   Ok(Some(ret))

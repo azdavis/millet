@@ -16,7 +16,7 @@ use std::collections::BTreeSet;
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Cfg {
   pub(crate) inner: config::Cfg,
-  pub(crate) gen: Generalizable,
+  pub(crate) gz: Generalizable,
   pub(crate) rec: bool,
 }
 
@@ -33,7 +33,7 @@ pub(crate) fn get(
     Some(x) => x,
     None => PatRet {
       pm_pat: Pat::zero(Con::Any, pat),
-      ty: st.syms_tys.tys.meta_var(cfg.gen),
+      ty: st.syms_tys.tys.meta_var(cfg.gz),
       ty_scheme: None,
       defs: def::Set::default(),
     },
@@ -65,7 +65,7 @@ fn get_(
   let mut defs = def::Set::default();
   let (pm_pat, ty) = match &ars.pat[pat_idx] {
     // @def(32)
-    sml_hir::Pat::Wild => (Pat::zero(Con::Any, pat), st.syms_tys.tys.meta_var(cfg.gen)),
+    sml_hir::Pat::Wild => (Pat::zero(Con::Any, pat), st.syms_tys.tys.meta_var(cfg.gz)),
     // @def(33)
     sml_hir::Pat::SCon(special_con) => {
       let con = match special_con {
@@ -78,7 +78,7 @@ fn get_(
         sml_hir::SCon::Char(c) => Con::Char(*c),
         sml_hir::SCon::String(s) => Con::String(s.clone()),
       };
-      let t = get_scon(&mut st.syms_tys.tys, cfg.gen, special_con);
+      let t = get_scon(&mut st.syms_tys.tys, cfg.gz, special_con);
       (Pat::zero(con, pat), t)
     }
     sml_hir::Pat::Con(path, argument) => {
@@ -93,7 +93,7 @@ fn get_(
         && (val_info_for_var(val_info.val.as_ref().ok().copied()) || cfg.rec);
       // @def(34)
       if is_var {
-        let ty = st.syms_tys.tys.meta_var(cfg.gen);
+        let ty = st.syms_tys.tys.meta_var(cfg.gz);
         insert_name(st, pat_idx.into(), cfg.inner, ve, path.last().clone(), ty);
         // a little WET with val_info_for_var
         if let Mode::Dynamics = st.info.mode {
@@ -122,7 +122,7 @@ fn get_(
         IdStatus::Con => VariantName::Name(path.last().clone()),
         IdStatus::Exn(exn) => VariantName::Exn(*exn),
       };
-      let ty = instantiate(&mut st.syms_tys.tys, cfg.gen, &val_info.ty_scheme);
+      let ty = instantiate(&mut st.syms_tys.tys, cfg.gz, &val_info.ty_scheme);
       // @def(35), @def(41)
       let (sym, arguments, ty) = match st.syms_tys.tys.data(ty) {
         TyData::Con(data) => {
@@ -186,7 +186,7 @@ fn get_(
       });
       let ty = if *allows_other {
         // @def(38)
-        st.syms_tys.tys.unresolved_record(cfg.gen, rows, pat_idx.into())
+        st.syms_tys.tys.unresolved_record(cfg.gz, rows, pat_idx.into())
       } else {
         st.syms_tys.tys.record(rows)
       };
@@ -257,7 +257,7 @@ fn get_(
 }
 
 pub(crate) fn val_info_for_var(vi: Option<&ValInfo>) -> bool {
-  vi.map_or(true, |vi| matches!(vi.id_status, IdStatus::Val))
+  vi.is_none_or(|vi| matches!(vi.id_status, IdStatus::Val))
 }
 
 fn insert_name(

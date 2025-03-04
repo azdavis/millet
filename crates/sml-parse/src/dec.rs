@@ -7,7 +7,7 @@ use crate::parser::{ErrorKind, Exited, Expected, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
 use crate::util::{
-  ascription, eat_name_star, many_sep, maybe_semi_sep, name_star_eq, path, path_must, InfixErr,
+  InfixErr, ascription, eat_name_star, many_sep, maybe_semi_sep, name_star_eq, path, path_must,
 };
 use sml_syntax::kind::SyntaxKind as SK;
 

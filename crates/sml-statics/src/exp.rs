@@ -256,11 +256,7 @@ fn lint_app(
           }
         }
         def::Def::Path(def::Path::BuiltinLib("std_basis/list.sml"), _) => {
-          if path.last().as_str() == "@" {
-            lint_append(ars, argument)
-          } else {
-            None
-          }
+          if path.last().as_str() == "@" { lint_append(ars, argument) } else { None }
         }
         def::Def::Path(_, _) => None,
       }
@@ -308,7 +304,7 @@ fn lint_append(ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<Error
   let (func, argument) = match ars.exp[lhs] {
     sml_hir::Exp::App(a, b) => (a?, b?),
     sml_hir::Exp::Path(ref p) => {
-      return (p.last().as_str() == "nil").then_some(ErrorKind::InvalidAppend(AppendArg::Empty))
+      return (p.last().as_str() == "nil").then_some(ErrorKind::InvalidAppend(AppendArg::Empty));
     }
     _ => return None,
   };
@@ -360,7 +356,7 @@ fn get_matcher(
   // @def(14)
   for arm in matcher {
     let mut ve = ValEnv::default();
-    let cfg = pat::Cfg { inner: cfg, gen: Generalizable::Sometimes, rec: false };
+    let cfg = pat::Cfg { inner: cfg, gz: Generalizable::Sometimes, rec: false };
     let (pm_pat, pat_ty) = pat::get(st, cfg, ars, cx, &mut ve, arm.pat);
     for (name, new_vi) in ve.iter() {
       let Some(old_vi) = cx.env.val_env.get(name) else { continue };

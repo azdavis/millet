@@ -4,8 +4,8 @@
 
 mod cli_test;
 
-use anyhow::{anyhow, bail, Context as _, Result};
-use flate2::{write::GzEncoder, Compression};
+use anyhow::{Context as _, Result, anyhow, bail};
+use flate2::{Compression, write::GzEncoder};
 use pico_args::Arguments;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io, process::Command};
@@ -112,11 +112,7 @@ fn finish_args(args: Arguments) -> Result<()> {
 fn run(c: &mut Command) -> Result<()> {
   let mut sp = c.spawn().with_context(|| format!("spawn {c:?}"))?;
   let w = sp.wait().with_context(|| format!("wait for {c:?}"))?;
-  if w.success() {
-    Ok(())
-  } else {
-    bail!("unsuccessful {c:?}")
-  }
+  if w.success() { Ok(()) } else { bail!("unsuccessful {c:?}") }
 }
 
 fn run_ci() -> Result<()> {
@@ -156,11 +152,7 @@ fn cmd_exe(fst: &str) -> Command {
 }
 
 fn pop_path_buf(p: &mut PathBuf) -> Result<()> {
-  if p.pop() {
-    Ok(())
-  } else {
-    bail!("path had no parent")
-  }
+  if p.pop() { Ok(()) } else { bail!("path had no parent") }
 }
 
 fn exe(s: &str) -> String {

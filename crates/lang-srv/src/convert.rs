@@ -1,7 +1,7 @@
 //! Conversions between LSP types and more commonly used types, like ones from analysis or the
 //! standard library.
 
-use anyhow::{bail, Context as _, Result};
+use anyhow::{Context as _, Result, bail};
 use lsp_types::Url;
 use std::fmt;
 

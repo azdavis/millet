@@ -1,7 +1,7 @@
 //! Dynamics types.
 
-use fast_hash::{map, FxHashMap, FxHashSet};
-use sml_hir::{la_arena, Lab, SCon};
+use fast_hash::{FxHashMap, FxHashSet, map};
+use sml_hir::{Lab, SCon, la_arena};
 use sml_statics_types::info::IdStatusMap;
 use sml_statics_types::sym::Exn;
 use std::collections::BTreeMap;

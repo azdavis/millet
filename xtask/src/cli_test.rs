@@ -1,6 +1,6 @@
 //! A test for the CLI, using real I/O.
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use std::path::Path;
 use std::process::Command;
 use tempfile::TempDir;

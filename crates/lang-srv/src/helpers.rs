@@ -1,7 +1,7 @@
 //! Misc. helpers.
 
 use crate::convert::analysis_range;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use lsp_server::{ExtractError, Notification, Request, RequestId};
 use std::ops::ControlFlow;
 

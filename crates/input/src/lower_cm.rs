@@ -2,8 +2,8 @@
 
 use crate::types::Group;
 use crate::util::{
-  get_path_id_in_group, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, IoError,
-  StartedGroup,
+  Error, ErrorKind, ErrorSource, GroupPathToProcess, IoError, StartedGroup, get_path_id_in_group,
+  read_file,
 };
 use fast_hash::FxHashSet;
 use paths::{CleanPathBuf, PathMap};

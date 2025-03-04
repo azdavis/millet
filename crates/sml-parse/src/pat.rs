@@ -3,7 +3,7 @@
 use crate::parser::{Entered, ErrorKind, Exited, Expected, Parser};
 use crate::ty::{ty, ty_annotation};
 use crate::util::{
-  comma_sep, eat_name_star, lab, name_star, path, path_infix, path_no_infix, should_break, InfixErr,
+  InfixErr, comma_sep, eat_name_star, lab, name_star, path, path_infix, path_no_infix, should_break,
 };
 use sml_syntax::kind::SyntaxKind as SK;
 

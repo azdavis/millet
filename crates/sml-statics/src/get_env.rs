@@ -37,7 +37,7 @@ where
   for name in names {
     env = match env.str_env.get(name) {
       None => {
-        return GetEnvResult { val: Err(UndefinedError(Item::Struct, name.clone())), disallow }
+        return GetEnvResult { val: Err(UndefinedError(Item::Struct, name.clone())), disallow };
       }
       Some(x) => x,
     };

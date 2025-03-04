@@ -3,7 +3,7 @@
 use crate::cx::Cx;
 use crate::state::{Mode, St};
 use crate::{convert, diagnostics, helpers};
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use lsp_server::Notification;
 use paths::FileSystem as _;
 use std::collections::hash_map::Entry;

@@ -1,7 +1,7 @@
 //! Representing the standard basis libraries and all other "built-in" libraries by parsing and
 //! analyzing them at runtime at when starting up.
 
-use crate::{add_all_doc_comments, SourceFileSyntax};
+use crate::{SourceFileSyntax, add_all_doc_comments};
 use fast_hash::FxHashMap;
 use sml_statics::{basis, info::Info};
 use sml_syntax::ast::AstNode as _;

@@ -1,6 +1,6 @@
 //! Collect all the paths to ty cons in an env.
 
-use crate::get_env::{get_env, GetEnvResult};
+use crate::get_env::{GetEnvResult, get_env};
 use fast_hash::FxHashSet;
 use sml_statics_types::env::Env;
 

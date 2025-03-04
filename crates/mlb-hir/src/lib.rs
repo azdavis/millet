@@ -33,11 +33,7 @@ impl BasDec {
   /// If there was an internal error.
   #[must_use]
   pub fn seq(mut decs: Vec<Self>) -> Self {
-    if decs.len() == 1 {
-      decs.pop().unwrap()
-    } else {
-      Self::Seq(decs)
-    }
+    if decs.len() == 1 { decs.pop().unwrap() } else { Self::Seq(decs) }
   }
 }
 

@@ -62,7 +62,7 @@ fn get_one(
       let mut ve = ValEnv::default();
       let mut src_exp = FxHashMap::<str_util::Name, sml_hir::ExpIdx>::default();
       let exp_cfg = Cfg { mark_defined: true };
-      let mut pat_cfg = pat::Cfg { inner: cfg, gen: Generalizable::Sometimes, rec: false };
+      let mut pat_cfg = pat::Cfg { inner: cfg, gz: Generalizable::Sometimes, rec: false };
       let marker = st.syms_tys.syms.mark();
       while let Some(val_bind) = val_binds.get(idx) {
         if val_bind.rec {
@@ -471,7 +471,7 @@ fn constructor(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
       }
       let val_info =
         get_env_raw(&cx.env, path.prefix()).ok().and_then(|env| env.val_env.get(path.last()));
-      val_info.map_or(true, |x| matches!(x.id_status, IdStatus::Con | IdStatus::Exn(_)))
+      val_info.is_none_or(|x| matches!(x.id_status, IdStatus::Con | IdStatus::Exn(_)))
     }
   }
 }

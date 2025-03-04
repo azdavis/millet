@@ -119,7 +119,10 @@ impl fmt::Display for Error {
       ErrorKind::NotSpec => f.write_str("non-specification not allowed here"),
       ErrorKind::AsPatLhsNotName => f.write_str("left-hand side of `as` pattern must be a name"),
       ErrorKind::PatNameIsNameOfContainingFun(flavor) => {
-        write!(f, "name bound in pattern inside a `{flavor}` matches name of a `fun` that contains the `{flavor}`")
+        write!(
+          f,
+          "name bound in pattern inside a `{flavor}` matches name of a `fun` that contains the `{flavor}`"
+        )
       }
       ErrorKind::EmptyFun => f.write_str("`fun` requires at least 1 parameter"),
       ErrorKind::EmptyExpSemiSeq => {

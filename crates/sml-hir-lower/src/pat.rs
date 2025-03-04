@@ -13,11 +13,7 @@ pub(crate) fn get(
   let pat = pat?;
   let ptr = SyntaxNodePtr::new(pat.syntax());
   let or_pat = get_or(st, flavor, pat)?;
-  if or_pat.rest.is_empty() {
-    or_pat.first
-  } else {
-    st.pat(sml_hir::Pat::Or(or_pat), ptr)
-  }
+  if or_pat.rest.is_empty() { or_pat.first } else { st.pat(sml_hir::Pat::Or(or_pat), ptr) }
 }
 
 fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<sml_hir::OrPat> {

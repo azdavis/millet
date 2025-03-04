@@ -2,7 +2,7 @@
 
 use crate::check::raw::env_var_enabled;
 use fast_hash::{FxHashMap, FxHashSet};
-use std::collections::{hash_map::Entry, BTreeSet};
+use std::collections::{BTreeSet, hash_map::Entry};
 use std::fmt::{self, Write as _};
 use std::{env, fs, path::Path, process::Command, sync::LazyLock};
 
@@ -151,11 +151,7 @@ fn architecture() {
     }))
     .chain(output(root_cmd("git").args(["ls-tree", "--name-only", "HEAD"])).lines().filter_map(
       |x| {
-        if no_doc.remove(x) {
-          None
-        } else {
-          Some(x.to_owned())
-        }
+        if no_doc.remove(x) { None } else { Some(x.to_owned()) }
       },
     ))
     .collect();

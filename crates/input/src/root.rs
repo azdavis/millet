@@ -1,7 +1,7 @@
 //! Getting the root groups.
 
 use crate::types::Severities;
-use crate::util::{read_dir, str_path, Error, ErrorKind, ErrorSource, GroupPathKind, NoRootFlavor};
+use crate::util::{Error, ErrorKind, ErrorSource, GroupPathKind, NoRootFlavor, read_dir, str_path};
 use fast_hash::{FxHashMap, FxHashSet};
 use paths::PathId;
 use slash_var_path::{EnvEntry, EnvEntryKind};

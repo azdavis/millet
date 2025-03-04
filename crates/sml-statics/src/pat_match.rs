@@ -64,11 +64,7 @@ impl pattern_match::Lang for Lang {
               || cur_cons.iter().any(|c| **c == Con::Any)
               || all_cons.iter().any(|c| !cur_cons.contains(c))
           };
-          if use_any {
-            vec![Con::Any]
-          } else {
-            all_cons
-          }
+          if use_any { vec![Con::Any] } else { all_cons }
         }
         TyData::Record(rows) => {
           vec![Con::Record { labels: rows.keys().cloned().collect(), allows_other: false }]

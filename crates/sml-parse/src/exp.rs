@@ -2,7 +2,7 @@
 
 use crate::parser::{ErrorKind, Exited, Expected, ParensExpFlavor, Parser};
 use crate::util::{
-  comma_sep, end_sep, lab, many_sep, path_infix, path_no_infix, should_break, InfixErr,
+  InfixErr, comma_sep, end_sep, lab, many_sep, path_infix, path_no_infix, should_break,
 };
 use crate::{dec::dec, pat::pat, ty::ty};
 use sml_syntax::kind::SyntaxKind as SK;

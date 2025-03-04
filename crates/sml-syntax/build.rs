@@ -1,6 +1,6 @@
 //! Generating Rust code from the ungrammar.
 
-use fast_hash::{map, FxHashMap};
+use fast_hash::{FxHashMap, map};
 
 fn main() {
   let doc = code_h2_md_map::get(include_str!("../../docs/tokens.md"), |tok| {
@@ -26,5 +26,5 @@ fn main() {
     special: &special,
     file: file!(),
   };
-  syntax_gen::gen(&options);
+  syntax_gen::get(&options);
 }

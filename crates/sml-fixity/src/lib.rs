@@ -1,6 +1,6 @@
 //! Types concerning SML infix operators, precedence, and associativity.
 
-use fast_hash::{map_with_capacity, FxHashMap};
+use fast_hash::{FxHashMap, map_with_capacity};
 use std::sync::LazyLock;
 
 /// A mapping from names to (in)fixities.

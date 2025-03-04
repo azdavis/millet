@@ -100,11 +100,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
 fn sml_string(s: &str) -> Option<String> {
   let mut idx = 0usize;
   let res = lex_util::string::get(&mut idx, s.as_bytes());
-  if idx == s.len() {
-    res.actual
-  } else {
-    None
-  }
+  if idx == s.len() { res.actual } else { None }
 }
 
 pub(crate) fn get_name(n: Option<sml_syntax::kind::SyntaxToken>) -> Option<str_util::Name> {

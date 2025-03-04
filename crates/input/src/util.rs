@@ -279,7 +279,7 @@ impl StartedGroup {
           source_path: paths.get_path(cur.parent).to_owned(),
           range: cur.range,
           inner,
-        })
+        });
       }
     };
     let pos_db = text_pos::PositionDb::new(&contents);
