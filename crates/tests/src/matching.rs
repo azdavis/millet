@@ -598,3 +598,39 @@ val _ =
 ",
   );
 }
+
+#[test]
+fn record_in_datatype_5() {
+  check(
+    r"
+datatype ab = A of {a: int, b: int, c: int, d: int} | B
+val _ =
+    case B of
+(** ^^^^^^^^^ non-exhaustive case: missing `A {a = _, b = _, c = _, d = _}`, `B` *)
+    A {a = 1, ...} => 0
+  | A {b = 2, c = 3, ...} => 1
+  | A {d = 4, c = 5, ...} => 2
+  | A {b = 2, a = 4, ...} => 3
+  | A {b = 2, ...} => 4
+",
+  );
+}
+
+#[test]
+fn record_in_datatype_6() {
+  check(
+    r"
+datatype ab = A of {a: int, b: int, c: int, d: int} | B
+val _ =
+    case B of
+    A {a = 1, ...} => 0
+  | A {b = 2, c = 3, ...} => 1
+  | A {d = 4, c = 5, ...} => 2
+  | A {b = 2, a = 1, ...} => 3
+(** + unreachable pattern *)
+  | A {b = 2, ...} => 4
+  | A _ => 5
+  | B => 6
+",
+  );
+}
