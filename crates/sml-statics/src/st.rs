@@ -212,9 +212,12 @@ fn get_match(
   let ck = elapsed::log("pattern_match::check", || {
     pattern_match::check::<pat_match::Lang>(syms_tys, pats, ty)
   });
-  let Ok(ck) = ck else {
-    // we already should have emitted other errors in this case.
-    return Vec::new();
+  let ck = match ck {
+    Ok(x) => x,
+    Err(e) => {
+      log::warn!("should have already emitted other errors: {e}");
+      return Vec::new();
+    }
   };
   let mut unreachable: Vec<_> = ck.unreachable.into_iter().flatten().collect();
   unreachable.sort_unstable_by_key(|x| x.into_raw());
