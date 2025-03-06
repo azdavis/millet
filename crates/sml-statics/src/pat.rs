@@ -11,7 +11,7 @@ use sml_statics_types::info::{IdStatus, ValEnv, ValInfo};
 use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme};
 use sml_statics_types::util::{get_scon, instantiate};
 use sml_statics_types::{def, env::Cx, item::Item, mode::Mode, sym::Sym};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Cfg {
@@ -176,12 +176,10 @@ fn get_(
     }
     // @def(36)
     sml_hir::Pat::Record { rows, allows_other } => {
-      let mut labels = BTreeSet::<sml_hir::Lab>::new();
-      let mut pats = Vec::<Pat>::with_capacity(rows.len());
+      let mut label_pats = BTreeMap::<sml_hir::Lab, Pat>::new();
       let rows = record(st, pat_idx.into(), rows, |st, lab, pat| {
         let (pm_pat, ty) = get(st, cfg, ars, cx, ve, pat);
-        labels.insert(lab.clone());
-        pats.push(pm_pat);
+        label_pats.insert(lab.clone(), pm_pat);
         ty
       });
       let ty = if *allows_other {
@@ -190,6 +188,8 @@ fn get_(
       } else {
         st.syms_tys.tys.record(rows)
       };
+      // keep order consistent between labels and pats
+      let (labels, pats): (BTreeSet<_>, Vec<_>) = label_pats.into_iter().collect();
       let con = Con::Record { labels, allows_other: *allows_other };
       (Pat::con(con, pats, pat), ty)
     }

@@ -1,6 +1,6 @@
 //! Matching with `case` and friends.
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn smoke_case() {
@@ -548,15 +548,53 @@ fun parse xs =
 }
 
 #[test]
-fn non_exhaustive_fail() {
-  fail(
-    r#"
-datatype abc = A of {z: {s: int, t: int}, y: int} | B | C
+fn record_in_datatype_1() {
+  check(
+    r"
+datatype ab = A of {a: {n: int}, z: int} | B
 val _ =
     case B of
-(** ^^^^^^^^^ non-exhaustive case: missing `C` *)
-    A {z = {s, t}, y} => 0
-  | B => 1
-"#,
+(** ^^^^^^^^^ non-exhaustive case: missing `B` *)
+    A {a={n}, z} => 0
+",
+  );
+}
+
+#[test]
+fn record_in_datatype_2() {
+  check(
+    r"
+datatype ab = A of {a: {n: int}, z: int} | B
+val _ =
+    case B of
+(** ^^^^^^^^^ non-exhaustive case: missing `B` *)
+    A {z, a={n}} => 0
+",
+  );
+}
+
+#[test]
+fn record_in_datatype_3() {
+  check(
+    r"
+  datatype ab = A of {z: {n: int}, a: int} | B
+  val _ =
+      case B of
+  (** ^^^^^^^^^ non-exhaustive case: missing `B` *)
+      A {z={n}, a} => 0
+  ",
+  );
+}
+
+#[test]
+fn record_in_datatype_4() {
+  check(
+    r"
+  datatype ab = A of {z: {n: int}, a: int} | B
+  val _ =
+      case B of
+  (** ^^^^^^^^^ non-exhaustive case: missing `B` *)
+      A {a, z={n}} => 0
+  ",
   );
 }
