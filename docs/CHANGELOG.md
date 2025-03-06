@@ -8,6 +8,7 @@ Millet technically follows [SemVer][sem-ver], but the major version is zero, and
 
 - Support holes in CM and MLB.
 - Note another use for the open paren token.
+- Improve record pattern matching.
 
 ## v0.14.7
 
