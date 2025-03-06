@@ -109,11 +109,14 @@ where
   Ok(())
 }
 
-/// Append a second extension to a path (keeping the original extension)
-fn append_extension(path: &std::path::Path, extension2: &str) -> Option<CleanPathBuf> {
-  let path =
-    path.extension()?.to_str().map(|ext| path.with_extension(format!("{ext}.{extension2}")));
-  CleanPathBuf::new(path?)
+/// Append a second extension to a path, keeping the original extension, if any. `ext` should NOT
+/// contain a leading `.`.
+fn append_extension(path: CleanPathBuf, ext: &str) -> CleanPathBuf {
+  let mut os_string = std::ffi::OsString::from(path.into_path_buf());
+  os_string.push(".");
+  os_string.push(ext);
+  let pb = std::path::PathBuf::from(os_string);
+  CleanPathBuf::new(pb).expect("adding extension should not change cleanliness")
 }
 
 fn get_one_cm_file<F>(
@@ -140,9 +143,7 @@ fn get_one_cm_file<F>(
         ret.sml_paths.insert((path_id, kind));
       }
       cm_syntax::PathKind::MlLex => {
-        let Some(lex_sml_path) = append_extension(path.as_path(), "sml") else {
-          continue;
-        };
+        let lex_sml_path = append_extension(path, "sml");
         let contents = match read_file(st.fs, source, lex_sml_path.as_path()) {
           Ok(x) => x,
           Err(e) => {
@@ -155,9 +156,7 @@ fn get_one_cm_file<F>(
         ret.sml_paths.insert((path_id, Kind::Sml));
       }
       cm_syntax::PathKind::MlYacc => {
-        let Some(yacc_sig_path) = append_extension(path.as_path(), "sig") else {
-          continue;
-        };
+        let yacc_sig_path = append_extension(path.clone(), "sig");
         let contents = match read_file(st.fs, source.clone(), yacc_sig_path.as_path()) {
           Ok(x) => x,
           Err(e) => {
@@ -169,9 +168,7 @@ fn get_one_cm_file<F>(
         st.sources.insert(path_id, contents);
         ret.sml_paths.insert((path_id, Kind::Sig));
 
-        let Some(yacc_sml_path) = append_extension(path.as_path(), "sml") else {
-          continue;
-        };
+        let yacc_sml_path = append_extension(path, "sml");
         let contents = match read_file(st.fs, source, yacc_sml_path.as_path()) {
           Ok(x) => x,
           Err(e) => {
