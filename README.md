@@ -115,7 +115,7 @@ If you're using VS Code, you can try out the VS Code extension:
 ## Naming
 
 - "Millet" has the letters M and L in it, in that order. So does "Standard ML".
-- Birds eat millet. A bird named Polly Morphism is the mascot for [15-150][cmu150], Carnegie Mellon's introductory functional programming course, which is taught in Standard ML.
+- Some birds eat millet. A bird named Polly Morphism is the mascot for [15-150][cmu150], Carnegie Mellon's introductory functional programming course, which is taught in Standard ML.
 
 ## Logo
 
