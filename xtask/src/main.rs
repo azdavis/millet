@@ -16,29 +16,25 @@ enum Cmd {
   Ci,
   CliTest,
   Dist,
-  Tag,
+  Release,
 }
 
 struct CmdSpec {
   name: &'static str,
   desc: &'static str,
   options: &'static [(&'static str, &'static str)],
-  args: &'static [(&'static str, &'static str)],
 }
 
 impl Cmd {
-  const VALUES: [Cmd; 5] = [Cmd::Help, Cmd::Ci, Cmd::CliTest, Cmd::Dist, Cmd::Tag];
+  const VALUES: [Cmd; 5] = [Cmd::Help, Cmd::Ci, Cmd::CliTest, Cmd::Dist, Cmd::Release];
 
   fn spec(self) -> CmdSpec {
     match self {
-      Cmd::Help => CmdSpec { name: "help", desc: "show this help", options: &[], args: &[] },
-      Cmd::Ci => CmdSpec {
-        name: "ci",
-        desc: "run various tests, including the cli test",
-        options: &[],
-        args: &[],
-      },
-      Cmd::CliTest => CmdSpec { name: "cli-test", desc: "run a cli test", options: &[], args: &[] },
+      Cmd::Help => CmdSpec { name: "help", desc: "show this help", options: &[] },
+      Cmd::Ci => {
+        CmdSpec { name: "ci", desc: "run various tests, including the cli test", options: &[] }
+      }
+      Cmd::CliTest => CmdSpec { name: "cli-test", desc: "run a cli test", options: &[] },
       Cmd::Dist => CmdSpec {
         name: "dist",
         desc: "make artifacts for distribution",
@@ -49,13 +45,11 @@ impl Cmd {
             "build for the <target> triple, and gzip, and build the CLI as well",
           ),
         ],
-        args: &[],
       },
-      Cmd::Tag => CmdSpec {
-        name: "tag",
+      Cmd::Release => CmdSpec {
+        name: "release",
         desc: "update package files with a new version, then commit a new tag",
-        options: &[],
-        args: &[("<tag>", "the name of the tag")],
+        options: &[("--tag", "the tag to release")],
       },
     }
   }
@@ -86,14 +80,6 @@ fn show_help() {
       println!();
       println!("    options:");
       for (name, desc) in spec.options {
-        println!("      {name}");
-        println!("        {desc}");
-      }
-    }
-    if !spec.args.is_empty() {
-      println!();
-      println!("    args:");
-      for (name, desc) in spec.args {
         println!("      {name}");
         println!("        {desc}");
       }
@@ -245,7 +231,7 @@ where
   fs::write(path.as_ref(), out).with_context(|| format!("write {}", path.as_ref().display()))
 }
 
-fn tag(tag_arg: &str) -> Result<()> {
+fn release(tag_arg: &str) -> Result<()> {
   let Some(version) = tag_arg.strip_prefix('v') else { bail!("tag must start with v") };
   let version_parts: Vec<_> = version.split('.').collect();
   let num_parts = version_parts.len();
@@ -339,10 +325,10 @@ fn main() -> Result<()> {
       finish_args(args)?;
       dist(&dist_args)?;
     }
-    Cmd::Tag => {
-      let tag_arg: String = args.free_from_str()?;
+    Cmd::Release => {
+      let tag: String = args.value_from_str("--tag")?;
       finish_args(args)?;
-      tag(&tag_arg)?;
+      release(&tag)?;
       run_ci()?;
     }
   }
