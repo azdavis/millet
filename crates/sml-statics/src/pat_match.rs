@@ -95,12 +95,14 @@ impl pattern_match::Lang for Lang {
         Con::Any | Con::Int(_) | Con::Word(_) | Con::Char(_) | Con::String(_) => Vec::new(),
         Con::Variant(sym, variant_name) => {
           if data.sym != *sym {
-            return Err(CheckError);
+            return Err(CheckError("con sym mismatch"));
           }
           match (variant_name, cx.syms.get(data.sym)) {
             (VariantName::Exn(exn), None) => cx.syms.get_exn(*exn).param.iter().copied().collect(),
+            (VariantName::Exn(_), Some(_)) => return Err(CheckError("exn with Some")),
             (VariantName::Name(name), Some(sym_info)) => {
-              let val_info = sym_info.ty_info.val_env.get(name).ok_or(CheckError)?;
+              let val_info =
+                sym_info.ty_info.val_env.get(name).ok_or(CheckError("no such named val for ty"))?;
               match cx.tys.data(val_info.ty_scheme.ty) {
                 TyData::Con(_) => Vec::new(),
                 TyData::Fn(fn_data) => {
@@ -108,20 +110,22 @@ impl pattern_match::Lang for Lang {
                   apply_bv(&mut cx.tys, &data.args, &mut param);
                   vec![param]
                 }
-                _ => return Err(CheckError),
+                _ => return Err(CheckError("val not a con or fn")),
               }
             }
-            _ => return Err(CheckError),
+            (VariantName::Name(_), None) => return Err(CheckError("name with None")),
           }
         }
         Con::Vector(n) => {
           if data.sym != Sym::VECTOR {
-            return Err(CheckError);
+            return Err(CheckError("not a vector"));
           }
-          let &[ty] = data.args.as_slice() else { return Err(CheckError) };
+          let &[ty] = data.args.as_slice() else {
+            return Err(CheckError("not exactly 1 arg to vector"));
+          };
           std::iter::repeat(ty).take(*n).collect()
         }
-        Con::Record { .. } => return Err(CheckError),
+        Con::Record { .. } => return Err(CheckError("ty is con but con is record")),
       },
     };
     Ok(ret)
