@@ -1,6 +1,6 @@
 //! Matching with `case` and friends.
 
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn smoke_case() {
@@ -544,5 +544,19 @@ fun parse xs =
   | _ $ Tok A $ Tok B $ Bar $ Tok C $ Quz $ _ => 4
   | _ $ Tok F $ Tok D $ Tok A $ Foo $ Quz $ _ => 4
 ",
+  );
+}
+
+#[test]
+fn non_exhaustive_fail() {
+  fail(
+    r#"
+datatype abc = A of {z: {s: int, t: int}, y: int} | B | C
+val _ =
+    case B of
+(** ^^^^^^^^^ non-exhaustive case: missing `C` *)
+    A {z = {s, t}, y} => 0
+  | B => 1
+"#,
   );
 }
