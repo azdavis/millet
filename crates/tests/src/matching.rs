@@ -577,12 +577,12 @@ val _ =
 fn record_in_datatype_3() {
   check(
     r"
-  datatype ab = A of {z: {n: int}, a: int} | B
-  val _ =
-      case B of
-  (** ^^^^^^^^^ non-exhaustive case: missing `B` *)
-      A {z={n}, a} => 0
-  ",
+datatype ab = A of {z: {n: int}, a: int} | B
+val _ =
+    case B of
+(** ^^^^^^^^^ non-exhaustive case: missing `B` *)
+    A {z={n}, a} => 0
+",
   );
 }
 
@@ -590,11 +590,11 @@ fn record_in_datatype_3() {
 fn record_in_datatype_4() {
   check(
     r"
-  datatype ab = A of {z: {n: int}, a: int} | B
-  val _ =
-      case B of
-  (** ^^^^^^^^^ non-exhaustive case: missing `B` *)
-      A {a, z={n}} => 0
-  ",
+datatype ab = A of {z: {n: int}, a: int} | B
+val _ =
+    case B of
+(** ^^^^^^^^^ non-exhaustive case: missing `B` *)
+    A {a, z={n}} => 0
+",
   );
 }
