@@ -10,7 +10,7 @@ fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, PathKind)])
   let got_export = RawExport::from(file.export);
   let got_paths: Vec<_> =
     file.paths.into_iter().map(|path| (path.val.as_path().to_owned(), path.val.kind())).collect();
-  assert_eq!(RawExport::Union(want_exports), got_export);
+  assert_eq!(RawExport::union(want_exports), got_export);
   assert_eq!(want_paths, got_paths);
 }
 
@@ -24,6 +24,12 @@ enum RawExport {
   Union(Vec<RawExport>),
   Difference(Box<RawExport>, Box<RawExport>),
   Intersection(Box<RawExport>, Box<RawExport>),
+}
+
+impl RawExport {
+  fn union(mut es: Vec<Self>) -> Self {
+    if es.len() == 1 { es.pop().expect("should have len 1") } else { Self::Union(es) }
+  }
 }
 
 impl From<Export> for RawExport {

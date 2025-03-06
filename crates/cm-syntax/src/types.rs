@@ -213,6 +213,12 @@ pub enum Export {
   Intersection(Box<Export>, Box<Export>),
 }
 
+impl Export {
+  pub(crate) fn union(mut es: Vec<Self>) -> Self {
+    if es.len() == 1 { es.pop().expect("should have len 1") } else { Self::Union(es) }
+  }
+}
+
 /// Either a regular path or a std basis path (e.g. `$/basis.cm`).
 #[derive(Debug, PartialEq, Eq)]
 pub enum PathOrStdBasis {

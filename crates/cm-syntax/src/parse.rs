@@ -180,7 +180,7 @@ fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
 }
 
 fn exports_and_members(p: &mut Parser<'_>) -> Result<(Export, Vec<Member>)> {
-  let es = Export::Union(exports(p)?);
+  let es = Export::union(exports(p)?);
   p.eat(Token::Is)?;
   let mut members = Vec::<Member>::new();
   loop {
