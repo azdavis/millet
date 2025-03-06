@@ -112,11 +112,11 @@ where
 /// Append a second extension to a path, keeping the original extension, if any. `ext` should NOT
 /// contain a leading `.`.
 fn append_extension(path: CleanPathBuf, ext: &str) -> CleanPathBuf {
-  let mut os_string = std::ffi::OsString::from(path.into_path_buf());
-  os_string.push(".");
-  os_string.push(ext);
-  let pb = std::path::PathBuf::from(os_string);
-  CleanPathBuf::new(pb).expect("adding extension should not change cleanliness")
+  let mut path = std::ffi::OsString::from(path.into_path_buf());
+  path.push(".");
+  path.push(ext);
+  CleanPathBuf::new(std::path::PathBuf::from(path))
+    .expect("adding extension should not change cleanliness")
 }
 
 fn get_one_cm_file<F>(
