@@ -81,21 +81,27 @@ jobs:
       - name: Package VSIX
         run: npx --no-install vsce package --target ${{ matrix.vscode }} -o vsix/millet-${{ matrix.vscode }}.vsix
         working-directory: editors/vscode
-      - name: Upload binary artifacts
+      - name: Upload language server artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: binary
-          path: |
-            binary/millet-ls-${{ matrix.rust }}.gz
-            binary/millet-cli-${{ matrix.rust }}.gz
+          name: ls-${{ matrix.rust }}
+          path: binary/millet-ls-${{ matrix.rust }}.gz
+      - name: Upload CLI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-${{ matrix.rust }}
+          path: binary/millet-cli-${{ matrix.rust }}.gz
       - name: Upload VSIX artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: vsix
+          name: vsix-${{ matrix.vscode }}
           path: editors/vscode/vsix/millet-${{ matrix.vscode }}.vsix
   release:
     needs: dist
     runs-on: ubuntu-latest
+    # need this to allow creating a release
+    permissions:
+      contents: write
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
@@ -106,16 +112,24 @@ jobs:
       - name: Install node dependencies
         run: npm ci
         working-directory: editors/vscode
-      - name: Download binary artifacts
+      - name: Download language server artifacts
         uses: actions/download-artifact@v4
         with:
-          name: binary
           path: binary
+          pattern: ls-*
+          merge-multiple: true
+      - name: Download CLI artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: binary
+          pattern: cli-*
+          merge-multiple: true
       - name: Download VSIX artifacts
         uses: actions/download-artifact@v4
         with:
-          name: vsix
           path: editors/vscode/vsix
+          pattern: vsix-*
+          merge-multiple: true
       - name: Make GitHub release
         uses: softprops/action-gh-release@v1
         with:
