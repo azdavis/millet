@@ -5,7 +5,7 @@ use pattern_match::{CheckError, Result};
 use sml_statics_types::sym::{Exn, Sym, Syms};
 use sml_statics_types::ty::{Ty, TyData};
 use sml_statics_types::util::apply_bv;
-use std::collections::BTreeSet;
+use std::{collections::BTreeSet, fmt};
 
 pub(crate) type Pat = pattern_match::Pat<Lang>;
 pub(crate) type Cx = sml_statics_types::St;
@@ -145,10 +145,47 @@ pub(crate) enum Con {
   Vector(usize),
 }
 
+impl fmt::Display for Con {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Con::Any => f.write_str("_"),
+      Con::Int(n) => fmt::Display::fmt(n, f),
+      Con::Word(w) => fmt::Display::fmt(w, f),
+      Con::Char(c) => fmt::Display::fmt(c, f),
+      Con::String(s) => fmt::Display::fmt(s, f),
+      Con::Record { labels, allows_other } => {
+        f.write_str("{")?;
+        let mut iter = labels.iter();
+        if let Some(fst) = iter.next() {
+          fmt::Display::fmt(fst, f)?;
+        }
+        for lab in iter {
+          write!(f, ", {lab}")?;
+        }
+        if *allows_other {
+          f.write_str(", ...")?;
+        }
+        f.write_str("}")
+      }
+      Con::Variant(_, name) => fmt::Display::fmt(name, f),
+      Con::Vector(n) => write!(f, "vector[{n}]"),
+    }
+  }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum VariantName {
   Name(str_util::Name),
   Exn(Exn),
+}
+
+impl fmt::Display for VariantName {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      VariantName::Name(name) => fmt::Display::fmt(name, f),
+      VariantName::Exn(exn) => write!(f, "exn[{exn:?}]"),
+    }
+  }
 }
 
 const NON_EXN_INFINITE: [Sym; 6] =
