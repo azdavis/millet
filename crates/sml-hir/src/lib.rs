@@ -142,7 +142,8 @@ pub enum Spec {
   Val(Vec<TyVar>, Vec<ValDesc>),
   Ty(TyDesc),
   EqTy(TyDesc),
-  Datatype(Vec<DatDesc>),
+  /// The `TyBinds` are from `withtype`, since it's easier to process in statics than lower.
+  Datatype(Vec<DatDesc>, Vec<TyBind>),
   DatatypeCopy(Name, Path),
   Exception(ExDesc),
   Str(StrDesc),

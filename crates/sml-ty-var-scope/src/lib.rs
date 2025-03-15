@@ -148,7 +148,7 @@ fn get_spec_one(st: &mut St, ars: &sml_hir::Arenas, spec: sml_hir::SpecIdx) {
     sml_hir::Spec::Sharing(spec, _, _) => get_spec(st, ars, spec),
     sml_hir::Spec::Ty(_)
     | sml_hir::Spec::EqTy(_)
-    | sml_hir::Spec::Datatype(_)
+    | sml_hir::Spec::Datatype(_, _)
     | sml_hir::Spec::DatatypeCopy(_, _)
     | sml_hir::Spec::Exception(_) => {}
   }
