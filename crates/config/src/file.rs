@@ -198,5 +198,7 @@ pub struct SuccessorMl {
   #[serde(default)]
   pub exp_row_pun: bool,
   #[serde(default)]
+  pub sig_withtype: bool,
+  #[serde(default)]
   pub vector: bool,
 }

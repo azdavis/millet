@@ -497,9 +497,9 @@ fn get_spec_one(
       get_ty_desc(st, spec.into(), &mut ac.ty_env, ty_descs, Equality::Sometimes);
     }
     // @def(71)
-    sml_hir::Spec::Datatype(dat_descs) => {
+    sml_hir::Spec::Datatype(dat_descs, with_types) => {
       let (ty_env, big_val_env) =
-        dec::get_dat_binds(st, spec.into(), bs.as_cx(), ars, dat_descs, &[]);
+        dec::get_dat_binds(st, spec.into(), bs.as_cx(), ars, dat_descs, with_types);
       for (name, val) in ty_env {
         if let Some(e) = ins_no_dupe(&mut ac.ty_env, name, val, Item::Ty) {
           st.err(spec, e);
