@@ -36,7 +36,7 @@ dependencies = [
 
 [[package]]
 name = "analysis"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "config",
  "diagnostic",
@@ -196,7 +196,7 @@ source = "git+https://github.com/azdavis/language-util.git#81d8f4782630608de27cc
 
 [[package]]
 name = "cm-syntax"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "lex-util",
  "paths",
@@ -232,7 +232,7 @@ checksum = "5b63caa9aa9397e2d9480a9b13673856c78d8ac123288526c37d7839f2a86990"
 
 [[package]]
 name = "config"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "fast-hash",
  "serde",
@@ -280,7 +280,7 @@ checksum = "7704b5fdd17b18ae31c4c1da5a2e0305a2bf17b5249300a9ee9ed7b72114c636"
 
 [[package]]
 name = "cov-mark"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "fast-hash",
 ]
@@ -681,7 +681,7 @@ dependencies = [
 
 [[package]]
 name = "input"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "cm-syntax",
  "config",
@@ -746,7 +746,7 @@ checksum = "3752f229dcc5a481d60f385fa479ff46818033d881d2d801aa27dffcfb5e8306"
 
 [[package]]
 name = "lang-srv"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "analysis",
  "anyhow",
@@ -768,7 +768,7 @@ dependencies = [
 
 [[package]]
 name = "lex-util"
-version = "0.14.8"
+version = "0.14.9"
 
 [[package]]
 name = "libc"
@@ -838,7 +838,7 @@ checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
 name = "millet-cli"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "analysis",
  "codespan-reporting",
@@ -856,7 +856,7 @@ dependencies = [
 
 [[package]]
 name = "millet-ls"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "anyhow",
  "env_logger 0.11.6",
@@ -882,7 +882,7 @@ dependencies = [
 
 [[package]]
 name = "mlb-hir"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "fast-hash",
  "paths",
@@ -894,7 +894,7 @@ dependencies = [
 
 [[package]]
 name = "mlb-statics"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "config",
  "cov-mark",
@@ -920,7 +920,7 @@ dependencies = [
 
 [[package]]
 name = "mlb-syntax"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "lex-util",
  "paths",
@@ -992,7 +992,7 @@ checksum = "945462a4b81e43c4e3ba96bd7b49d834c6f61198356aa858733bc4acf3cbe62e"
 
 [[package]]
 name = "panic-hook"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "better-panic",
 ]
@@ -1010,7 +1010,7 @@ dependencies = [
 
 [[package]]
 name = "paths-glob"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "glob",
  "paths",
@@ -1244,7 +1244,7 @@ dependencies = [
 
 [[package]]
 name = "slash-var-path"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "fast-hash",
  "str-util",
@@ -1258,14 +1258,14 @@ checksum = "7fcf8323ef1faaee30a44a340193b1ac6814fd9b7b4e88e9d4519a3e4abe1cfd"
 
 [[package]]
 name = "sml-comment"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "sml-syntax",
 ]
 
 [[package]]
 name = "sml-dynamics"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "fast-hash",
  "fmt-util",
@@ -1276,7 +1276,7 @@ dependencies = [
 
 [[package]]
 name = "sml-dynamics-tests"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "config",
  "pretty_assertions",
@@ -1293,11 +1293,11 @@ dependencies = [
 
 [[package]]
 name = "sml-file"
-version = "0.14.8"
+version = "0.14.9"
 
 [[package]]
 name = "sml-file-syntax"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "config",
  "elapsed",
@@ -1312,7 +1312,7 @@ dependencies = [
 
 [[package]]
 name = "sml-fixity"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "fast-hash",
  "str-util",
@@ -1320,7 +1320,7 @@ dependencies = [
 
 [[package]]
 name = "sml-hir"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "la-arena",
  "sml-lab",
@@ -1331,7 +1331,7 @@ dependencies = [
 
 [[package]]
 name = "sml-hir-lower"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "config",
  "cov-mark",
@@ -1348,14 +1348,14 @@ dependencies = [
 
 [[package]]
 name = "sml-lab"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "str-util",
 ]
 
 [[package]]
 name = "sml-lex"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "cov-mark",
  "diagnostic",
@@ -1372,7 +1372,7 @@ source = "git+https://github.com/azdavis/sml-libs.git#0d94e3ce13f2a489dff86151f7
 
 [[package]]
 name = "sml-naive-fmt"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "fast-hash",
  "sml-comment",
@@ -1382,11 +1382,11 @@ dependencies = [
 
 [[package]]
 name = "sml-namespace"
-version = "0.14.8"
+version = "0.14.9"
 
 [[package]]
 name = "sml-parse"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "diagnostic",
  "event-parse",
@@ -1400,14 +1400,14 @@ dependencies = [
 
 [[package]]
 name = "sml-path"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "str-util",
 ]
 
 [[package]]
 name = "sml-scon"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "num-bigint",
  "num-traits",
@@ -1416,7 +1416,7 @@ dependencies = [
 
 [[package]]
 name = "sml-statics"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "chain-map",
  "config",
@@ -1439,7 +1439,7 @@ dependencies = [
 
 [[package]]
 name = "sml-statics-types"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "chain-map",
  "code-h2-md-map",
@@ -1457,7 +1457,7 @@ dependencies = [
 
 [[package]]
 name = "sml-symbol-kind"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "sml-namespace",
  "sml-statics-types",
@@ -1465,7 +1465,7 @@ dependencies = [
 
 [[package]]
 name = "sml-syntax"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "code-h2-md-map",
  "fast-hash",
@@ -1476,7 +1476,7 @@ dependencies = [
 
 [[package]]
 name = "sml-ty-var-scope"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "fast-hash",
  "sml-hir",
@@ -1567,7 +1567,7 @@ dependencies = [
 
 [[package]]
 name = "tests"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "analysis",
  "cm-syntax",
@@ -1917,7 +1917,7 @@ checksum = "1e9df38ee2d2c3c5948ea468a8406ff0db0b29ae1ffde1bcf20ef305bcc95c51"
 
 [[package]]
 name = "xtask"
-version = "0.14.8"
+version = "0.14.9"
 dependencies = [
  "anyhow",
  "flate2",
