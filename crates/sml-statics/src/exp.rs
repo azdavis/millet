@@ -168,38 +168,26 @@ fn lint_eta_reduce(
   flavor: sml_hir::FnFlavor,
   matcher: &[sml_hir::Arm],
 ) -> Option<str_util::Name> {
-  let fst = match (flavor, matcher) {
-    (sml_hir::FnFlavor::Fn, [x]) => *x,
-    _ => return None,
-  };
+  let (sml_hir::FnFlavor::Fn, &[fst]) = (flavor, matcher) else { return None };
   let pat = fst.pat?;
-  let name = match &ars.pat[pat] {
-    sml_hir::Pat::Con(path, None) => {
-      if path.prefix().is_empty() {
-        path.last()
-      } else {
-        return None;
-      }
-    }
-    _ => return None,
+  let sml_hir::Pat::Con(path, None) = &ars.pat[pat] else { return None };
+  if !path.prefix().is_empty() {
+    return None;
   };
-  if !pat::val_info_for_var(cx.env.val_env.get(name)) {
+  let param_name = path.last();
+  if !pat::val_info_for_var(cx.env.val_env.get(param_name)) {
     return None;
   }
   let exp = fst.exp?;
   let sml_hir::Exp::App(func, Some(argument)) = ars.exp[exp] else { return None };
-  match &ars.exp[argument] {
-    sml_hir::Exp::Path(path) => {
-      if !path.prefix().is_empty() || path.last() != name {
-        return None;
-      }
-    }
-    _ => return None,
-  }
-  if maybe_contains_free_var(ars, func, name) {
+  let sml_hir::Exp::Path(path) = &ars.exp[argument] else { return None };
+  if !path.prefix().is_empty()
+    || path.last() != param_name
+    || maybe_contains_free_var(ars, func, param_name)
+  {
     return None;
   }
-  Some(name.clone())
+  Some(param_name.clone())
 }
 
 fn maybe_contains_free_var(
