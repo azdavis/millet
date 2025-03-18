@@ -473,6 +473,19 @@ fun incB {a, b, c} = {a, b = b + 1, c}
 fun incB {a, b, c} = {a = a, b = b + 1, c = c}
 ```
 
+#### `language.successor-ml.sig-withtype`
+
+- Type: `boolean`
+- Default: `false`
+
+```sml
+signature STREAM =
+  sig
+    datatype 'a u = Nil | Cons of 'a * 'a t
+    withtype 'a t = unit -> 'a u
+  end
+```
+
 #### `language.successor-ml.vector`
 
 - Type: `boolean`
