@@ -478,6 +478,8 @@ fun incB {a, b, c} = {a = a, b = b + 1, c = c}
 - Type: `boolean`
 - Default: `false`
 
+Whether `withtype` in specifications is allowed.
+
 ```sml
 signature STREAM =
   sig
