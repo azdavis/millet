@@ -366,14 +366,17 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
       if !st.lang().dec.datatype {
         st.err(dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`datatype`")));
       }
-      if !st.lang().successor_ml.sig_withtype {
-        if let Some(with_type) = dec.with_type() {
-          let e = ErrorKind::Disallowed(Disallowed::SuccMl("`withtype` in specifications"));
-          st.err(with_type.syntax(), e);
-        }
-      }
       let d_binds = dat_binds(st, dec.dat_binds());
-      let t_binds = ty_binds(st, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
+      let t_binds = match dec.with_type() {
+        Some(with_type) => {
+          if !st.lang().successor_ml.sig_withtype {
+            let e = ErrorKind::Disallowed(Disallowed::SuccMl("`withtype` in specifications"));
+            st.err(with_type.syntax(), e);
+          }
+          ty_binds(st, with_type.ty_binds())
+        }
+        None => Vec::new(),
+      };
       let dat = sml_hir::Spec::Datatype(d_binds, t_binds);
       vec![st.spec(dat, ptr)]
     }
