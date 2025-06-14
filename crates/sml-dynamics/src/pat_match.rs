@@ -32,15 +32,19 @@ pub(crate) fn get(ac: &mut ValEnv, cx: Cx<'_>, pat: sml_hir::PatIdx, val: &Val) 
         unreachable!("SCon types do not match")
       }
     },
-    (sml_hir::Pat::SCon(_), Val::Con(_) | Val::Record(_)) => {
-      unreachable!("match SCon with (Con or Record")
+    (sml_hir::Pat::SCon(_), Val::Con(_) | Val::Record(_) | Val::Vector(_)) => {
+      unreachable!("match SCon with (Con or Record or Vector)")
     }
     (sml_hir::Pat::Record { rows: pat_rows, allows_other: _ }, Val::Record(val_rows)) => {
       pat_rows.iter().all(|(lab, pat)| get(ac, cx, *pat, &val_rows[lab]))
     }
-    (sml_hir::Pat::Record { .. }, Val::SCon(_) | Val::Con(_)) => {
-      unreachable!("match Record with (SCon or Con")
+    (sml_hir::Pat::Record { .. }, Val::SCon(_) | Val::Con(_) | Val::Vector(_)) => {
+      unreachable!("match Record with (SCon or Con or Vector)")
     }
+    (sml_hir::Pat::Vector(ps), Val::Vector(vs)) => {
+      (ps.len() == vs.len()) && ps.iter().zip(vs).all(|(&p, v)| get(ac, cx, p, v))
+    }
+    (sml_hir::Pat::Vector(_), _) => unreachable!("match Vector with non-Vector"),
     (sml_hir::Pat::Typed(pat, _), _) => get(ac, cx, *pat, val),
     (sml_hir::Pat::As(name, pat), val) => {
       ac.insert(name.clone(), val.clone());
@@ -60,7 +64,6 @@ pub(crate) fn get(ac: &mut ValEnv, cx: Cx<'_>, pat: sml_hir::PatIdx, val: &Val) 
       }
       false
     }
-    (sml_hir::Pat::Vector(_), _) => todo!(),
   }
 }
 

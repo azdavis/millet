@@ -47,6 +47,14 @@ impl fmt::Display for Dynamics<'_> {
           }
           prec = Prec::Min;
         }
+        FrameKind::Vector(vs, _) => {
+          f.write_str("#[")?;
+          for val in vs {
+            ValDisplay { val, prec: Prec::Min, cx }.fmt(f)?;
+            f.write_str(", ")?;
+          }
+          prec = Prec::Min;
+        }
         FrameKind::AppClosureArg(matcher) => {
           if matches!(prec, Prec::Atomic) {
             f.write_str("(")?;
@@ -131,14 +139,22 @@ impl fmt::Display for Dynamics<'_> {
             f.write_str(", ")?;
           }
           if *is_tuple {
-            let rows = es.iter().map(|&(_, exp)| ExpDisplay { exp, prec: Prec::Min, cx });
+            let rows = es.iter().rev().map(|&(_, exp)| ExpDisplay { exp, prec: Prec::Min, cx });
             fmt_util::comma_seq(f, rows.into_iter())?;
             f.write_str(")")?;
           } else {
-            let rows = es.iter().map(|&(ref lab, exp)| ExpRowDisplay { lab, exp, cx });
+            let rows = es.iter().rev().map(|&(ref lab, exp)| ExpRowDisplay { lab, exp, cx });
             fmt_util::comma_seq(f, rows)?;
             f.write_str(" }")?;
           }
+        }
+        FrameKind::Vector(_, es) => {
+          if !es.is_empty() {
+            f.write_str(", ")?;
+          }
+          let es = es.iter().rev().map(|&exp| ExpDisplay { exp, prec: Prec::Min, cx });
+          fmt_util::comma_seq(f, es)?;
+          f.write_str("]")?;
         }
         FrameKind::AppFunc(exp) => {
           f.write_str(" ")?;
@@ -274,6 +290,12 @@ impl fmt::Display for ValDisplay<'_> {
       Val::Con(con) => {
         let con = ConDisplay { con, atomic: matches!(self.prec, Prec::Atomic), cx: self.cx };
         con.fmt(f)
+      }
+      Val::Vector(vs) => {
+        let vs = vs.iter().map(|val| ValDisplay { val, prec: Prec::Min, cx: self.cx });
+        f.write_str("#[")?;
+        fmt_util::comma_seq(f, vs)?;
+        f.write_str("]")
       }
       Val::Record(rows) => {
         let is_tuple =
@@ -475,7 +497,12 @@ impl fmt::Display for ExpDisplay<'_> {
       sml_hir::Exp::Typed(exp, _, _) => {
         ExpDisplay { exp: *exp, prec: self.prec, cx: self.cx }.fmt(f)
       }
-      sml_hir::Exp::Vector(_) => todo!(),
+      sml_hir::Exp::Vector(es) => {
+        let es = es.iter().map(|&exp| ExpDisplay { exp, prec: Prec::Min, cx: self.cx });
+        f.write_str("#[")?;
+        fmt_util::comma_seq(f, es)?;
+        f.write_str("]")
+      }
     }
   }
 }
@@ -568,7 +595,12 @@ impl fmt::Display for PatDisplay<'_> {
         }
         Ok(())
       }
-      sml_hir::Pat::Vector(_) => todo!(),
+      sml_hir::Pat::Vector(ps) => {
+        let ps = ps.iter().map(|&pat| PatDisplay { pat, atomic: true, ars: self.ars });
+        f.write_str("#[")?;
+        fmt_util::comma_seq(f, ps)?;
+        f.write_str("]")
+      }
     }
   }
 }

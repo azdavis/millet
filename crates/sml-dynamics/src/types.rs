@@ -11,6 +11,7 @@ use str_util::Name;
 pub(crate) enum Val {
   SCon(SCon),
   Con(Con),
+  Vector(Vec<Val>),
   Record(BTreeMap<Lab, Val>),
   Closure(Closure),
   Builtin(Builtin),
@@ -163,6 +164,7 @@ impl Frame {
 pub(crate) enum FrameKind {
   /// The bool is whether this is actually a tuple.
   Record(bool, BTreeMap<Lab, Val>, Lab, Vec<(Lab, sml_hir::ExpIdx)>),
+  Vector(Vec<Val>, Vec<sml_hir::ExpIdx>),
   AppFunc(sml_hir::ExpIdx),
   AppClosureArg(Vec<sml_hir::Arm>),
   AppBuiltinArg(Builtin),

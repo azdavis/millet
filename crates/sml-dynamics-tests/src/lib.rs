@@ -17,7 +17,10 @@ fn check(s: &str, steps: &[&str]) {
   let manually_advance = env_var_enabled("MILLET_MANUALLY_ADVANCE");
   let check_steps = !env_var_enabled("MILLET_NO_CHECK_STEPS");
   let mut fix_env = sml_fixity::STD_BASIS.clone();
-  let lang = config::lang::Language::default();
+  let lang = config::lang::Language {
+    successor_ml: config::file::SuccessorMl { vector: true, ..Default::default() },
+    ..Default::default()
+  };
   let sf = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, &lang, sml_file::Kind::Sml, s);
   if let Some(e) = sf.lex_errors.first() {
     panic!("lex error: {e}");
@@ -366,6 +369,26 @@ val four =
       r"
 val four =
   S (S (S (S Z)))
+",
+    ],
+  );
+}
+
+#[test]
+fn vector() {
+  check(
+    r"
+#[1 + 1, 2 + 2]
+",
+    &[
+      r"
+val _ = #[+ (1, 1), + (2, 2)]
+",
+      r"
+val _ = #[2, + (2, 2)]
+",
+      r"
+val _ = #[2, 4]
 ",
     ],
   );

@@ -28,7 +28,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
           let env = st.env.get(path.prefix()).expect("should have an env");
           let val = env.val[path.last()].clone();
           let visible = match &val {
-            Val::SCon(_) | Val::Record(_) | Val::Closure(_) => true,
+            Val::SCon(_) | Val::Record(_) | Val::Closure(_) | Val::Vector(_) => true,
             Val::Builtin(_) => false,
             Val::Con(con) => !path.prefix().is_empty() || path.last() != &con.name,
           };
@@ -73,7 +73,17 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
         (Step::Val(Val::Closure(clos)), false)
       }
       sml_hir::Exp::Typed(exp, _, _) => (Step::exp(*exp), false),
-      sml_hir::Exp::Vector(_) => todo!(),
+      sml_hir::Exp::Vector(es) => {
+        let mut es = es.clone();
+        es.reverse();
+        match es.pop() {
+          None => (Step::Val(Val::Vector(Vec::new())), false),
+          Some(e) => {
+            st.push_with_cur_env(FrameKind::Vector(Vec::new(), es));
+            (Step::exp(e), false)
+          }
+        }
+      }
     },
     Step::Val(val) => match st.frames.pop() {
       // done evaluating
@@ -87,6 +97,17 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
               st.env = frame.env;
               st.push_with_cur_env(FrameKind::Record(is_tuple, val_rows, lab, exp_rows));
               (Step::exp(exp), false)
+            }
+          }
+        }
+        FrameKind::Vector(mut vs, mut es) => {
+          vs.push(val);
+          match es.pop() {
+            None => (Step::Val(Val::Vector(vs)), false),
+            Some(e) => {
+              st.env = frame.env;
+              st.push_with_cur_env(FrameKind::Vector(vs, es));
+              (Step::exp(e), false)
             }
           }
         }
@@ -249,6 +270,7 @@ fn step_dec(st: &mut St) -> (Step, bool) {
   while let Some(frame) = st.frames.pop() {
     match frame.kind {
       FrameKind::Record(_, _, _, _)
+      | FrameKind::Vector(_, _)
       | FrameKind::AppFunc(_)
       | FrameKind::AppClosureArg(_)
       | FrameKind::AppBuiltinArg(_)
