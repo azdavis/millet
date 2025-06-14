@@ -234,7 +234,7 @@ impl std::ops::IndexMut<overload::Basic> for Overloads {
 #[derive(Debug, Default, Clone)]
 pub struct Syms {
   /// always use `Sym::idx` to index
-  syms: Vec<SymInfo>,
+  inner: Vec<SymInfo>,
   exns: Vec<ExnInfo>,
   overloads: Overloads,
 }
@@ -250,18 +250,18 @@ impl Syms {
     };
     // must start with sometimes equality, as an assumption for constructing datatypes. we may
     // realize that it should actually be never equality based on arguments to constructors.
-    self.syms.push(SymInfo { path, ty_info, equality: Equality::Sometimes });
+    self.inner.push(SymInfo { path, ty_info, equality: Equality::Sometimes });
     StartedSym {
       bomb: DropBomb::new("must be passed to Syms::finish"),
       // calculate len after push, because we sub 1 in get, because of Sym::EXN.
-      sym: Sym(idx::Idx::new(self.syms.len())),
+      sym: Sym(idx::Idx::new(self.inner.len())),
     }
   }
 
   /// Finish constructing a `Sym`.
   pub fn finish(&mut self, mut started: StartedSym, ty_info: SymTyInfo, equality: Equality) {
     started.bomb.defuse();
-    let sym_info = &mut self.syms[started.sym.idx()];
+    let sym_info = &mut self.inner[started.sym.idx()];
     sym_info.ty_info = ty_info;
     sym_info.equality = equality;
   }
@@ -276,7 +276,7 @@ impl Syms {
     if sym == Sym::EXN {
       return None;
     }
-    Some(self.syms.get(sym.idx()).unwrap())
+    Some(self.inner.get(sym.idx()).unwrap())
   }
 
   /// Inserts a new exception.
@@ -298,12 +298,12 @@ impl Syms {
 
   /// Return a marker, so we may later whether a `Sym` has been generated after this marker.
   pub fn mark(&self) -> SymsMarker {
-    SymsMarker(self.syms.len())
+    SymsMarker(self.inner.len())
   }
 
   /// Iterate over the `Syms`'s info.
   pub fn iter_syms(&self) -> impl Iterator<Item = &SymInfo> {
-    self.syms.iter()
+    self.inner.iter()
   }
 
   /// Returns the overloads.

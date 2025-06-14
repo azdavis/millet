@@ -89,7 +89,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
         None,
       );
       ret.cx.registered_for_watched_files = true;
-    };
+    }
   }
   diagnostics::try_publish(&mut ret);
   if !ret.cx.registered_for_watched_files {

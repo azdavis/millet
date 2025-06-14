@@ -47,7 +47,7 @@ impl<'a> Dynamics<'a> {
       }
     }
     self.step = Some(s);
-    Progress::Still(self)
+    Progress::Still(Box::new(self))
   }
 
   /// Prints debug output. TODO remove
@@ -63,7 +63,7 @@ impl<'a> Dynamics<'a> {
 #[derive(Debug)]
 pub enum Progress<'a> {
   /// Still evaluating.
-  Still(Dynamics<'a>),
+  Still(Box<Dynamics<'a>>),
   /// Done evaluating.
   Done,
   /// Raised an exception.

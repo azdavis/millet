@@ -392,7 +392,7 @@ pub(crate) fn get_dat_binds(
       if let Some(of_ty) = con_bind.ty {
         let param = ty::get(st, &cx, ars, ty::Mode::TyRhs, of_ty);
         ty = st.syms_tys.tys.fun(param, ty);
-      };
+      }
       // just `get` would also work, because `ty_scheme` contains `out_ty`, which mentions every
       // fixed var.
       let ty_scheme = generalize::get_fixed(&mut st.syms_tys.tys, datatype.fixed.clone(), ty);

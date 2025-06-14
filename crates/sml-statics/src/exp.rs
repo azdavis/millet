@@ -173,7 +173,7 @@ fn lint_eta_reduce(
   let sml_hir::Pat::Con(path, None) = &ars.pat[pat] else { return None };
   if !path.prefix().is_empty() {
     return None;
-  };
+  }
   let param_name = path.last();
   if !pat::val_info_for_var(cx.env.val_env.get(param_name)) {
     return None;

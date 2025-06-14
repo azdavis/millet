@@ -69,7 +69,7 @@ fn check(s: &str, steps: &[&str]) {
       pretty_assertions::assert_str_eq!(want, got);
     }
     match dynamics.step() {
-      sml_dynamics::Progress::Still(d) => dynamics = d,
+      sml_dynamics::Progress::Still(d) => dynamics = *d,
       sml_dynamics::Progress::Done => {
         if show {
           println!("==> done");

@@ -20,7 +20,7 @@ pub(crate) fn clean_path_buf(url: &Url) -> Result<paths::CleanPathBuf> {
 
 pub(crate) fn file_url(path: &std::path::Path) -> Result<Url> {
   Url::parse(&format!("file://{}", path.display()))
-    .with_context(|| format!("couldn't parse path into a URL: {path:?}"))
+    .with_context(|| format!("couldn't parse path into a URL: {}", path.display()))
 }
 
 pub(crate) fn diagnostics(

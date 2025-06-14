@@ -123,7 +123,7 @@ impl pattern_match::Lang for Lang {
           let &[ty] = data.args.as_slice() else {
             return Err(CheckError("not exactly 1 arg to vector"));
           };
-          std::iter::repeat(ty).take(*n).collect()
+          std::iter::repeat_n(ty, *n).collect()
         }
         Con::Record { .. } => return Err(CheckError("ty is con but con is record")),
       },

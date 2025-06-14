@@ -228,7 +228,7 @@ fn names_seq(p: &mut Parser<'_>) -> Result<NamesSeq> {
       p.bump();
       other = Some(p.name()?);
       p.bump();
-    };
+    }
     Ok((name, other))
   })
 }

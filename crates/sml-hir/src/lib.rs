@@ -425,7 +425,7 @@ impl UnutterableTyVar {
 impl fmt::Display for UnutterableTyVar {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let ticks = if self.equality { 2 } else { 1 };
-    for c in std::iter::repeat('?').take(ticks).chain(idx_to_name(self.idx)) {
+    for c in std::iter::repeat_n('?', ticks).chain(idx_to_name(self.idx)) {
       write!(f, "{c}")?;
     }
     Ok(())
@@ -437,5 +437,5 @@ fn idx_to_name(idx: usize) -> impl Iterator<Item = char> {
   let quot = idx / alpha;
   let rem = u8::try_from(idx % alpha).unwrap();
   let ch = char::from(b'a' + rem);
-  std::iter::repeat(ch).take(quot + 1)
+  std::iter::repeat_n(ch, quot + 1)
 }
