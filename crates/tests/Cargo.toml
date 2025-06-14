@@ -18,6 +18,7 @@ write-rs-tokens.workspace = true
 
 [dev-dependencies]
 diagnostic.workspace = true
+env_logger.workspace = true
 fast-hash.workspace = true
 log.workspace = true
 paths.workspace = true
@@ -31,7 +32,6 @@ analysis = { path = "../analysis", features = ["sync"] } # @ignore
 cm-syntax.path = "../cm-syntax"
 config.path = "../config"
 cov-mark.path = "../cov-mark"
-env_logger = "0.10"
 input.path = "../input"
 mlb-syntax.path = "../mlb-syntax"
 slash-var-path.path = "../slash-var-path"
