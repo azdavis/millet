@@ -26,7 +26,7 @@ pub(crate) enum ErrorKind {
 
 impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match &self.0.kind {
+    match &self.0.inner {
       ErrorKind::NotInfix(name) => write!(f, "non-infix name used as infix: `{name}`"),
       ErrorKind::InfixWithoutOp(name) => {
         write!(f, "infix name used as non-infix without `op`: `{name}`")
@@ -108,7 +108,7 @@ impl fmt::Display for Expected {
 
 /// A parse error.
 #[derive(Debug)]
-pub struct Error(pub(crate) event_parse::rowan_sink::Error<ErrorKind>);
+pub struct Error(pub(crate) event_parse::rowan_sink::Error<SyntaxKind, ErrorKind>);
 
 impl Error {
   /// Returns the range for this.
@@ -120,7 +120,7 @@ impl Error {
   /// Returns the code for this.
   #[must_use]
   pub fn code(&self) -> Code {
-    match self.0.kind {
+    match self.0.inner {
       ErrorKind::NotInfix(_) => Code::n(3001),
       ErrorKind::InfixWithoutOp(_) => Code::n(3002),
       ErrorKind::InvalidFixity(_) => Code::n(3003),
@@ -136,7 +136,7 @@ impl Error {
   /// Returns the severity for this.
   #[must_use]
   pub fn severity(&self) -> Severity {
-    match self.0.kind {
+    match self.0.inner {
       ErrorKind::UnnecessaryOp => Severity::Warning,
       _ => Severity::Error,
     }
