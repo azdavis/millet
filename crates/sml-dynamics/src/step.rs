@@ -253,9 +253,8 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
         step_dec(st)
       }
       sml_hir::StrDec::Structure(_) => todo!(),
-      sml_hir::StrDec::Signature(_) => todo!(),
-      sml_hir::StrDec::Functor(_) => todo!(),
       sml_hir::StrDec::Local(_, _) => todo!(),
+      sml_hir::StrDec::Signature(_) | sml_hir::StrDec::Functor(_) => step_dec(st),
     },
     // done with a dec
     Step::DecDone => {
