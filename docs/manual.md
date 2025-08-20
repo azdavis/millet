@@ -44,6 +44,8 @@ When using other editors, you will likely need to:
 
 ## Usage
 
+First, open your editor onto a folder. Most Millet features doesn't work in single-file mode.
+
 After opening your editor onto a folder, Millet will look for a "group file" directly contained in that folder.
 
 A group file is either:
