@@ -37,54 +37,6 @@ pub trait FileSystem: paths::FileSystem {
   fn entry_path<'e>(entry: &'e Self::WalkEntry<'_>) -> &'e std::path::Path;
 }
 
-struct WaxFileSystem(pub paths::RealFileSystem);
-
-impl paths::FileSystem for WaxFileSystem {
-  fn current_dir(&self) -> std::io::Result<paths::CleanPathBuf> {
-    self.0.current_dir()
-  }
-
-  fn read_to_string(&self, path: &std::path::Path) -> std::io::Result<String> {
-    self.0.read_to_string(path)
-  }
-
-  fn read_to_bytes(&self, path: &std::path::Path) -> std::io::Result<Vec<u8>> {
-    self.0.read_to_bytes(path)
-  }
-
-  fn read_dir(&self, path: &std::path::Path) -> std::io::Result<Vec<std::path::PathBuf>> {
-    self.0.read_dir(path)
-  }
-
-  fn is_file(&self, path: &std::path::Path) -> bool {
-    self.0.is_file(path)
-  }
-}
-
-impl FileSystem for WaxFileSystem {
-  type Glob<'a> = wax::Glob<'a>;
-
-  type BuildError = wax::BuildError;
-
-  fn glob(pattern: &str) -> Result<Self::Glob<'_>, Self::BuildError> {
-    wax::Glob::new(pattern)
-  }
-
-  type WalkEntry<'a> = wax::WalkEntry<'a>;
-
-  type Walk<'a> = wax::Walk<'a>;
-
-  type WalkError = wax::WalkError;
-
-  fn walk<'g>(&self, glob: &'g mut Self::Glob<'_>) -> Self::Walk<'g> {
-    glob.walk(".")
-  }
-
-  fn entry_path<'e>(entry: &'e Self::WalkEntry<'_>) -> &'e std::path::Path {
-    entry.path()
-  }
-}
-
 /// A walker.
 #[derive(Debug)]
 pub struct Walk<'a>(&'a mut glob::Paths);
