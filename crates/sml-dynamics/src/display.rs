@@ -302,7 +302,7 @@ impl fmt::Display for ValDisplay<'_> {
           rows.len() != 1 && rows.iter().enumerate().all(|(idx, (lab, _))| Lab::tuple(idx) == *lab);
         if is_tuple {
           f.write_str("(")?;
-          let rows = rows.iter().map(|(_, val)| ValDisplay { val, prec: Prec::Min, cx: self.cx });
+          let rows = rows.values().map(|val| ValDisplay { val, prec: Prec::Min, cx: self.cx });
           fmt_util::comma_seq(f, rows)?;
           f.write_str(")")?;
         } else {
