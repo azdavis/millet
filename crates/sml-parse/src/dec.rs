@@ -82,10 +82,8 @@ fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> boo
                 p.bump();
               }
               if is_name_star {
-                if !saw_op {
-                  if let Some(name) = infix_name {
-                    p.error(ErrorKind::InfixWithoutOp(name));
-                  }
+                if !saw_op && let Some(name) = infix_name {
+                  p.error(ErrorKind::InfixWithoutOp(name));
                 }
                 p.bump();
               } else {
@@ -509,10 +507,10 @@ fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>, fe: &sml_fixity::Env, infi
   if at_pat(p, fe, infix).is_none() {
     p.error(ErrorKind::Expected(Expected::Pat));
   }
-  if let Some(name) = eat_name_star(p) {
-    if !fe.contains_key(name.text) {
-      p.error(ErrorKind::NotInfix(str_util::Name::new(name.text)));
-    }
+  if let Some(name) = eat_name_star(p)
+    && !fe.contains_key(name.text)
+  {
+    p.error(ErrorKind::NotInfix(str_util::Name::new(name.text)));
   }
   if at_pat(p, fe, infix).is_none() {
     p.error(ErrorKind::Expected(Expected::Pat));

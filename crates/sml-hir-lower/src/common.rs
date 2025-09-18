@@ -137,10 +137,7 @@ pub(crate) fn get_lab(st: &mut St<'_>, lab: ast::Lab) -> sml_hir::Lab {
 }
 
 pub(crate) fn forbid_opaque_asc(st: &mut St<'_>, asc: Option<ast::Ascription>) {
-  let asc = match asc {
-    None => return,
-    Some(x) => x,
-  };
+  let Some(asc) = asc else { return };
   if matches!(asc.kind, ast::AscriptionKind::ColonGt) {
     st.err_tok(&asc.token, ErrorKind::InvalidOpaqueAscription);
   }

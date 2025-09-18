@@ -242,12 +242,11 @@ fn get_str_exp(
           // this, in conjunction with some extra hackery for "name" signature expressions (like
           // `SIG`) in builtin lib files, lets us get the docs on the signature for that "conjured"
           // structure as well.
-          if let Some(sml_hir::StrExp::Struct(decs)) = inner_str_exp.map(|x| &ars.str_exp[x]) {
-            if let Some(sml_hir::SigExp::Name(_)) = sig_exp.map(|x| &ars.sig_exp[x]) {
-              if decs.is_empty() {
-                ac.defs.extend(to_add.defs.iter().copied());
-              }
-            }
+          if let Some(sml_hir::StrExp::Struct(decs)) = inner_str_exp.map(|x| &ars.str_exp[x])
+            && let Some(sml_hir::SigExp::Name(_)) = sig_exp.map(|x| &ars.sig_exp[x])
+            && decs.is_empty()
+          {
+            ac.defs.extend(to_add.defs.iter().copied());
           }
         }
         Mode::PathOrder => {}

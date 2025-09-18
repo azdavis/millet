@@ -541,10 +541,10 @@ impl fmt::Display for SmlfmtError {
       SmlfmtError::Unsuccessful(_) => f.write_str("`smlfmt` exited unsuccessfully")?,
       SmlfmtError::Utf8(_) => f.write_str("couldn't convert `smlfmt` output to UTF-8")?,
     }
-    if f.alternate() {
-      if let Some(e) = self.source() {
-        write!(f, ": {e}")?;
-      }
+    if f.alternate()
+      && let Some(e) = self.source()
+    {
+      write!(f, ": {e}")?;
     }
     Ok(())
   }

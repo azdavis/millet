@@ -87,10 +87,9 @@ fn check(s: &str, steps: &[&str]) {
       }
     }
   }
-  if check_steps {
-    if let Some(step) = steps.next() {
-      panic!("extra step: {step}");
-    }
+  #[expect(clippy::manual_assert)]
+  if check_steps && let Some(step) = steps.next() {
+    panic!("extra step: {step}");
   }
 }
 

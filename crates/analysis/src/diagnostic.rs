@@ -84,15 +84,14 @@ where
       let message = err.display(syms_tys, options.lines).to_string();
       Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
     }));
-    if matches!(options.format, config::init::FormatEngine::Naive) {
-      if let Err(sml_naive_fmt::Error::Comments(ranges)) =
+    if let config::init::FormatEngine::Naive = options.format
+      && let Err(sml_naive_fmt::Error::Comments(ranges)) =
         sml_naive_fmt::check(&file.syntax.parse.root)
-      {
-        ret.extend(ranges.into_iter().filter_map(|range| {
-          let range = f(&file.syntax.pos_db, range)?;
-          Some(Diagnostic::naive_fmt_comment(range))
-        }));
-      }
+    {
+      ret.extend(ranges.into_iter().filter_map(|range| {
+        let range = f(&file.syntax.pos_db, range)?;
+        Some(Diagnostic::naive_fmt_comment(range))
+      }));
     }
   }
   ret

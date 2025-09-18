@@ -126,12 +126,12 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
     // @def(12)
     sml_hir::Exp::Fn(matcher, flavor) => {
       let (pats, param, res) = get_matcher(st, exp.into(), cfg, cx, ars, matcher);
-      if let TyData::Con(data) = st.syms_tys.tys.data(param) {
-        if data.sym == Sym::BOOL {
-          assert!(data.args.is_empty(), "bool should have no ty args");
-          if matches!(flavor, sml_hir::FnFlavor::Case) {
-            st.err(exp, ErrorKind::BoolCase);
-          }
+      if let TyData::Con(data) = st.syms_tys.tys.data(param)
+        && data.sym == Sym::BOOL
+      {
+        assert!(data.args.is_empty(), "bool should have no ty args");
+        if matches!(flavor, sml_hir::FnFlavor::Case) {
+          st.err(exp, ErrorKind::BoolCase);
         }
       }
       let eta_reduce = lint_eta_reduce(cx, ars, *flavor, matcher);
@@ -284,10 +284,10 @@ fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<
 
 fn lint_append(ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<ErrorKind> {
   let [lhs, rhs] = get_pair(ars, argument?)?;
-  if let sml_hir::Exp::Path(p) = &ars.exp[rhs] {
-    if p.last().as_str() == "nil" {
-      return Some(ErrorKind::InvalidAppend(AppendArg::Empty));
-    }
+  if let sml_hir::Exp::Path(p) = &ars.exp[rhs]
+    && p.last().as_str() == "nil"
+  {
+    return Some(ErrorKind::InvalidAppend(AppendArg::Empty));
   }
   let (func, argument) = match ars.exp[lhs] {
     sml_hir::Exp::App(a, b) => (a?, b?),
@@ -305,10 +305,10 @@ fn lint_append(ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<Error
     _ => return None,
   }
   let [_, rhs] = get_pair(ars, argument)?;
-  if let sml_hir::Exp::Path(p) = &ars.exp[rhs] {
-    if p.last().as_str() == "nil" {
-      return Some(ErrorKind::InvalidAppend(AppendArg::Singleton));
-    }
+  if let sml_hir::Exp::Path(p) = &ars.exp[rhs]
+    && p.last().as_str() == "nil"
+  {
+    return Some(ErrorKind::InvalidAppend(AppendArg::Singleton));
   }
   None
 }

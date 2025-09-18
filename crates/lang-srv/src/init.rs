@@ -69,27 +69,25 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
       .workspace
       .and_then(|x| x.file_operations?.dynamic_registration)
       .unwrap_or_default();
-  if want_file_ops {
-    if let Mode::Root(root) = &ret.mode {
-      // we'd like to activate on millet.toml, but "nested alternate groups are not allowed" at time
-      // of writing, and we'd rather not activate on all toml.
-      let watchers = vec![lsp_types::FileSystemWatcher {
-        glob_pattern: lsp_types::GlobPattern::Relative(lsp_types::RelativePattern {
-          base_uri: lsp_types::OneOf::Right(convert::file_url(root.path.as_path()).unwrap()),
-          pattern: "**/*.{sml,sig,fun,cm,mlb}".to_owned(),
-        }),
-        kind: None,
-      }];
-      let did_changed_registration =
-        convert::registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
-          lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
-        );
-      ret.cx.send_request::<lsp_types::request::RegisterCapability>(
-        lsp_types::RegistrationParams { registrations: vec![did_changed_registration] },
-        None,
+  if want_file_ops && let Mode::Root(root) = &ret.mode {
+    // we'd like to activate on millet.toml, but "nested alternate groups are not allowed" at time
+    // of writing, and we'd rather not activate on all toml.
+    let watchers = vec![lsp_types::FileSystemWatcher {
+      glob_pattern: lsp_types::GlobPattern::Relative(lsp_types::RelativePattern {
+        base_uri: lsp_types::OneOf::Right(convert::file_url(root.path.as_path()).unwrap()),
+        pattern: "**/*.{sml,sig,fun,cm,mlb}".to_owned(),
+      }),
+      kind: None,
+    }];
+    let did_changed_registration =
+      convert::registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
+        lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
       );
-      ret.cx.registered_for_watched_files = true;
-    }
+    ret.cx.send_request::<lsp_types::request::RegisterCapability>(
+      lsp_types::RegistrationParams { registrations: vec![did_changed_registration] },
+      None,
+    );
+    ret.cx.registered_for_watched_files = true;
   }
   diagnostics::try_publish(&mut ret);
   if !ret.cx.registered_for_watched_files {

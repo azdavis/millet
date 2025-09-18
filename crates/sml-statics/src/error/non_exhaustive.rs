@@ -18,11 +18,11 @@ pub(crate) fn get(
   let iter =
     pats.iter().take(max_len).map(|pat| Backticks(PatDisplay { pat, syms, prec: PatPrec::Min }));
   comma_seq(f, iter)?;
-  if let Some(n) = pats.len().checked_sub(max_len) {
-    if n != 0 {
-      let s = if n == 1 { "" } else { "s" };
-      write!(f, ", and {n} other{s}")?;
-    }
+  if let Some(n) = pats.len().checked_sub(max_len)
+    && n != 0
+  {
+    let s = if n == 1 { "" } else { "s" };
+    write!(f, ", and {n} other{s}")?;
   }
   Ok(())
 }

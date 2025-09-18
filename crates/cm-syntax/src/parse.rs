@@ -232,10 +232,10 @@ fn path(p: &Parser<'_>, s: &str) -> Result<PathOrStdBasis> {
   match slash_var_path::get(s, p.env) {
     Ok(x) => Ok(PathOrStdBasis::Path(x)),
     Err(e) => {
-      if let slash_var_path::Error::Undefined(var) = &e {
-        if matches!(var.as_str(), "" | "SMLNJ-LIB") {
-          return Ok(PathOrStdBasis::StdBasis);
-        }
+      if let slash_var_path::Error::Undefined(var) = &e
+        && let "" | "SMLNJ-LIB" = var.as_str()
+      {
+        return Ok(PathOrStdBasis::StdBasis);
       }
       p.err(ErrorKind::SlashVarPathError(e))
     }
