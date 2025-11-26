@@ -16,12 +16,9 @@ pub(crate) fn dec(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr)
 }
 
 fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> bool {
-  let kind = match p.peek() {
-    Some(t) => t.kind,
-    None => return false,
-  };
+  let Some(tok) = p.peek() else { return false };
   let en = p.enter();
-  let kind = match kind {
+  let kind = match tok.kind {
     SK::DotDotDot => {
       p.bump();
       SK::HoleDec
