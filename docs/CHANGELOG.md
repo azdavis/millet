@@ -4,6 +4,10 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 Millet technically follows [SemVer][sem-ver], but the major version is zero, and it probably will be [for a while][zero-ver].
 
+## main
+
+- Support [`_esImport` declarations from Lunar ML](https://lunarml.readthedocs.io/en/latest/language.html#importing-ecmascript-modules).
+
 ## v0.14.9
 
 - Support `withtype` in signatures under `language.successor-ml.sig-withtype`.

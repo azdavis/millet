@@ -350,6 +350,8 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
       st.write("include ");
       sep(st, " ", dec.sig_exps(), |st, sig_exp| get_sig_exp(st, cfg, sig_exp))?;
     }
+    // TODO write formatting for this
+    ast::DecOne::EsImportDec(_) => return None,
   }
   Some(())
 }

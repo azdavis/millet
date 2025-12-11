@@ -182,6 +182,44 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       }
       sml_hir::StrDec::Local(fst, snd)
     }
+    ast::DecOne::EsImportDec(str_dec) => {
+      if !st.lang().lunar_ml.es_import {
+        st.err(str_dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`_esImport`")));
+      }
+      let default_import =
+        str_dec.default_import().and_then(|tok| st.pat(pat::name(tok.text()), ptr));
+      let binds: Vec<_> = str_dec
+        .specs()
+        .into_iter()
+        .flat_map(|x| x.es_import_spec_args())
+        .filter_map(|x| x.es_import_spec())
+        .filter_map(|spec| {
+          let src = spec.es_import_spec_source()?;
+          let pat = match (spec.as_pat_tail(), src.kind) {
+            (Some(x), _) => pat::get(st, None, x.pat()),
+            (None, ast::EsImportSpecSourceKind::Name) => {
+              let name = pat::name(src.token.text());
+              st.pat(name, ptr)
+            }
+            (None, ast::EsImportSpecSourceKind::StringLit) => {
+              st.err(spec.syntax(), ErrorKind::NoAsForStringEsImportSpec);
+              return None;
+            }
+          };
+          if let Some(ty_ann) = spec.ty_annotation() {
+            forbid_opaque_asc(st, ty_ann.ascription());
+            let ty = ty::get(st, ty_ann.ty());
+            st.pat(sml_hir::Pat::Typed(pat, ty), ptr)
+          } else {
+            pat
+          }
+        })
+        .chain(default_import)
+        .map(|pat| sml_hir::ValBind { rec: false, pat: Some(pat), exp: None })
+        .collect();
+      let dec = st.dec(sml_hir::Dec::Val(Vec::new(), binds, sml_hir::ValFlavor::EsImport), ptr);
+      sml_hir::StrDec::Dec(vec![dec])
+    }
     _ => sml_hir::StrDec::Dec(get_one(st, str_dec).into_iter().collect()),
   };
   st.str_dec(res, ptr)
@@ -464,7 +502,8 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
     | ast::DecOne::LocalDec(_)
     | ast::DecOne::SignatureDec(_)
     | ast::DecOne::FunctorDec(_)
-    | ast::DecOne::ExpDec(_) => {
+    | ast::DecOne::ExpDec(_)
+    | ast::DecOne::EsImportDec(_) => {
       st.err(dec.syntax(), ErrorKind::NotSpec);
       vec![]
     }
@@ -767,7 +806,8 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
     ast::DecOne::StructureDec(_)
     | ast::DecOne::SignatureDec(_)
     | ast::DecOne::FunctorDec(_)
-    | ast::DecOne::IncludeDec(_) => {
+    | ast::DecOne::IncludeDec(_)
+    | ast::DecOne::EsImportDec(_) => {
       st.err(dec.syntax(), ErrorKind::DecNotAllowedHere);
       return None;
     }

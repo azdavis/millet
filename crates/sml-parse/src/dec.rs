@@ -4,10 +4,11 @@
 
 use crate::exp::{eq_exp, exp, exp_opt};
 use crate::parser::{ErrorKind, Exited, Expected, Parser};
-use crate::pat::{at_pat, pat};
+use crate::pat::{as_pat_tl, at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
 use crate::util::{
-  InfixErr, ascription, eat_name_star, many_sep, maybe_semi_sep, name_star_eq, path, path_must,
+  InfixErr, ascription, comma_sep, eat_name_star, many_sep, maybe_semi_sep, name_star_eq, path,
+  path_must,
 };
 use sml_syntax::kind::SyntaxKind as SK;
 
@@ -258,7 +259,9 @@ fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> boo
       SK::IncludeDec
     }
     _ => {
-      if exp_opt(p, fe) {
+      if es_import(p, fe) {
+        SK::EsImportDec
+      } else if exp_opt(p, fe) {
         SK::ExpDec
       } else {
         p.abandon(en);
@@ -512,4 +515,63 @@ fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>, fe: &sml_fixity::Env, infi
   if at_pat(p, fe, infix).is_none() {
     p.error(ErrorKind::Expected(Expected::Pat));
   }
+}
+
+fn es_import(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> bool {
+  if !p.at(SK::EsimportKw) {
+    return false;
+  }
+  p.bump();
+  // attributes
+  if p.at(SK::LSquare) {
+    let en = p.enter();
+    p.bump();
+    while p.at(SK::Name) {
+      p.bump();
+    }
+    p.eat(SK::RSquare);
+    p.exit(en, SK::EsImportAttrs);
+  }
+  // side-effect import
+  if p.at(SK::StringLit) {
+    p.bump();
+    return true;
+  }
+  // default import
+  if p.at(SK::Name) {
+    p.bump();
+    // comma between default and named
+    if p.at(SK::Comma) && p.at_n(1, SK::LCurly) {
+      p.bump();
+    }
+  }
+  // named imports
+  if p.at(SK::LCurly) {
+    let en = p.enter();
+    p.bump();
+    comma_sep(p, SK::EsImportSpecArg, SK::RCurly, |p| {
+      es_import_spec(p, fe);
+    });
+    p.exit(en, SK::EsImportSpecs);
+  }
+  // from
+  if let Some(tok) = p.eat(SK::Name)
+    && tok.text != "from"
+  {
+    p.error(ErrorKind::Expected(Expected::From));
+  }
+  p.eat(SK::StringLit);
+  true
+}
+
+fn es_import_spec(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Exited {
+  let en = p.enter();
+  if p.at(SK::Name) || p.at(SK::StringLit) {
+    p.bump();
+  } else {
+    p.error(ErrorKind::Expected(Expected::NameOrString));
+  }
+  as_pat_tl(p, fe, InfixErr::Yes);
+  ty_annotation(p);
+  p.exit(en, SK::EsImportSpec)
 }

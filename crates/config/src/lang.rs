@@ -18,4 +18,6 @@ pub struct Language {
   pub structure: FxHashSet<sml_path::Path>,
   /// Configuration for Successor ML features.
   pub successor_ml: file::SuccessorMl,
+  /// Configuration for Lunar ML features.
+  pub lunar_ml: file::LunarMl,
 }

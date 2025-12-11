@@ -29,6 +29,8 @@ DecOne =
 | ExpDec
 // not actually a dec.
 | IncludeDec
+// used in LunarML
+| EsImportDec
 
 HoleDec = '...'
 ValDec = 'val' TyVarSeq ValBind*
@@ -49,6 +51,8 @@ SignatureDec = 'signature' SigBind*
 FunctorDec = 'functor' FunctorBind*
 ExpDec = Exp
 IncludeDec = 'include' SigExp*
+// we don't want the 'from' keyword to be an actual keyword at the lexical level.
+EsImportDec = '_esImport' attrs:EsImportAttrs? default_import:'Name'? ','? specs:EsImportSpecs? from_kw:'Name'? module_name:'StringLit'
 
 LocalDecHd = 'local' Dec*
 LocalDecTl = 'in' Dec*
@@ -71,6 +75,14 @@ FunctorBind =
   functor_name:'Name'
   '(' FunctorArg* ')' AscriptionTail?
   '=' body:StrExp 'and'?
+
+EsImportAttrs = '[' 'Name'* ']'
+EsImportSpecs = '{' EsImportSpecArg* '}'
+EsImportSpecArg = EsImportSpec ','?
+EsImportSpec = EsImportSpecSource AsPatTail? TyAnnotation?
+EsImportSpecSource =
+  'Name'
+| 'StringLit'
 
 EqExp = '=' Exp
 EqStrExp = '=' StrExp

@@ -81,6 +81,7 @@ pub(crate) enum ErrorKind {
   EmptyRecordPatOrExp,
   EmptyRecordTy,
   DiscouragedTopDecKindForSigFun,
+  NoAsForStringEsImportSpec,
 }
 
 impl fmt::Display for Error {
@@ -150,6 +151,9 @@ impl fmt::Display for Error {
       ErrorKind::DiscouragedTopDecKindForSigFun => f.write_str(
         "`.sig` and `.fun` files usually contain exactly one `signature` or `functor` respectively",
       ),
+      ErrorKind::NoAsForStringEsImportSpec => {
+        f.write_str("no `as` for an ES import spec with a string name")
+      }
     }
   }
 }
@@ -276,6 +280,7 @@ impl Error {
       ErrorKind::EmptyRecordPatOrExp => Code::n(4035),
       ErrorKind::EmptyRecordTy => Code::n(4036),
       ErrorKind::DiscouragedTopDecKindForSigFun => Code::n(4037),
+      ErrorKind::NoAsForStringEsImportSpec => Code::n(4038),
     }
   }
 

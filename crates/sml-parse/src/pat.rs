@@ -248,7 +248,11 @@ fn at_pat_l_round(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) -> 
   SK::TuplePat
 }
 
-fn as_pat_tl(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) -> Option<Exited> {
+pub(crate) fn as_pat_tl(
+  p: &mut Parser<'_>,
+  fe: &sml_fixity::Env,
+  infix: InfixErr,
+) -> Option<Exited> {
   if p.at(SK::AsKw) {
     let en = p.enter();
     p.bump();

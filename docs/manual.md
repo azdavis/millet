@@ -508,6 +508,34 @@ fun foo (xs : int vector) : int =
   | _ => 6
 ```
 
+#### `language.lunar-ml`
+
+Configuration for [Lunar ML][lunar-ml] features.
+
+#### `language.lunar-ml.es-import`
+
+- Type: `boolean`
+- Default: `false`
+
+Whether `_esImport` declarations are allowed. Described [in the docs](https://lunarml.readthedocs.io/en/latest/language.html#importing-ecmascript-modules).
+
+```sml
+_esImport "module-name"
+(* -> import "module-name"; *)
+
+_esImport defaultItem from "module-name"
+(* -> import defaultItem from "module-name"; *)
+
+_esImport [pure] defaultItem from "module-name"
+(* -> import defaultItem from "module-name"; with dead-code elimination enabled *)
+
+_esImport [pure] { foo, bar as barr, "fun" as fun' } from "module-name"
+(* -> import { foo, bar as barr, fun as fun$PRIME } from "module-name"; with dead-code elimination enabled *)
+
+_esImport defaultItem, { foo, bar as barr, "fun" as fun' } from "module-name"
+(* -> import defaultItem, { foo, bar as barr, fun as fun$PRIME } from "module-name"; *)
+```
+
 ### VS Code settings
 
 Millet has VS Code specific settings, which are stored as [JSON][]. You may need to reload VS Code and/or Millet to pick up the changes.
@@ -931,5 +959,6 @@ The formatter does, however, respect the editor-configured tab size.
 [mlb-ann]: http://mlton.org/MLBasisAnnotations
 [bike-shed]: https://en.wikipedia.org/wiki/Law_of_triviality
 [succ-ml]: http://mlton.org/SuccessorML
+[lunar-ml]: https://lunarml.readthedocs.io/en/latest
 [releases]: https://github.com/azdavis/millet/releases
 [build-from-source]: /README.md#development

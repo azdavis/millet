@@ -272,6 +272,8 @@ pub struct ValBind {
 /// The original bit of syntax that got eventually lowered to stuff involving `val`.
 #[derive(Debug, Clone, Copy)]
 pub enum ValFlavor {
+  // Lowers to `val`.
+  EsImport,
   /// A top-level expression `e` lowers to `val _ = e` (it should technically lower to `val it = e`
   /// but see the comment.)
   TopLevelExp,

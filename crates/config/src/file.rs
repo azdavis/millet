@@ -90,6 +90,9 @@ pub struct Language {
   /// Configuration for Successor ML features.
   #[serde(default)]
   pub successor_ml: SuccessorMl,
+  /// Configuration for Lunar ML features.
+  #[serde(default)]
+  pub lunar_ml: LunarMl,
 }
 
 /// Configuration for declarations.
@@ -201,4 +204,18 @@ pub struct SuccessorMl {
   pub sig_withtype: bool,
   #[serde(default)]
   pub vector: bool,
+}
+
+/// Configuration for [Lunar ML][1] features.
+///
+/// [1]: https://lunarml.readthedocs.io/en/latest
+#[derive(Debug, Default, Clone, Deserialize)]
+#[allow(missing_docs, clippy::struct_excessive_bools)]
+#[serde(rename_all = "kebab-case")]
+pub struct LunarMl {
+  /// Whether to treat `_esImport` as an ES import declaration as detailed in [the docs][1].
+  ///
+  /// [1]: https://lunarml.readthedocs.io/en/latest/language.html#importing-ecmascript-modules
+  #[serde(default)]
+  pub es_import: bool,
 }

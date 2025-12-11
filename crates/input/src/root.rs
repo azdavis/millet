@@ -175,6 +175,7 @@ impl Config {
     ret.lang.dec = parsed.language.dec;
     ret.lang.exp = parsed.language.exp;
     ret.lang.successor_ml = parsed.language.successor_ml;
+    ret.lang.lunar_ml = parsed.language.lunar_ml;
     disallow(errors, config_path, parsed.language.val, &mut ret.lang.val);
     disallow(errors, config_path, parsed.language.structure, &mut ret.lang.structure);
     (ret, parsed.workspace.root)
