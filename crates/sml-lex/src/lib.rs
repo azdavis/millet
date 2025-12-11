@@ -161,7 +161,6 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
       // the fact that e.g. `_x` is actually supposed to lex as `_ x`, since that is unexpected,
       // and (b) to support `_esImport` in Lunar ML.
       if bs.get(st.i + 1).and_then(|&b| alpha_num(b)).is_some() {
-        let start = st.i;
         st.i += 1;
         advance_while(&mut st.i, bs, |b| alpha_num(b).is_some());
         return SK::keyword(&bs[start..st.i]).unwrap_or_else(|| {
