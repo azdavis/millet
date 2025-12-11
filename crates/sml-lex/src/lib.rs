@@ -28,6 +28,7 @@ enum ErrorKind {
   WrongLenCharLit,
   MissingDigitsInNumLit,
   String(string::Error),
+  NameStartingWithUnderscore,
 }
 
 impl fmt::Display for Error {
@@ -44,6 +45,7 @@ impl fmt::Display for Error {
       ErrorKind::String(string::Error::NonWhitespaceInContinuation) => {
         f.write_str("non-whitespace in string continuation")
       }
+      ErrorKind::NameStartingWithUnderscore => f.write_str("name cannot start with a `_`"),
     }
   }
 }
@@ -75,6 +77,7 @@ impl Error {
       ErrorKind::MissingDigitsInNumLit => Code::n(2007),
       ErrorKind::String(string::Error::InvalidEscape) => Code::n(2008),
       ErrorKind::String(string::Error::NonWhitespaceInContinuation) => Code::n(2009),
+      ErrorKind::NameStartingWithUnderscore => Code::n(2010),
     }
   }
 
@@ -149,7 +152,25 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
       advance_while(&mut st.i, bs, |b| alpha_num(b).is_some());
       return SK::keyword(&bs[start..st.i]).unwrap_or(SK::Name);
     }
-    Some(AlphaNum::Num | AlphaNum::Underscore) | None => {}
+    Some(AlphaNum::Underscore) => {
+      // NOTE: this may technically cause certain things to lex differently? like if you have
+      // `fun f _x = ()` i think **technically** that should parse as `fun f _ x = ()`,
+      // so f: 'a -> 'b -> unit, but most people would probably "expect" this to be f: 'a -> unit
+      // with one unused argument named `_x`. but this is actually not lexically allowed in the
+      // Definition. but we do lex it as such because (a) we don't really actually wish to support
+      // the fact that e.g. `_x` is actually supposed to lex as `_ x`, since that is unexpected,
+      // and (b) to support `_esImport` in Lunar ML.
+      if bs.get(st.i + 1).and_then(|&b| alpha_num(b)).is_some() {
+        let start = st.i;
+        st.i += 1;
+        advance_while(&mut st.i, bs, |b| alpha_num(b).is_some());
+        return SK::keyword(&bs[start..st.i]).unwrap_or_else(|| {
+          err(st, start, ErrorKind::NameStartingWithUnderscore);
+          SK::Name
+        });
+      }
+    }
+    Some(AlphaNum::Num) | None => {}
   }
   // num lit. note e.g. `~3` is one token but `~ 3` is two
   if b.is_ascii_digit() || (b == b'~' && bs.get(st.i + 1).is_some_and(u8::is_ascii_digit)) {
