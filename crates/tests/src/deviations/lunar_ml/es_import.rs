@@ -1,6 +1,6 @@
 //! The Lunar ML ES import syntax.
 
-use crate::check::{check, check_multi, raw};
+use crate::check::{check, raw};
 
 #[track_caller]
 fn check_ok(s: &str) {
@@ -8,7 +8,14 @@ fn check_ok(s: &str) {
 version = 1
 language.lunar-ml.es-import = true
 ";
-  check_multi(raw::singleton(config, s));
+  let opts = raw::Opts {
+    std_basis: raw::StdBasis::Minimal,
+    outcome: raw::Outcome::Pass,
+    limit: raw::Limit::First,
+    min_severity: diagnostic::Severity::Warning,
+    expected_input: raw::ExpectedInput::Good,
+  };
+  raw::get(raw::singleton(config, s), opts);
 }
 
 #[test]
@@ -23,7 +30,7 @@ fn err_no_pats() {
 }
 
 #[test]
-fn ok_no_parts() {
+fn ok_no_pats() {
   check_ok(
     r#"
     _esImport "foo"

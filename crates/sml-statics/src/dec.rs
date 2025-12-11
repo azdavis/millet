@@ -47,8 +47,8 @@ fn get_one(
 ) {
   match &ars.dec[dec] {
     // @def(15)
-    sml_hir::Dec::Val(ty_vars, val_binds, _) => {
-      if !maybe_effectful_val(ars, val_binds) {
+    sml_hir::Dec::Val(ty_vars, val_binds, flavor) => {
+      if !matches!(*flavor, sml_hir::ValFlavor::EsImport) && !maybe_effectful_val(ars, val_binds) {
         st.err(dec, ErrorKind::DecWithoutEffect);
       }
       let mut cx = cx.clone();
