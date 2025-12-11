@@ -22,7 +22,7 @@
   ],
   "main": "out/main.js",
   "scripts": {
-    "build-debug": "esbuild src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node20",
+    "build-debug": "esbuild src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node24",
     "build-release": "npm run build-debug -- --minify",
     "check": "tsc"
   },
