@@ -5,7 +5,7 @@ use crate::is_whitespace;
 /// The result of lexing a string.
 #[derive(Debug, Default)]
 pub struct Res {
-  /// The actual the string, with escapes replaced, or None if it was not UTF-8.
+  /// The actual string, with escapes replaced, or None if it was not UTF-8.
   pub actual: Option<String>,
   /// The errors encountered as pairs of (index where encountered, kind of error).
   pub errors: Vec<(usize, Error)>,
