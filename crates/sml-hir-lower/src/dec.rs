@@ -129,8 +129,9 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       if !st.lang().dec.functor {
         st.err(str_dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`functor`")));
       }
-      if let (true, (true, sml_file::Kind::Fun) | (_, sml_file::Kind::Sig)) =
-        (st.is_top_level(), (st.seen_top_level(), st.file_kind()))
+      if st.is_top_level()
+        && let (true, sml_file::Kind::Fun) | (_, sml_file::Kind::Sig) =
+          (st.seen_top_level(), st.file_kind())
       {
         st.err(str_dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
       }
