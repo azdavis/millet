@@ -149,7 +149,7 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
       advance_while(&mut st.i, bs, |b| alpha_num(b).is_some());
       return SK::keyword(&bs[start..st.i]).unwrap_or(SK::Name);
     }
-    Some(AlphaNum::NumOrUnderscore) | None => {}
+    Some(AlphaNum::Num | AlphaNum::Underscore) | None => {}
   }
   // num lit. note e.g. `~3` is one token but `~ 3` is two
   if b.is_ascii_digit() || (b == b'~' && bs.get(st.i + 1).is_some_and(u8::is_ascii_digit)) {
@@ -282,7 +282,8 @@ fn get_string(st: &mut St, bs: &[u8]) -> Option<String> {
 enum AlphaNum {
   Prime,
   Alpha,
-  NumOrUnderscore,
+  Num,
+  Underscore,
 }
 
 fn alpha_num(b: u8) -> Option<AlphaNum> {
@@ -290,8 +291,10 @@ fn alpha_num(b: u8) -> Option<AlphaNum> {
     Some(AlphaNum::Prime)
   } else if b.is_ascii_alphabetic() {
     Some(AlphaNum::Alpha)
-  } else if b.is_ascii_digit() || b == b'_' {
-    Some(AlphaNum::NumOrUnderscore)
+  } else if b.is_ascii_digit() {
+    Some(AlphaNum::Num)
+  } else if b == b'_' {
+    Some(AlphaNum::Underscore)
   } else {
     None
   }
