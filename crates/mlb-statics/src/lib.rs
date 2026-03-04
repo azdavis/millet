@@ -307,7 +307,7 @@ fn get_source_file(
   fix_env: sml_fixity::Env,
   syntax: SourceFileSyntax,
 ) {
-  let mode = sml_statics_types::mode::Mode::Regular(Some(path));
+  let mode = sml_statics_types::mode::Mode::Regular(path);
   let checked =
     sml_statics::get(st.syms_tys, &scope.bs, mode, &syntax.lower.arenas, &syntax.lower.root);
   ac.append(MBasis {
@@ -391,7 +391,7 @@ pub fn update_one(
 ) {
   let mut fix_env = sml_fixity::STD_BASIS.clone();
   sf.syntax = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, lang, sf.syntax.kind, contents);
-  let mode = sml_statics_types::mode::Mode::Regular(Some(path));
+  let mode = sml_statics_types::mode::Mode::Regular(path);
   let checked =
     sml_statics::get(syms_tys, &sf.scope, mode, &sf.syntax.lower.arenas, &sf.syntax.lower.root);
   sf.info = checked.info;

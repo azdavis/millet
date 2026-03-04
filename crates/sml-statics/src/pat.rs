@@ -275,12 +275,12 @@ fn insert_name(
     disallow: None,
   };
   match st.info.mode {
-    Mode::Regular(Some(_)) => {
+    Mode::Regular(_) => {
       if cfg.mark_defined {
         st.mark_defined(idx, name.clone());
       }
     }
-    Mode::Regular(None) | Mode::BuiltinLib(_) | Mode::PathOrder | Mode::Dynamics => {}
+    Mode::BuiltinLib(_) | Mode::PathOrder | Mode::Dynamics => {}
   }
   if let Some(e) = ins_check_name(ve, name, vi, Item::Val) {
     st.err(idx, e);

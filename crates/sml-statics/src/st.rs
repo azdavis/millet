@@ -46,9 +46,9 @@ impl<'a> St<'a> {
 
   pub(crate) fn def_opt(&self, idx: sml_hir::Idx) -> Option<def::Def> {
     let path = match self.info.mode {
-      Mode::Regular(Some(p)) => def::Path::Regular(p),
+      Mode::Regular(p) => def::Path::Regular(p),
       Mode::BuiltinLib(p) => def::Path::BuiltinLib(p),
-      Mode::Regular(None) | Mode::PathOrder | Mode::Dynamics => return None,
+      Mode::PathOrder | Mode::Dynamics => return None,
     };
     Some(def::Def::Path(path, idx))
   }

@@ -4,7 +4,7 @@
 #[derive(Debug, Clone, Copy)]
 pub enum Mode {
   /// Regular checking. The default.
-  Regular(Option<paths::PathId>),
+  Regular(paths::PathId),
   /// Built-in library checking. Notably, ascription structure expressions will not check to see if
   /// they actually match the signature.
   ///
