@@ -5,7 +5,7 @@ use crate::ty::{
   MetaTyVarData, RecordData, Ty, TyData, TyKind, TyVarKind, Tys, UnsolvedMetaTyVarData,
   UnsolvedMetaTyVarKind,
 };
-use crate::{equality, mode::Mode, overload};
+use crate::{equality, overload};
 use std::collections::BTreeSet;
 
 /// An error when unifying.
@@ -216,7 +216,7 @@ fn check_mv_solution(
       // mv is a regular meta var, allowing all types.
       TyVarKind::Regular => Ok(()),
       // mv is an equality meta var. ty must be an equality ty as well.
-      TyVarKind::Equality => match equality::get_ty(Mode::Regular(None), syms, tys, ty) {
+      TyVarKind::Equality => match equality::get_ty(syms, tys, ty) {
         Ok(()) => Ok(()),
         Err(e) => Err(Incompatible::NotEqTy(ty, e).into()),
       },
@@ -289,7 +289,7 @@ fn new_overload(
       // ty is a regular meta var, allowing all types.
       TyVarKind::Regular => Ok(ov),
       // ty is an equality meta var. mv must be an equality overload.
-      TyVarKind::Equality => match equality::get_ty(Mode::Regular(None), syms, tys, mv) {
+      TyVarKind::Equality => match equality::get_ty(syms, tys, mv) {
         Ok(()) => Ok(ov),
         Err(e) => Err(Incompatible::NotEqTy(mv, e).into()),
       },
@@ -319,7 +319,7 @@ fn new_solved_rows(
       TyVarKind::Regular => Ok(rows),
       // ty is an equality meta var. the types in the rows so far must be all equality types as
       // well. mv contains those rows.
-      TyVarKind::Equality => match equality::get_ty(Mode::Regular(None), syms, tys, mv) {
+      TyVarKind::Equality => match equality::get_ty(syms, tys, mv) {
         Ok(()) => Ok(rows),
         Err(e) => Err(Incompatible::NotEqTy(mv, e).into()),
       },

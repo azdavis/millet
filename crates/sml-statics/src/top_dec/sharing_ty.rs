@@ -69,9 +69,8 @@ struct SharingTyScheme {
 
 impl SharingTyScheme {
   fn new(st: &mut St<'_>, ty_scheme: TyScheme) -> Self {
-    let equality =
-      equality::get_ty_scheme(st.info.mode, &st.syms_tys.syms, &mut st.syms_tys.tys, &ty_scheme)
-        .is_ok();
+    let equality = st.info.mode.is_path_order()
+      || equality::get_ty_scheme(&st.syms_tys.syms, &mut st.syms_tys.tys, &ty_scheme).is_ok();
     Self { ty_scheme, equality }
   }
 }

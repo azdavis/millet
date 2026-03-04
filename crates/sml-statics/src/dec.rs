@@ -415,12 +415,11 @@ pub(crate) fn get_dat_binds(
     let ty_info =
       TyInfo { ty_scheme: datatype.ty_scheme, val_env, defs: st.def(idx), disallow: None };
     let ty_info_dve = ty_info.clone().with_default_val_env_type();
-    let equality = equality::get_ty_info(
-      st.info.mode,
-      &st.syms_tys.syms,
-      &mut st.syms_tys.tys,
-      ty_info_dve.clone(),
-    );
+    let equality = if st.info.mode.is_path_order() {
+      Ok(())
+    } else {
+      equality::get_ty_info(&st.syms_tys.syms, &mut st.syms_tys.tys, ty_info_dve.clone())
+    };
     let equality = match equality {
       Ok(()) => Equality::Sometimes,
       Err(_) => Equality::Never,
