@@ -117,17 +117,21 @@ fn unify_mv(
   syms: &Syms,
   mv: Ty,
   umv: UnsolvedMetaTyVarData,
-  mut ty: Ty,
+  ty: Ty,
 ) -> Result<(), Error> {
   debug_assert!(matches!(tys.data(mv), TyData::UnsolvedMetaVar(_)),);
   // make sure we're trying to solve the right ty.
-  while let TyKind::MetaVar = ty.kind {
-    match &tys.meta_var_data[ty.idx.to_usize()] {
-      MetaTyVarData::Solved(new_ty) => ty = *new_ty,
-      MetaTyVarData::Unsolved(_) => break,
+  let ty = {
+    let mut tmp = ty;
+    while let TyKind::MetaVar = ty.kind {
+      match &tys.meta_var_data[ty.idx.to_usize()] {
+        MetaTyVarData::Solved(new_ty) => tmp = *new_ty,
+        MetaTyVarData::Unsolved(_) => break,
+      }
     }
-  }
-  // allow solving to itself.
+    tmp
+  };
+  // allow solving to itself as a no-op.
   if mv == ty {
     return Ok(());
   }
@@ -136,8 +140,67 @@ fn unify_mv(
     Ok(()) => {}
     Err(()) => return Err(Error::Circularity(Circularity { meta_var: mv, ty })),
   }
-  // check the solution is allowed.
-  check_mv_solution(tys, syms, mv, umv.kind, ty)?;
+  // check that ty is compatible with what that meta var currently is.
+  match umv.kind {
+    UnsolvedMetaTyVarKind::Kind(kind) => match kind {
+      // mv is a regular meta var, allowing all types.
+      TyVarKind::Regular => {}
+      // mv is an equality meta var. ty must be an equality ty as well.
+      TyVarKind::Equality => match equality::get_ty(syms, tys, ty) {
+        Ok(()) => {}
+        Err(e) => return Err(Incompatible::NotEqTy(ty, e).into()),
+      },
+      // mv is an overloaded meta var. ty must be compatible with the overload.
+      TyVarKind::Overloaded(ov) => match tys.data(ty) {
+        // ignore.
+        TyData::None => {}
+        // none of these are overloaded types.
+        TyData::BoundVar(_) | TyData::FixedVar(_) | TyData::Record(_) | TyData::Fn(_) => {
+          return Err(Incompatible::OverloadHeadMismatch(ov, ty).into());
+        }
+        // ty is a con. the con must be compatible with the overload.
+        TyData::Con(data) => {
+          if ov.as_basics().iter().any(|&ov| syms.overloads()[ov].contains(&data.sym)) {
+            assert!(data.args.is_empty(), "overloaded syms do not have ty args");
+          } else {
+            return Err(Incompatible::OverloadCon(ov, data.sym).into());
+          }
+        }
+        // ty is an unsolved meta var. it must now be an overloaded meta var.
+        TyData::UnsolvedMetaVar(ty_unsolved) => {
+          let ty_ov = new_overload(tys, syms, ty_unsolved.kind, mv, ov)?;
+          // make ty an overloaded meta var.
+          tys.unsolved_meta_var(ty).kind =
+            UnsolvedMetaTyVarKind::Kind(TyVarKind::Overloaded(ty_ov));
+        }
+      },
+    },
+    // mv is an unresolved record ty var (i.e. from a `...` pattern). ty must have the rows gotten
+    // so far.
+    UnsolvedMetaTyVarKind::UnresolvedRecord(mut want) => match tys.data(ty) {
+      // ignore.
+      TyData::None => {}
+      // none of these are record types.
+      TyData::BoundVar(_) | TyData::FixedVar(_) | TyData::Con(_) | TyData::Fn(_) => {
+        return Err(Incompatible::UnresolvedRecordHeadMismatch(want.rows, ty).into());
+      }
+      // ty is a record. it should have every label in the currently resolved rows, and the
+      // corresponding types for those rows should unify.
+      TyData::Record(mut got_rows) => {
+        for (lab, want) in want.rows {
+          match got_rows.remove(&lab) {
+            None => return Err(Incompatible::UnresolvedRecordMissingRow(lab).into()),
+            Some(got) => unify(tys, syms, want, got)?,
+          }
+        }
+      }
+      // ty is an unsolved meta var as well. it must now be a unresolved record meta var.
+      TyData::UnsolvedMetaVar(ty_unsolved) => {
+        want.rows = new_solved_rows(tys, syms, ty_unsolved.kind, mv, want.rows)?;
+        tys.unsolved_meta_var(ty).kind = UnsolvedMetaTyVarKind::UnresolvedRecord(want);
+      }
+    },
+  }
   // solve mv to ty.
   //
   // there may be a chain: e.g. mv could already have been solved to another meta var was solved to
@@ -199,81 +262,6 @@ fn adjust_mv_ranks(tys: &mut Tys, mv: Ty, umv: &UnsolvedMetaTyVarData, ty: Ty) -
       adjust_mv_ranks(tys, mv, umv, data.res)?;
       Ok(())
     }
-  }
-}
-
-/// we want to solve meta var that is currently unsolved with the given `kind` to be equal to ty.
-/// we have to check that ty is compatible with what that meta var currently is.
-fn check_mv_solution(
-  tys: &mut Tys,
-  syms: &Syms,
-  mv: Ty,
-  mv_kind: UnsolvedMetaTyVarKind,
-  ty: Ty,
-) -> Result<(), Error> {
-  match mv_kind {
-    UnsolvedMetaTyVarKind::Kind(kind) => match kind {
-      // mv is a regular meta var, allowing all types.
-      TyVarKind::Regular => Ok(()),
-      // mv is an equality meta var. ty must be an equality ty as well.
-      TyVarKind::Equality => match equality::get_ty(syms, tys, ty) {
-        Ok(()) => Ok(()),
-        Err(e) => Err(Incompatible::NotEqTy(ty, e).into()),
-      },
-      // mv is an overloaded meta var. ty must be compatible with the overload.
-      TyVarKind::Overloaded(ov) => match tys.data(ty) {
-        // ignore.
-        TyData::None => Ok(()),
-        // none of these are overloaded types.
-        TyData::BoundVar(_) | TyData::FixedVar(_) | TyData::Record(_) | TyData::Fn(_) => {
-          Err(Incompatible::OverloadHeadMismatch(ov, ty).into())
-        }
-        // ty is a con. the con must be compatible with the overload.
-        TyData::Con(data) => {
-          if ov.as_basics().iter().any(|&ov| syms.overloads()[ov].contains(&data.sym)) {
-            assert!(data.args.is_empty(), "overloaded syms do not have ty args");
-            Ok(())
-          } else {
-            Err(Incompatible::OverloadCon(ov, data.sym).into())
-          }
-        }
-        // ty is an unsolved meta var. it must now be an overloaded meta var.
-        TyData::UnsolvedMetaVar(ty_unsolved) => {
-          let ty_ov = new_overload(tys, syms, ty_unsolved.kind, mv, ov)?;
-          // make ty an overloaded meta var.
-          tys.unsolved_meta_var(ty).kind =
-            UnsolvedMetaTyVarKind::Kind(TyVarKind::Overloaded(ty_ov));
-          Ok(())
-        }
-      },
-    },
-    // mv is an unresolved record ty var (i.e. from a `...` pattern). ty must have the rows gotten
-    // so far.
-    UnsolvedMetaTyVarKind::UnresolvedRecord(mut want) => match tys.data(ty) {
-      // ignore.
-      TyData::None => Ok(()),
-      // none of these are record types.
-      TyData::BoundVar(_) | TyData::FixedVar(_) | TyData::Con(_) | TyData::Fn(_) => {
-        Err(Incompatible::UnresolvedRecordHeadMismatch(want.rows, ty).into())
-      }
-      // ty is a record. it should have every label in the currently resolved rows, and the
-      // corresponding types for those rows should unify.
-      TyData::Record(mut got_rows) => {
-        for (lab, want) in want.rows {
-          match got_rows.remove(&lab) {
-            None => return Err(Incompatible::UnresolvedRecordMissingRow(lab).into()),
-            Some(got) => unify(tys, syms, want, got)?,
-          }
-        }
-        Ok(())
-      }
-      // ty is an unsolved meta var as well. it must now be a unresolved record meta var.
-      TyData::UnsolvedMetaVar(ty_unsolved) => {
-        want.rows = new_solved_rows(tys, syms, ty_unsolved.kind, mv, want.rows)?;
-        tys.unsolved_meta_var(ty).kind = UnsolvedMetaTyVarKind::UnresolvedRecord(want);
-        Ok(())
-      }
-    },
   }
 }
 
