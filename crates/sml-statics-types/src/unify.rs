@@ -169,7 +169,26 @@ fn unify_mv(
         }
         // ty is an unsolved meta var. it must now be an overloaded meta var.
         TyData::UnsolvedMetaVar(ty_unsolved) => {
-          let ty_ov = new_overload(tys, syms, ty_unsolved.kind, mv, ov)?;
+          let ty_ov = match ty_unsolved.kind {
+            UnsolvedMetaTyVarKind::Kind(kind) => match kind {
+              // ty is a regular meta var, allowing all types.
+              TyVarKind::Regular => ov,
+              // ty is an equality meta var. mv must be an equality overload.
+              TyVarKind::Equality => match equality::get_ty(syms, tys, mv) {
+                Ok(()) => ov,
+                Err(e) => return Err(Incompatible::NotEqTy(mv, e).into()),
+              },
+              // ty is an overloaded meta var as well. the overloads must be compatible.
+              TyVarKind::Overloaded(ty_ov) => match ov.unify(ty_ov) {
+                Some(ty_ov) => ty_ov,
+                None => return Err(Incompatible::OverloadUnify(ov, ty_ov).into()),
+              },
+            },
+            // ty is an unresolved record. no overload is an unresolved record.
+            UnsolvedMetaTyVarKind::UnresolvedRecord(ur) => {
+              return Err(Incompatible::OverloadRecord(ov, ur.rows).into());
+            }
+          };
           // make ty an overloaded meta var.
           tys.unsolved_meta_var(ty).kind =
             UnsolvedMetaTyVarKind::Kind(TyVarKind::Overloaded(ty_ov));
@@ -197,7 +216,32 @@ fn unify_mv(
       }
       // ty is an unsolved meta var as well. it must now be a unresolved record meta var.
       TyData::UnsolvedMetaVar(ty_unsolved) => {
-        want.rows = new_solved_rows(tys, syms, ty_unsolved.kind, mv, want.rows)?;
+        match ty_unsolved.kind {
+          UnsolvedMetaTyVarKind::Kind(kind) => match kind {
+            // ty is a regular meta var, allowing all types.
+            TyVarKind::Regular => {}
+            // ty is an equality meta var. the types in the rows so far must be all equality types as
+            // well. mv contains those rows.
+            TyVarKind::Equality => match equality::get_ty(syms, tys, mv) {
+              Ok(()) => {}
+              Err(e) => return Err(Incompatible::NotEqTy(mv, e).into()),
+            },
+            // ty is an overloaded meta var. no overload is a record type.
+            TyVarKind::Overloaded(ov) => {
+              return Err(Incompatible::OverloadRecord(ov, want.rows).into());
+            }
+          },
+          // ty is an unresolved record meta var as well. merge the rows, and for those rows that
+          // appeared in both, unify the types.
+          UnsolvedMetaTyVarKind::UnresolvedRecord(got) => {
+            for (lab, got) in got.rows {
+              if let Some(&want) = want.rows.get(&lab) {
+                unify(tys, syms, want, got)?;
+              }
+              want.rows.insert(lab, got);
+            }
+          }
+        }
         tys.unsolved_meta_var(ty).kind = UnsolvedMetaTyVarKind::UnresolvedRecord(want);
       }
     },
@@ -262,69 +306,6 @@ fn adjust_mv_ranks(
       adjust_mv_ranks(tys, mv, mv_data, data.param)?;
       adjust_mv_ranks(tys, mv, mv_data, data.res)?;
       Ok(())
-    }
-  }
-}
-
-fn new_overload(
-  tys: &mut Tys,
-  syms: &Syms,
-  kind: UnsolvedMetaTyVarKind,
-  mv: Ty,
-  ov: overload::Overload,
-) -> Result<overload::Overload, Error> {
-  match kind {
-    UnsolvedMetaTyVarKind::Kind(kind) => match kind {
-      // ty is a regular meta var, allowing all types.
-      TyVarKind::Regular => Ok(ov),
-      // ty is an equality meta var. mv must be an equality overload.
-      TyVarKind::Equality => match equality::get_ty(syms, tys, mv) {
-        Ok(()) => Ok(ov),
-        Err(e) => Err(Incompatible::NotEqTy(mv, e).into()),
-      },
-      // ty is an overloaded meta var as well. the overloads must be compatible.
-      TyVarKind::Overloaded(ty_ov) => match ov.unify(ty_ov) {
-        Some(ty_ov) => Ok(ty_ov),
-        None => Err(Incompatible::OverloadUnify(ov, ty_ov).into()),
-      },
-    },
-    // ty is an unresolved record. no overload is an unresolved record.
-    UnsolvedMetaTyVarKind::UnresolvedRecord(ur) => {
-      Err(Incompatible::OverloadRecord(ov, ur.rows).into())
-    }
-  }
-}
-
-fn new_solved_rows(
-  tys: &mut Tys,
-  syms: &Syms,
-  kind: UnsolvedMetaTyVarKind,
-  mv: Ty,
-  mut rows: RecordData,
-) -> Result<RecordData, Error> {
-  match kind {
-    UnsolvedMetaTyVarKind::Kind(kind) => match kind {
-      // ty is a regular meta var, allowing all types.
-      TyVarKind::Regular => Ok(rows),
-      // ty is an equality meta var. the types in the rows so far must be all equality types as
-      // well. mv contains those rows.
-      TyVarKind::Equality => match equality::get_ty(syms, tys, mv) {
-        Ok(()) => Ok(rows),
-        Err(e) => Err(Incompatible::NotEqTy(mv, e).into()),
-      },
-      // ty is an overloaded meta var. no overload is a record type.
-      TyVarKind::Overloaded(ov) => Err(Incompatible::OverloadRecord(ov, rows).into()),
-    },
-    // ty is an unresolved record meta var as well. merge the rows, and for those rows that
-    // appeared in both, unify the types.
-    UnsolvedMetaTyVarKind::UnresolvedRecord(got) => {
-      for (lab, got) in got.rows {
-        if let Some(&want) = rows.get(&lab) {
-          unify(tys, syms, want, got)?;
-        }
-        rows.insert(lab, got);
-      }
-      Ok(rows)
     }
   }
 }
