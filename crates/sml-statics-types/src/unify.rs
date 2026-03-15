@@ -120,7 +120,9 @@ fn unify_mv(
   mv_data: UnsolvedMetaTyVarData,
   ty: Ty,
 ) -> Result<(), Error> {
-  debug_assert!(matches!(tys.data(mv), TyData::UnsolvedMetaVar(_)),);
+  debug_assert!(matches!(tys.data(mv), TyData::UnsolvedMetaVar(_)));
+  debug_assert_eq!(tys.canonicalize(mv).0, mv);
+  debug_assert_eq!(tys.canonicalize(ty).0, ty);
   // make sure we're trying to solve the right ty.
   let ty = {
     let mut tmp = ty;
@@ -220,8 +222,8 @@ fn unify_mv(
           UnsolvedMetaTyVarKind::Kind(kind) => match kind {
             // ty is a regular meta var, allowing all types.
             TyVarKind::Regular => {}
-            // ty is an equality meta var. the types in the rows so far must be all equality types as
-            // well. mv contains those rows.
+            // ty is an equality meta var. the types in the rows so far must be all equality types
+            // as well. mv contains those rows.
             TyVarKind::Equality => match equality::get_ty(syms, tys, mv) {
               Ok(()) => {}
               Err(e) => return Err(Incompatible::NotEqTy(mv, e).into()),
@@ -246,23 +248,8 @@ fn unify_mv(
       }
     },
   }
-  // solve mv to ty.
-  //
-  // there may be a chain: e.g. mv could already have been solved to another meta var was solved to
-  // another, etc, until at the end of the chain there is an unsolved meta var. break the chain and
-  // solve them all to this one ty.
-  let mut cur = mv.idx;
-  loop {
-    let old_data =
-      std::mem::replace(&mut tys.meta_var_data[cur.to_usize()], MetaTyVarData::Solved(ty));
-    match old_data {
-      MetaTyVarData::Solved(old_ty) => match old_ty.kind {
-        TyKind::MetaVar => cur = old_ty.idx,
-        k => unreachable!("meta var solved to non-meta var {k:?}"),
-      },
-      MetaTyVarData::Unsolved(_) => break,
-    }
-  }
+  // solve mv to ty. mv is already known to be canonically an unsolved meta var.
+  tys.meta_var_data[mv.idx.to_usize()] = MetaTyVarData::Solved(ty);
   Ok(())
 }
 
