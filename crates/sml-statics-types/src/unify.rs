@@ -111,12 +111,13 @@ pub fn unify(tys: &mut Tys, syms: &Syms, want: Ty, got: Ty) -> Result<(), Error>
   }
 }
 
-/// unifies mv, which is currently unsolved, but might have restrictions on it, with ty.
+/// unifies mv, which is currently unsolved and has data `mv_data`, which describes the
+/// restrictions if any on it, with ty.
 fn unify_mv(
   tys: &mut Tys,
   syms: &Syms,
   mv: Ty,
-  umv: UnsolvedMetaTyVarData,
+  mv_data: UnsolvedMetaTyVarData,
   ty: Ty,
 ) -> Result<(), Error> {
   debug_assert!(matches!(tys.data(mv), TyData::UnsolvedMetaVar(_)),);
@@ -136,12 +137,12 @@ fn unify_mv(
     return Ok(());
   }
   // adjust the ranks for meta vars in ty, and also fail if the occurs check fails.
-  match adjust_mv_ranks(tys, mv, &umv, ty) {
+  match adjust_mv_ranks(tys, mv, &mv_data, ty) {
     Ok(()) => {}
     Err(()) => return Err(Error::Circularity(Circularity { meta_var: mv, ty })),
   }
   // check that ty is compatible with what that meta var currently is.
-  match umv.kind {
+  match mv_data.kind {
     UnsolvedMetaTyVarKind::Kind(kind) => match kind {
       // mv is a regular meta var, allowing all types.
       TyVarKind::Regular => {}
@@ -208,19 +209,14 @@ fn unify_mv(
   // solve them all to this one ty.
   let mut cur = mv.idx;
   loop {
-    let cur_data = &mut tys.meta_var_data[cur.to_usize()];
-    match cur_data {
+    let old_data =
+      std::mem::replace(&mut tys.meta_var_data[cur.to_usize()], MetaTyVarData::Solved(ty));
+    match old_data {
       MetaTyVarData::Solved(old_ty) => match old_ty.kind {
-        TyKind::MetaVar => {
-          cur = old_ty.idx;
-          *cur_data = MetaTyVarData::Solved(ty);
-        }
+        TyKind::MetaVar => cur = old_ty.idx,
         k => unreachable!("meta var solved to non-meta var {k:?}"),
       },
-      MetaTyVarData::Unsolved(_) => {
-        *cur_data = MetaTyVarData::Solved(ty);
-        break;
-      }
+      MetaTyVarData::Unsolved(_) => break,
     }
   }
   Ok(())
@@ -229,7 +225,12 @@ fn unify_mv(
 /// adjust the ranks of all unsolved meta vars in `ty` to be no higher than the rank of the meta var
 /// with the given unsolved data, which is about to be solved to `ty`. also check this meta var does
 /// not appear in `ty` (the "occurs check").
-fn adjust_mv_ranks(tys: &mut Tys, mv: Ty, umv: &UnsolvedMetaTyVarData, ty: Ty) -> Result<(), ()> {
+fn adjust_mv_ranks(
+  tys: &mut Tys,
+  mv: Ty,
+  mv_data: &UnsolvedMetaTyVarData,
+  ty: Ty,
+) -> Result<(), ()> {
   let (ty, data) = tys.canonicalize(ty);
   match data {
     // the interesting case
@@ -237,8 +238,8 @@ fn adjust_mv_ranks(tys: &mut Tys, mv: Ty, umv: &UnsolvedMetaTyVarData, ty: Ty) -
       if mv == ty {
         return Err(());
       }
-      if umv.rank < ty_mv_unsolved.rank {
-        tys.unsolved_meta_var(ty).rank = umv.rank;
+      if mv_data.rank < ty_mv_unsolved.rank {
+        tys.unsolved_meta_var(ty).rank = mv_data.rank;
       }
       Ok(())
     }
@@ -247,19 +248,19 @@ fn adjust_mv_ranks(tys: &mut Tys, mv: Ty, umv: &UnsolvedMetaTyVarData, ty: Ty) -
     // recursive cases
     TyData::Record(rows) => {
       for (_, ty) in rows {
-        adjust_mv_ranks(tys, mv, umv, ty)?;
+        adjust_mv_ranks(tys, mv, mv_data, ty)?;
       }
       Ok(())
     }
     TyData::Con(data) => {
       for ty in data.args {
-        adjust_mv_ranks(tys, mv, umv, ty)?;
+        adjust_mv_ranks(tys, mv, mv_data, ty)?;
       }
       Ok(())
     }
     TyData::Fn(data) => {
-      adjust_mv_ranks(tys, mv, umv, data.param)?;
-      adjust_mv_ranks(tys, mv, umv, data.res)?;
+      adjust_mv_ranks(tys, mv, mv_data, data.param)?;
+      adjust_mv_ranks(tys, mv, mv_data, data.res)?;
       Ok(())
     }
   }

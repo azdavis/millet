@@ -141,6 +141,7 @@ impl Tys {
     self.meta_var_rank -= 1;
   }
 
+  /// Asserts that this ty is an unsolved meta var, and returns its mutable data.
   pub(crate) fn unsolved_meta_var(&mut self, mut ty: Ty) -> &mut UnsolvedMetaTyVarData {
     assert!(matches!(ty.kind, TyKind::MetaVar));
     // wtf, borrow checker? just let me 'return' from the first loop!!
