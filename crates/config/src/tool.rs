@@ -25,3 +25,9 @@ impl std::ops::Not for Tool {
     !self.0
   }
 }
+
+impl From<bool> for Tool {
+  fn from(value: bool) -> Self {
+    Self(value)
+  }
+}

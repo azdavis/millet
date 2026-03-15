@@ -15,6 +15,11 @@ pub struct StdBasis {
 }
 
 impl StdBasis {
+  /// Adds a new notes to this, even if it already had one.
+  pub fn add_notes(&mut self) {
+    self.syms_tys.notes = Some(sml_statics_types::notes::Notes::default());
+  }
+
   /// The minimal standard basis. Only includes fundamental top-level definitions like `int`,
   /// `real`, `ref`, `<`, etc.
   #[must_use]

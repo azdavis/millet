@@ -580,6 +580,13 @@ Show a hint on diagnostic messages about clicking the error code number for more
 
 Send diagnostics when file contents change before saving.
 
+#### `millet.server.diagnostics.unstable.unifyErrorExtraHelp.enable`
+
+- Type: `boolean`
+- Default: `false`
+
+Enable experimental extra help for unify errors.
+
 #### `millet.server.enable`
 
 - Type: `boolean`

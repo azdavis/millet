@@ -5,7 +5,7 @@ use crate::ty::{
   BoundTyVarData, BoundTyVars, MetaTyVarDisplayData, RecordData, Ty, TyData, TyScheme, TyVarKind,
   UnsolvedMetaTyVarKind,
 };
-use crate::{St, unify::Incompatible};
+use crate::{St, notes, unify::Incompatible};
 use fmt_util::comma_seq;
 use std::fmt;
 
@@ -14,7 +14,23 @@ impl Ty {
   #[must_use]
   pub fn display(self, st: &St, lines: config::DiagnosticLines) -> impl fmt::Display {
     TyDisplay {
-      cx: TyDisplayCx { bound_vars: None, st },
+      cx: TyDisplayCx { bound_vars: None, named: None, st },
+      ty: self,
+      prec: TyPrec::Arrow,
+      pretty: Pretty::from_diagnostic_lines(lines),
+    }
+  }
+
+  /// Returns a value that display this with type names.
+  #[must_use]
+  pub fn display_with_names<'a>(
+    self,
+    named: notes::NamedTys<'a>,
+    st: &'a St,
+    lines: config::DiagnosticLines,
+  ) -> impl fmt::Display {
+    TyDisplay {
+      cx: TyDisplayCx { bound_vars: None, named: Some(named), st },
       ty: self,
       prec: TyPrec::Arrow,
       pretty: Pretty::from_diagnostic_lines(lines),
@@ -27,7 +43,7 @@ impl TyScheme {
   #[must_use]
   pub fn display<'a>(&'a self, st: &'a St, lines: config::DiagnosticLines) -> impl fmt::Display {
     TyDisplay {
-      cx: TyDisplayCx { bound_vars: Some(&self.bound_vars), st },
+      cx: TyDisplayCx { bound_vars: Some(&self.bound_vars), named: None, st },
       ty: self.ty,
       prec: TyPrec::Arrow,
       pretty: Pretty::from_diagnostic_lines(lines),
@@ -79,6 +95,7 @@ impl Pretty {
 #[derive(Clone, Copy)]
 struct TyDisplayCx<'a> {
   bound_vars: Option<&'a BoundTyVars>,
+  named: Option<notes::NamedTys<'a>>,
   st: &'a St,
 }
 
@@ -97,6 +114,11 @@ impl TyDisplay<'_> {
 
 impl fmt::Display for TyDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    if let Some(named) = self.cx.named
+      && let Some(name) = named.name(self.ty)
+    {
+      return name.fmt(f);
+    }
     match self.cx.st.tys.data(self.ty) {
       TyData::None => f.write_str("_")?,
       TyData::BoundVar(bv) => {
@@ -316,7 +338,7 @@ pub fn record_meta_var<'a>(
   lines: config::DiagnosticLines,
 ) -> impl fmt::Display {
   RecordMetaVarDisplay {
-    cx: TyDisplayCx { bound_vars: None, st },
+    cx: TyDisplayCx { bound_vars: None, named: None, st },
     rows,
     pretty: Pretty::from_diagnostic_lines(lines),
   }

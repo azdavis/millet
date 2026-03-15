@@ -24,6 +24,7 @@ pub(crate) fn file_url(path: &std::path::Path) -> Result<Url> {
 }
 
 pub(crate) fn diagnostics(
+  file_url: &Url,
   errors: Vec<analysis::diagnostic::Diagnostic<text_pos::RangeUtf16>>,
   more_info_hint: bool,
 ) -> Vec<lsp_types::Diagnostic> {
@@ -31,6 +32,7 @@ pub(crate) fn diagnostics(
     .into_iter()
     .map(|err| {
       diagnostic(
+        file_url,
         err.message,
         Some(err.range),
         err.code,
@@ -60,6 +62,7 @@ impl fmt::Display for ClickCodeHint {
 }
 
 pub(crate) fn diagnostic(
+  file_url: &Url,
   message: String,
   range: Option<text_pos::RangeUtf16>,
   code: diagnostic::Code,
@@ -76,7 +79,7 @@ pub(crate) fn diagnostic(
     .flatten()
     .chain(more_info.into_iter().map(|info| lsp_types::DiagnosticRelatedInformation {
       // TODO use url for this file, not the error url
-      location: lsp_types::Location { uri: url.clone(), range: lsp_range(info.range) },
+      location: lsp_types::Location { uri: file_url.clone(), range: lsp_range(info.range) },
       message: info.message,
     }))
     .collect();

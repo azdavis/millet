@@ -8,7 +8,7 @@ use crate::{config::Cfg, pat_match::Pat};
 use crate::{dec, pat, st::St, ty, unify::unify};
 use sml_statics_types::env::{Cx, Env};
 use sml_statics_types::sym::{Sym, SymsMarker};
-use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme, Tys};
+use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme, TyVarKind, Tys};
 use sml_statics_types::util::{get_scon, instantiate};
 use sml_statics_types::{def, info::ValEnv, item::Item, mode::Mode};
 
@@ -34,12 +34,12 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
   let mut defs = def::Set::default();
   let ret = match &ars.exp[exp] {
     sml_hir::Exp::Hole => {
-      let mv = st.syms_tys.tys.meta_var(Generalizable::Always);
+      let mv = st.syms_tys.tys.meta_var(Generalizable::Always, TyVarKind::Regular);
       st.err(exp, ErrorKind::ExpHole(mv));
       mv
     }
     // @def(1)
-    sml_hir::Exp::SCon(scon) => get_scon(&mut st.syms_tys.tys, Generalizable::Always, scon),
+    sml_hir::Exp::SCon(scon) => get_scon(st.syms_tys, Generalizable::Always, scon, exp.into()),
     // @def(2)
     sml_hir::Exp::Path(path) => {
       let val_info = get_val_info(&cx.env, path);
@@ -97,7 +97,10 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
           data.res
         }
         _ => {
-          let ret = st.syms_tys.tys.meta_var(Generalizable::Always);
+          let ret = st.syms_tys.tys.meta_var(Generalizable::Always, TyVarKind::Regular);
+          if let Some(notes) = &mut st.syms_tys.notes {
+            notes.introduce(ret, exp.into());
+          }
           let got = st.syms_tys.tys.fun(arg_ty, ret);
           unify(st, func.unwrap_or(exp).into(), func_ty, got);
           ret
@@ -121,7 +124,11 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
     sml_hir::Exp::Raise(inner) => {
       let got = get(st, cfg, cx, ars, *inner);
       unify(st, inner.unwrap_or(exp).into(), Ty::EXN, got);
-      st.syms_tys.tys.meta_var(Generalizable::Always)
+      let ret = st.syms_tys.tys.meta_var(Generalizable::Always, TyVarKind::Regular);
+      if let Some(notes) = &mut st.syms_tys.notes {
+        notes.introduce(ret, exp.into());
+      }
+      ret
     }
     // @def(12)
     sml_hir::Exp::Fn(matcher, flavor) => {
@@ -147,7 +154,10 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
     }
     // Successor ML extension
     sml_hir::Exp::Vector(exps) => {
-      let ty = st.syms_tys.tys.meta_var(Generalizable::Always);
+      let ty = st.syms_tys.tys.meta_var(Generalizable::Always, TyVarKind::Regular);
+      if let Some(notes) = &mut st.syms_tys.notes {
+        notes.introduce(ty, exp.into());
+      }
       for &inner in exps {
         let inner_ty = get(st, cfg, cx, ars, inner);
         unify(st, inner.unwrap_or(exp).into(), ty, inner_ty);
@@ -337,8 +347,12 @@ fn get_matcher(
   ars: &sml_hir::Arenas,
   matcher: &[sml_hir::Arm],
 ) -> (Vec<Pat>, Ty, Ty) {
-  let param_ty = st.syms_tys.tys.meta_var(Generalizable::Always);
-  let res_ty = st.syms_tys.tys.meta_var(Generalizable::Always);
+  let param_ty = st.syms_tys.tys.meta_var(Generalizable::Always, TyVarKind::Regular);
+  let res_ty = st.syms_tys.tys.meta_var(Generalizable::Always, TyVarKind::Regular);
+  if let Some(notes) = &mut st.syms_tys.notes {
+    notes.introduce(param_ty, idx);
+    notes.introduce(res_ty, idx);
+  }
   let mut pats = Vec::<Pat>::new();
   st.syms_tys.tys.inc_meta_var_rank();
   // @def(14)

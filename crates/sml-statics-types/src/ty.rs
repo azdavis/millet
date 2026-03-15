@@ -47,13 +47,8 @@ impl Default for Tys {
 }
 
 impl Tys {
-  /// Returns a fresh regular meta type variable.
-  pub fn meta_var(&mut self, g: Generalizable) -> Ty {
-    self.meta_var_kind(g, TyVarKind::Regular)
-  }
-
   /// Returns a fresh meta type variable with the given kind.
-  pub fn meta_var_kind(&mut self, g: Generalizable, kind: TyVarKind) -> Ty {
+  pub fn meta_var(&mut self, g: Generalizable, kind: TyVarKind) -> Ty {
     self.mv(g, UnsolvedMetaTyVarKind::Kind(kind))
   }
 
@@ -185,6 +180,36 @@ impl Tys {
     }
   }
 
+  pub(crate) fn meta_vars<F>(&self, ty: Ty, f: &mut F)
+  where
+    F: FnMut(Ty),
+  {
+    match ty.kind {
+      // interesting case
+      TyKind::MetaVar => {
+        f(ty);
+      }
+      // trivial base cases
+      TyKind::None | TyKind::BoundVar | TyKind::FixedVar => {}
+      // recursive cases
+      TyKind::Record => {
+        for &new_ty in self.record.get_data(ty.idx).values() {
+          self.meta_vars(new_ty, f);
+        }
+      }
+      TyKind::Con => {
+        for &new_ty in &self.con.get_data(ty.idx).args {
+          self.meta_vars(new_ty, f);
+        }
+      }
+      TyKind::Fn => {
+        let data = self.fn_.get_data(ty.idx);
+        self.meta_vars(data.param, f);
+        self.meta_vars(data.res, f);
+      }
+    }
+  }
+
   /// Returns in O(1) time.
   pub(crate) fn is_generalizable(&self, rank: MetaTyVarRank) -> bool {
     match rank {
@@ -198,7 +223,7 @@ impl Tys {
 ///
 /// Use a `Tys` to get information about this type. The `Tys` guarantees that if two `Tys` are the
 /// same via `==`, they refer to the same type.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Ty {
   pub(crate) kind: TyKind,
   pub(crate) idx: idx::Idx,
@@ -237,7 +262,7 @@ impl Ty {
 const _: () = assert!(std::mem::size_of::<Ty>() == 8);
 
 /// A kind of type.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum TyKind {
   None,
   BoundVar,
@@ -349,7 +374,7 @@ pub enum UnsolvedMetaTyVarKind {
 pub struct UnresolvedRecordMetaTyVar {
   /// The currently solved rows.
   pub rows: RecordData,
-  /// For better error reporting.
+  /// For better error reporting. TODO remove?
   pub idx: sml_hir::Idx,
 }
 

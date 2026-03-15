@@ -35,6 +35,9 @@ export async function activate(cx: vscode.ExtensionContext) {
         on_change: config.get("server.diagnostics.onChange.enable"),
         more_info_hint: config.get("server.diagnostics.moreInfoHint.enable"),
         ignore: config.get("server.diagnostics.ignore"),
+        unify_extra_help: config.get(
+          "server.diagnostics.unstable.unifyErrorExtraHelp.enable",
+        ),
       },
     },
   };

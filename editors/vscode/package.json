@@ -88,6 +88,11 @@
           "default": false,
           "markdownDescription": "Send diagnostics when file contents change before saving."
         },
+        "millet.server.diagnostics.unstable.unifyErrorExtraHelp.enable": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable experimental extra help for unify errors."
+        },
         "millet.server.enable": {
           "type": "boolean",
           "default": true,

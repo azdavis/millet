@@ -7,8 +7,7 @@ use crate::pat_match::Pat;
 use diagnostic::{Code, Severity};
 use sml_statics_types::display::record_meta_var;
 use sml_statics_types::ty::{RecordData, Ty, TyScheme};
-use sml_statics_types::unify::{Circularity, Incompatible};
-use sml_statics_types::{disallow::Disallow, item::Item};
+use sml_statics_types::{disallow::Disallow, item::Item, notes, unify};
 use std::fmt;
 
 #[derive(Debug)]
@@ -19,8 +18,7 @@ pub(crate) enum ErrorKind {
   Duplicate(Item, str_util::Name),
   Missing(Item, str_util::Name),
   Extra(Item, str_util::Name),
-  Circularity(Circularity),
-  IncompatibleTys(Incompatible, Ty, Ty),
+  Unify(unify::Error, Ty, Ty, Box<notes::Events>),
   DuplicateLab(sml_hir::Lab),
   RealPat,
   UnreachablePattern,
@@ -80,26 +78,38 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: `{name}`"),
       ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: `{name}`"),
       ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: `{name}`"),
-      ErrorKind::Circularity(circ) => {
-        let mv = circ.meta_var.display(self.st, config::DiagnosticLines::One);
-        let ty = circ.ty.display(self.st, config::DiagnosticLines::One);
-        write!(f, "circular type: `{mv}` occurs in `{ty}`")
-      }
-      ErrorKind::IncompatibleTys(reason, want, got) => {
-        let reason = reason.display(self.st);
-        write!(f, "incompatible types: {reason}")?;
-        let want = want.display(self.st, config::DiagnosticLines::One);
-        let got = got.display(self.st, config::DiagnosticLines::One);
-        match self.lines {
-          config::DiagnosticLines::One => {
-            write!(f, ": expected `{want}`, found `{got}`")
-          }
-          config::DiagnosticLines::Many => {
-            writeln!(f, "\n  expected `{want}`")?;
-            write!(f, "     found `{got}`")
+      ErrorKind::Unify(un, want, got, events) => match un {
+        unify::Error::Circularity(circ) => {
+          let mv = circ.meta_var.display(self.st, config::DiagnosticLines::One);
+          let ty = circ.ty.display(self.st, config::DiagnosticLines::One);
+          write!(f, "circular type: `{mv}` occurs in `{ty}`")
+        }
+        unify::Error::Incompatible(reason) => {
+          let reason = reason.display(self.st);
+          write!(f, "incompatible types: {reason}")?;
+          let want_d = want.display(self.st, config::DiagnosticLines::One);
+          let got_d = got.display(self.st, config::DiagnosticLines::One);
+          match self.lines {
+            config::DiagnosticLines::One => {
+              write!(f, ": expected `{want_d}`, found `{got_d}`")
+            }
+            config::DiagnosticLines::Many => {
+              writeln!(f, "\n  expected `{want_d}`")?;
+              write!(f, "     found `{got_d}`")?;
+              let named = events.named_tys();
+              if named.is_empty() {
+                Ok(())
+              } else {
+                let want_d = want.display_with_names(named, self.st, config::DiagnosticLines::One);
+                let got_d = got.display_with_names(named, self.st, config::DiagnosticLines::One);
+                writeln!(f, "\nwith type var names:")?;
+                writeln!(f, "  expected `{want_d}`")?;
+                write!(f, "     found `{got_d}`")
+              }
+            }
           }
         }
-      }
+      },
       ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: `{lab}`"),
       ErrorKind::RealPat => f.write_str("real literal used as a pattern"),
       ErrorKind::UnreachablePattern => f.write_str("unreachable pattern"),
@@ -257,14 +267,16 @@ impl Error {
   /// - `Code::n(5007)`
   #[must_use]
   pub fn code(&self) -> Code {
-    match self.kind {
+    match &self.kind {
       ErrorKind::Unsupported(_) => Code::n(5999),
       ErrorKind::Undefined(_, _) => Code::n(5001),
       ErrorKind::Duplicate(_, _) => Code::n(5002),
       ErrorKind::Missing(_, _) => Code::n(5003),
       ErrorKind::Extra(_, _) => Code::n(5004),
-      ErrorKind::Circularity(_) => Code::n(5005),
-      ErrorKind::IncompatibleTys(_, _, _) => Code::n(5006),
+      ErrorKind::Unify(un, _, _, _) => match un {
+        unify::Error::Circularity(_) => Code::n(5005),
+        unify::Error::Incompatible(_) => Code::n(5006),
+      },
       ErrorKind::DuplicateLab(_) => Code::n(5008),
       ErrorKind::RealPat => Code::n(5009),
       ErrorKind::UnreachablePattern => Code::n(5010),
@@ -321,5 +333,11 @@ impl Error {
       | ErrorKind::ShadowInCaseWithSameTy(_, _) => Severity::Warning,
       _ => Severity::Error,
     }
+  }
+
+  /// Returns any events in this.
+  #[must_use]
+  pub fn events(&self) -> Option<&notes::Events> {
+    if let ErrorKind::Unify(_, _, _, events) = &self.kind { Some(events) } else { None }
   }
 }

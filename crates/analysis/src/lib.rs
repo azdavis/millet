@@ -34,7 +34,10 @@ pub struct Analysis {
 impl Analysis {
   /// Returns a new `Analysis`.
   #[must_use]
-  pub fn new(std_basis: StdBasis, diagnostics_options: diagnostic::Options) -> Self {
+  pub fn new(mut std_basis: StdBasis, diagnostics_options: diagnostic::Options) -> Self {
+    if diagnostics_options.unify_extra_help {
+      std_basis.add_notes();
+    }
     Self {
       syms_tys: std_basis.syms_tys().clone(),
       std_basis,

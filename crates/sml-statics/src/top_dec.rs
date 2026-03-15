@@ -92,6 +92,9 @@ fn get_str_dec_one(
     // @def(56)
     sml_hir::StrDec::Dec(dec) => {
       dec::get(st, Cfg::default(), &bs.as_cx(), ars, ac.as_mut_env(), dec);
+      if let Some(notes) = &mut st.syms_tys.notes {
+        notes.clear();
+      }
     }
     // @def(57)
     sml_hir::StrDec::Structure(str_binds) => {

@@ -1,35 +1,33 @@
 //! Utilities.
 
 use crate::ty::{BoundTyVar, BoundTyVars, Generalizable, Ty, TyData, TyScheme, TyVarKind, Tys};
-use crate::{overload, sym::Sym};
+use crate::{St, overload, sym::Sym};
 
 /// Gets the type from a special constructor aka literal.
-pub fn get_scon(tys: &mut Tys, g: Generalizable, scon: &sml_hir::SCon) -> Ty {
+pub fn get_scon(st: &mut St, g: Generalizable, scon: &sml_hir::SCon, idx: sml_hir::Idx) -> Ty {
   // we could have all of these return the basic overloads, but there are no overloads for `char` or
   // `string`, so just return the primitive types themselves for those.
-  match scon {
-    sml_hir::SCon::Int(_) => {
-      let kind = TyVarKind::Overloaded(overload::Basic::Int.into());
-      tys.meta_var_kind(g, kind)
-    }
-    sml_hir::SCon::Real(_) => {
-      let kind = TyVarKind::Overloaded(overload::Basic::Real.into());
-      tys.meta_var_kind(g, kind)
-    }
-    sml_hir::SCon::Word(_) => {
-      let kind = TyVarKind::Overloaded(overload::Basic::Word.into());
-      tys.meta_var_kind(g, kind)
-    }
-    sml_hir::SCon::Char(_) => Ty::CHAR,
-    sml_hir::SCon::String(_) => Ty::STRING,
+  let basic = match scon {
+    sml_hir::SCon::Char(_) => return Ty::CHAR,
+    sml_hir::SCon::String(_) => return Ty::STRING,
+    sml_hir::SCon::Int(_) => overload::Basic::Int,
+    sml_hir::SCon::Real(_) => overload::Basic::Real,
+    sml_hir::SCon::Word(_) => overload::Basic::Word,
+  };
+  let ov = overload::Overload::from(basic);
+  let kind = TyVarKind::Overloaded(ov);
+  let ret = st.tys.meta_var(g, kind);
+  if let Some(notes) = &mut st.notes {
+    notes.introduce_overloaded(ret, idx, ov);
   }
+  ret
 }
 
 /// Instantiates the type scheme's type with new meta type vars, according to the bound vars of the
 /// type scheme.
 pub fn instantiate(tys: &mut Tys, g: Generalizable, ty_scheme: &TyScheme) -> Ty {
   let subst: Vec<_> =
-    ty_scheme.bound_vars.iter().map(|data| tys.meta_var_kind(g, data.ty_var_kind())).collect();
+    ty_scheme.bound_vars.iter().map(|data| tys.meta_var(g, data.ty_var_kind())).collect();
   let mut ret = ty_scheme.ty;
   apply_bv(tys, &subst, &mut ret);
   ret

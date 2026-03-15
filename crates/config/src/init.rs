@@ -30,6 +30,8 @@ pub struct DiagnosticsOptions {
   #[serde(default)]
   pub more_info_hint: Tool,
   #[serde(default)]
+  pub unify_extra_help: bool,
+  #[serde(default)]
   pub ignore: DiagnosticsIgnore,
 }
 

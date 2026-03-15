@@ -8,7 +8,7 @@ use crate::{
   unify::unify,
 };
 use sml_statics_types::info::{IdStatus, ValEnv, ValInfo};
-use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme};
+use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme, TyVarKind};
 use sml_statics_types::util::{get_scon, instantiate};
 use sml_statics_types::{def, env::Cx, item::Item, mode::Mode, sym::Sym};
 use std::collections::{BTreeMap, BTreeSet};
@@ -33,7 +33,7 @@ pub(crate) fn get(
     Some(x) => x,
     None => PatRet {
       pm_pat: Pat::zero(Con::Any, pat),
-      ty: st.syms_tys.tys.meta_var(cfg.gz),
+      ty: st.syms_tys.tys.meta_var(cfg.gz, TyVarKind::Regular),
       ty_scheme: None,
       defs: def::Set::default(),
     },
@@ -65,7 +65,13 @@ fn get_(
   let mut defs = def::Set::default();
   let (pm_pat, ty) = match &ars.pat[pat_idx] {
     // @def(32)
-    sml_hir::Pat::Wild => (Pat::zero(Con::Any, pat), st.syms_tys.tys.meta_var(cfg.gz)),
+    sml_hir::Pat::Wild => {
+      let ty = st.syms_tys.tys.meta_var(cfg.gz, TyVarKind::Regular);
+      if let Some(notes) = &mut st.syms_tys.notes {
+        notes.introduce(ty, pat_idx.into());
+      }
+      (Pat::zero(Con::Any, pat), ty)
+    }
     // @def(33)
     sml_hir::Pat::SCon(special_con) => {
       let con = match special_con {
@@ -78,7 +84,7 @@ fn get_(
         sml_hir::SCon::Char(c) => Con::Char(*c),
         sml_hir::SCon::String(s) => Con::String(s.clone()),
       };
-      let t = get_scon(&mut st.syms_tys.tys, cfg.gz, special_con);
+      let t = get_scon(st.syms_tys, cfg.gz, special_con, pat_idx.into());
       (Pat::zero(con, pat), t)
     }
     sml_hir::Pat::Con(path, argument) => {
@@ -93,7 +99,10 @@ fn get_(
         && (val_info_for_var(val_info.val.as_ref().ok().copied()) || cfg.rec);
       // @def(34)
       if is_var {
-        let ty = st.syms_tys.tys.meta_var(cfg.gz);
+        let ty = st.syms_tys.tys.meta_var(cfg.gz, TyVarKind::Regular);
+        if let Some(notes) = &mut st.syms_tys.notes {
+          notes.introduce(ty, pat_idx.into());
+        }
         insert_name(st, pat_idx.into(), cfg.inner, ve, path.last().clone(), ty);
         // a little WET with val_info_for_var
         if let Mode::Dynamics = st.info.mode {
@@ -114,13 +123,13 @@ fn get_(
       if let Mode::Dynamics = st.info.mode {
         assert!(st.pat_id_statuses.insert(pat_idx, val_info.id_status).is_none());
       }
-      let variant_name = match &val_info.id_status {
+      let variant_name = match val_info.id_status {
         IdStatus::Val => {
           st.err(pat_idx, ErrorKind::PatValIdStatus);
           VariantName::Name(path.last().clone())
         }
         IdStatus::Con => VariantName::Name(path.last().clone()),
-        IdStatus::Exn(exn) => VariantName::Exn(*exn),
+        IdStatus::Exn(exn) => VariantName::Exn(exn),
       };
       let ty = instantiate(&mut st.syms_tys.tys, cfg.gz, &val_info.ty_scheme);
       // @def(35), @def(41)
@@ -242,7 +251,10 @@ fn get_(
     }
     // Successor ML extension
     sml_hir::Pat::Vector(pats) => {
-      let ty = st.syms_tys.tys.meta_var(Generalizable::Always);
+      let ty = st.syms_tys.tys.meta_var(Generalizable::Always, TyVarKind::Regular);
+      if let Some(notes) = &mut st.syms_tys.notes {
+        notes.introduce(ty, pat_idx.into());
+      }
       let iter = pats.iter().map(|&inner| {
         let (pm_pat, inner_ty) = get(st, cfg, ars, cx, ve, inner);
         unify(st, inner.unwrap_or(pat_idx).into(), ty, inner_ty);

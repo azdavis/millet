@@ -67,6 +67,7 @@ fn run() -> usize {
     } else {
       config::init::FormatEngine::None
     },
+    unify_extra_help: false,
   };
   let mut an = analysis::Analysis::new(analysis::StdBasis::full(), options);
   let got = an.get_many_text_range(&inp);

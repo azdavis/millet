@@ -253,7 +253,7 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
       disallow: None,
     },
   };
-  (sml_statics_types::St { syms, tys }, bs)
+  (sml_statics_types::St { syms, tys, notes: None }, bs)
 }
 
 fn insert_special(syms: &mut Syms, sym: Sym, ty_info: SymTyInfo) {

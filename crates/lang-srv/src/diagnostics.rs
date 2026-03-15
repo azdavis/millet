@@ -17,6 +17,7 @@ pub(crate) fn try_publish(st: &mut St) -> bool {
       match convert::file_url(err.abs_path()) {
         Ok(url) => {
           let d = convert::diagnostic(
+            &url,
             err.display(root.path.as_path()).to_string(),
             err.range(),
             err.code(),
@@ -61,7 +62,7 @@ pub(crate) fn try_publish(st: &mut St) -> bool {
         continue;
       }
     };
-    let ds = convert::diagnostics(errors, st.cx.options.diagnostics.more_info_hint.0);
+    let ds = convert::diagnostics(&url, errors, st.cx.options.diagnostics.more_info_hint.0);
     if ds.is_empty() {
       continue;
     }

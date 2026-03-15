@@ -5,7 +5,7 @@ use crate::ty::{
   MetaTyVarData, RecordData, Ty, TyData, TyKind, TyVarKind, Tys, UnsolvedMetaTyVarData,
   UnsolvedMetaTyVarKind,
 };
-use crate::{equality, overload};
+use crate::{equality, notes::Notes, overload};
 use std::collections::BTreeSet;
 
 /// An error when unifying.
@@ -58,7 +58,13 @@ impl From<Incompatible> for Error {
 /// # Panics
 ///
 /// If the types contain bound variables.
-pub fn unify(tys: &mut Tys, syms: &Syms, want: Ty, got: Ty) -> Result<(), Error> {
+pub fn unify(
+  notes: &mut Option<Notes>,
+  tys: &mut Tys,
+  syms: &Syms,
+  want: Ty,
+  got: Ty,
+) -> Result<(), Error> {
   let (want, want_data) = tys.canonicalize(want);
   let (got, got_data) = tys.canonicalize(got);
   // if `Ty`s are `==`, they are semantically the same type, because of interning.
@@ -70,8 +76,8 @@ pub fn unify(tys: &mut Tys, syms: &Syms, want: Ty, got: Ty) -> Result<(), Error>
     (TyData::BoundVar(_), _) | (_, TyData::BoundVar(_)) => {
       unreachable!("bound vars should be instantiated")
     }
-    (TyData::UnsolvedMetaVar(umv), _) => unify_mv(tys, syms, want, umv, got),
-    (_, TyData::UnsolvedMetaVar(umv)) => unify_mv(tys, syms, got, umv, want),
+    (TyData::UnsolvedMetaVar(umv), _) => unify_mv(notes, tys, syms, want, umv, got),
+    (_, TyData::UnsolvedMetaVar(umv)) => unify_mv(notes, tys, syms, got, umv, want),
     (TyData::FixedVar(want), TyData::FixedVar(got)) => {
       // already checked not equal
       Err(Incompatible::FixedTyVar(want.ty_var, got.ty_var).into())
@@ -83,7 +89,7 @@ pub fn unify(tys: &mut Tys, syms: &Syms, want: Ty, got: Ty) -> Result<(), Error>
           None => {
             missing.insert(lab);
           }
-          Some(got_ty) => unify(tys, syms, want_ty, got_ty)?,
+          Some(got_ty) => unify(notes, tys, syms, want_ty, got_ty)?,
         }
       }
       if got_rows.is_empty() && missing.is_empty() {
@@ -99,13 +105,13 @@ pub fn unify(tys: &mut Tys, syms: &Syms, want: Ty, got: Ty) -> Result<(), Error>
       }
       assert_eq!(want.args.len(), got.args.len());
       for (&want, &got) in want.args.iter().zip(got.args.iter()) {
-        unify(tys, syms, want, got)?;
+        unify(notes, tys, syms, want, got)?;
       }
       Ok(())
     }
     (TyData::Fn(want), TyData::Fn(got)) => {
-      unify(tys, syms, want.param, got.param)?;
-      unify(tys, syms, want.res, got.res)
+      unify(notes, tys, syms, want.param, got.param)?;
+      unify(notes, tys, syms, want.res, got.res)
     }
     _ => Err(Incompatible::HeadMismatch(want, got).into()),
   }
@@ -114,6 +120,7 @@ pub fn unify(tys: &mut Tys, syms: &Syms, want: Ty, got: Ty) -> Result<(), Error>
 /// unifies mv, which is currently unsolved and has data `mv_data`, which describes the
 /// restrictions if any on it, with ty.
 fn unify_mv(
+  notes: &mut Option<Notes>,
   tys: &mut Tys,
   syms: &Syms,
   mv: Ty,
@@ -192,6 +199,9 @@ fn unify_mv(
             }
           };
           // make ty an overloaded meta var.
+          if let Some(notes) = notes {
+            notes.overload(ty, ty_ov);
+          }
           tys.unsolved_meta_var(ty).kind =
             UnsolvedMetaTyVarKind::Kind(TyVarKind::Overloaded(ty_ov));
         }
@@ -212,7 +222,7 @@ fn unify_mv(
         for (lab, want) in want.rows {
           match got_rows.remove(&lab) {
             None => return Err(Incompatible::UnresolvedRecordMissingRow(lab).into()),
-            Some(got) => unify(tys, syms, want, got)?,
+            Some(got) => unify(notes, tys, syms, want, got)?,
           }
         }
       }
@@ -238,17 +248,23 @@ fn unify_mv(
           UnsolvedMetaTyVarKind::UnresolvedRecord(got) => {
             for (lab, got) in got.rows {
               if let Some(&want) = want.rows.get(&lab) {
-                unify(tys, syms, want, got)?;
+                unify(notes, tys, syms, want, got)?;
               }
               want.rows.insert(lab, got);
             }
           }
+        }
+        if let Some(notes) = notes {
+          notes.record(ty, want.clone());
         }
         tys.unsolved_meta_var(ty).kind = UnsolvedMetaTyVarKind::UnresolvedRecord(want);
       }
     },
   }
   // solve mv to ty. mv is already known to be canonically an unsolved meta var.
+  if let Some(notes) = notes {
+    notes.solve(mv, ty);
+  }
   tys.meta_var_data[mv.idx.to_usize()] = MetaTyVarData::Solved(ty);
   Ok(())
 }
