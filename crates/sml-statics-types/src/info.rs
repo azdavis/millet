@@ -85,6 +85,16 @@ impl IdStatus {
       (Self::Con, Self::Con) | (Self::Exn(_), Self::Exn(_)) | (Self::Val, Self::Val)
     )
   }
+
+  /// Returns a static str for this.
+  #[must_use]
+  pub fn as_static_str(self) -> &'static str {
+    match self {
+      IdStatus::Con => "a constructor",
+      IdStatus::Exn(_) => "an exception",
+      IdStatus::Val => "a value",
+    }
+  }
 }
 
 /// A map from an arena index to id status.

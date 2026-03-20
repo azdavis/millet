@@ -33,7 +33,7 @@ pub(crate) enum ErrorKind {
   TyEscape(Ty),
   ValRecExpNotFn,
   WrongNumTyArgs(usize, usize),
-  ExnCopyNotExnIdStatus(sml_path::Path),
+  ExnCopyNotExnIdStatus(sml_path::Path, sml_statics_types::info::IdStatus),
   InvalidRebindName(str_util::Name),
   WrongIdStatus(str_util::Name),
   UnresolvedRecordTy(RecordData),
@@ -115,12 +115,14 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let ty = ty.display(self.st, config::DiagnosticLines::One);
         write!(f, "type escapes its scope: `{ty}`")
       }
-      ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
+      ErrorKind::ValRecExpNotFn => f.write_str("expected a `fn` expression for a `val rec`"),
       ErrorKind::WrongNumTyArgs(want, got) => {
         let s = if *want == 1 { "" } else { "s" };
         write!(f, "expected {want} type argument{s}, found {got}")
       }
-      ErrorKind::ExnCopyNotExnIdStatus(path) => write!(f, "not an exception: `{path}`"),
+      ErrorKind::ExnCopyNotExnIdStatus(path, id_status) => {
+        write!(f, "expected an exception, found {}: `{}`", id_status.as_static_str(), path)
+      }
       ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: `{name}`"),
       ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: `{name}`"),
       ErrorKind::UnresolvedRecordTy(rows) => {
@@ -275,7 +277,7 @@ impl Error {
       ErrorKind::TyEscape(_) => Code::n(5017),
       ErrorKind::ValRecExpNotFn => Code::n(5018),
       ErrorKind::WrongNumTyArgs(_, _) => Code::n(5019),
-      ErrorKind::ExnCopyNotExnIdStatus(_) => Code::n(5020),
+      ErrorKind::ExnCopyNotExnIdStatus(_, _) => Code::n(5020),
       ErrorKind::InvalidRebindName(_) => Code::n(5021),
       ErrorKind::WrongIdStatus(_) => Code::n(5022),
       ErrorKind::UnresolvedRecordTy(_) => Code::n(5023),

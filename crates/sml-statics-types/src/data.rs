@@ -2,7 +2,7 @@
 
 use fast_hash::FxHashMap;
 
-/// A two-way mapping between interned indices and data.
+/// A two-way mapping between interned indices and data, that generates new indices.
 #[derive(Debug, Clone)]
 pub(crate) struct Map<T> {
   idx: FxHashMap<T, idx::Idx>,

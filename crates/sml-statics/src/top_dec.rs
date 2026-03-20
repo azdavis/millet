@@ -535,7 +535,7 @@ fn get_spec_one(
     // @def(73), @def(83)
     sml_hir::Spec::Exception(ex_desc) => {
       let cx = bs.as_cx();
-      // almost the same as the logic in dec::get, save for the check for ty vars.
+      // almost the same as the logic in [`dec::get`], save for the check for ty vars.
       let mut ty = Ty::EXN;
       let param = ex_desc.ty.map(|param| ty::get(st, &cx, ars, ty::Mode::Regular, param));
       if let Some(param) = param {

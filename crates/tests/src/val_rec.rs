@@ -88,7 +88,7 @@ fn let_() {
   check(
     r"
 val rec f = let val three = 3 in fn () => three end
-(** + was not a `fn` *)
+(** + expected a `fn` *)
 ",
   );
 }
@@ -98,7 +98,7 @@ fn handle() {
   check(
     r"
 val rec f = (fn () => 1) handle _ => (fn () => 2)
-(** + was not a `fn` *)
+(** + expected a `fn` *)
 ",
   );
 }
@@ -109,7 +109,7 @@ fn var() {
     r"
 val g = fn () => ()
 val rec f = g
-(** + was not a `fn` *)
+(** + expected a `fn` *)
 ",
   );
 }

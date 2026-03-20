@@ -202,17 +202,16 @@ fn get_one(
             if let Some(d) = &val_info.disallow {
               st.err(dec, ErrorKind::Disallowed(Item::Val, d.clone(), path.last().clone()));
             }
-            match val_info.id_status {
-              IdStatus::Exn(_) => {
-                match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
-                  None => {
-                    let dec_defs = st.info.entries.defs.dec.entry(dec).or_default();
-                    dec_defs.extend(val_info.defs.iter());
-                  }
-                  Some(e) => st.err(dec, e),
+            if let IdStatus::Exn(_) = val_info.id_status {
+              match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
+                None => {
+                  let dec_defs = st.info.entries.defs.dec.entry(dec).or_default();
+                  dec_defs.extend(val_info.defs.iter());
                 }
+                Some(e) => st.err(dec, e),
               }
-              _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus(path.clone())),
+            } else {
+              st.err(dec, ErrorKind::ExnCopyNotExnIdStatus(path.clone(), val_info.id_status));
             }
           }
         }
@@ -439,19 +438,18 @@ fn expansive(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
     sml_hir::Exp::Hole | sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) | sml_hir::Exp::Fn(_, _) => {
       false
     }
-    sml_hir::Exp::Let(_, _) | sml_hir::Exp::Raise(_) | sml_hir::Exp::Handle(_, _) => true,
+    sml_hir::Exp::Let(_, _)
+    | sml_hir::Exp::Raise(_)
+    | sml_hir::Exp::Handle(_, _)
+    | sml_hir::Exp::Vector(_) => true,
     sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| expansive(cx, ars, exp)),
     sml_hir::Exp::App(func, argument) => {
       !constructor(cx, ars, *func) || expansive(cx, ars, *argument)
     }
     sml_hir::Exp::Typed(exp, _, _) => expansive(cx, ars, *exp),
-    sml_hir::Exp::Vector(exps) => exps.iter().any(|&exp| expansive(cx, ars, exp)),
   }
 }
 
-/// this will sometimes return true for expressions that could not possibly be a "constructor" in
-/// the sense of section 4.7 of the definition, like records. but there would have been a type error
-/// emitted for the application already anyway.
 fn constructor(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
   let Some(exp) = exp else { return true };
   match &ars.exp[exp] {
@@ -461,8 +459,8 @@ fn constructor(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
     | sml_hir::Exp::Handle(_, _)
     | sml_hir::Exp::Raise(_)
     | sml_hir::Exp::Fn(_, _)
-    | sml_hir::Exp::Vector(_) => false,
-    sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| constructor(cx, ars, exp)),
+    | sml_hir::Exp::Vector(_)
+    | sml_hir::Exp::Record(_) => false,
     sml_hir::Exp::Typed(exp, _, _) => constructor(cx, ars, *exp),
     sml_hir::Exp::Path(path) => {
       if path.prefix().is_empty() && path.last().as_str() == "ref" {
