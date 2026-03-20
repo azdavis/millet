@@ -2,7 +2,7 @@
 
 use sml_syntax::ast::AstNode as _;
 
-/// A diagnostic.
+/// A diagnostic in a file.
 #[derive(Debug)]
 pub struct Diagnostic<R> {
   /// The range.
@@ -13,6 +13,8 @@ pub struct Diagnostic<R> {
   pub code: diagnostic::Code,
   /// The severity.
   pub severity: diagnostic::Severity,
+  /// More info.
+  pub more_info: Vec<MoreInfo<R>>,
 }
 
 impl<R> Diagnostic<R> {
@@ -24,8 +26,18 @@ impl<R> Diagnostic<R> {
       message: "comment prevents formatting".to_owned(),
       code: diagnostic::Code::n(6001),
       severity: diagnostic::Severity::Warning,
+      more_info: Vec::new(),
     }
   }
+}
+
+/// More info, in the same file.
+#[derive(Debug)]
+pub struct MoreInfo<R> {
+  /// The range in the file.
+  pub range: R,
+  /// The message.
+  pub message: String,
 }
 
 /// Options for diagnostics.
@@ -60,18 +72,33 @@ where
   let mut ret: Vec<_> = std::iter::empty()
     .chain(file.syntax.lex_errors.iter().filter_map(|err| {
       let range = f(&file.syntax.pos_db, err.range())?;
-      let message = err.to_string();
-      Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
+      Some(Diagnostic {
+        range,
+        message: err.to_string(),
+        code: err.code(),
+        severity: err.severity(),
+        more_info: Vec::new(),
+      })
     }))
     .chain(file.syntax.parse.errors.iter().filter_map(|err| {
       let range = f(&file.syntax.pos_db, err.range())?;
-      let message = err.to_string();
-      Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
+      Some(Diagnostic {
+        range,
+        message: err.to_string(),
+        code: err.code(),
+        severity: err.severity(),
+        more_info: Vec::new(),
+      })
     }))
     .chain(file.syntax.lower.errors.iter().filter_map(|err| {
       let range = f(&file.syntax.pos_db, err.range())?;
-      let message = err.to_string();
-      Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
+      Some(Diagnostic {
+        range,
+        message: err.to_string(),
+        code: err.code(),
+        severity: err.severity(),
+        more_info: Vec::new(),
+      })
     }))
     .collect();
   let has_any_error = ret.iter().any(|x| matches!(x.severity, diagnostic::Severity::Error));
@@ -81,8 +108,13 @@ where
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("should have a pointer for idx");
       let node = syntax.to_node(file.syntax.parse.root.syntax());
       let range = f(&file.syntax.pos_db, sml_syntax::node_range(&node))?;
-      let message = err.display(syms_tys, options.lines).to_string();
-      Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
+      Some(Diagnostic {
+        range,
+        message: err.display(syms_tys, options.lines).to_string(),
+        code: err.code(),
+        severity: err.severity(),
+        more_info: Vec::new(),
+      })
     }));
     if let config::init::FormatEngine::Naive = options.format
       && let Err(sml_naive_fmt::Error::Comments(ranges)) =

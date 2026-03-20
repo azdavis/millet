@@ -59,7 +59,7 @@ fn run() -> usize {
   let root = pwd.as_clean_path().join(root.as_path());
   let mut store = paths::Store::new();
   let inp = input::Input::new(&fs, &mut store, root.as_clean_path());
-  let options = analysis::Options {
+  let options = analysis::diagnostic::Options {
     lines: config::DiagnosticLines::One,
     ignore: config::init::DiagnosticsIgnore::AfterSyntax,
     format: if format {
@@ -103,7 +103,7 @@ fn run() -> usize {
             sml_naive_fmt::Error::Syntax => {}
             sml_naive_fmt::Error::Comments(ranges) => {
               for range in ranges {
-                let d = analysis::Diagnostic::naive_fmt_comment(range);
+                let d = analysis::diagnostic::Diagnostic::naive_fmt_comment(range);
                 let d = mk_diagnostic(id, &d);
                 codespan_reporting::term::emit(&mut stderr, &config, &files, &d).unwrap();
                 format_errors += 1;
@@ -135,7 +135,7 @@ fn show_input_error(root: &std::path::Path, e: &input::Error) {
 
 fn mk_diagnostic<R>(
   path: paths::PathId,
-  d: &analysis::Diagnostic<R>,
+  d: &analysis::diagnostic::Diagnostic<R>,
 ) -> codespan_reporting::diagnostic::Diagnostic<paths::PathId>
 where
   R: Copy + Into<std::ops::Range<usize>>,

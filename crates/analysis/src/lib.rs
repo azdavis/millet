@@ -1,6 +1,7 @@
 //! The unification of all the passes into a single high-level API.
 
-mod diagnostic;
+pub mod diagnostic;
+
 mod matcher;
 mod source_files;
 
@@ -14,7 +15,6 @@ use std::{error::Error, fmt, io::Write as _};
 use text_pos::{PositionDb, PositionUtf16, RangeUtf16};
 use text_size_util::TextRange;
 
-pub use crate::diagnostic::{Diagnostic, Options};
 pub use mlb_statics::StdBasis;
 
 /// The url to go to for information about diagnostics.
@@ -48,7 +48,7 @@ impl Analysis {
   pub fn get_many(
     &mut self,
     input: &input::Input,
-  ) -> PathMap<Vec<Diagnostic<text_pos::RangeUtf16>>> {
+  ) -> PathMap<Vec<diagnostic::Diagnostic<text_pos::RangeUtf16>>> {
     self.get_many_impl(input, text_pos::PositionDb::range_utf16)
   }
 
@@ -57,11 +57,15 @@ impl Analysis {
   pub fn get_many_text_range(
     &mut self,
     input: &input::Input,
-  ) -> PathMap<Vec<Diagnostic<TextRange>>> {
+  ) -> PathMap<Vec<diagnostic::Diagnostic<TextRange>>> {
     self.get_many_impl(input, |_, b| Some(b))
   }
 
-  fn get_many_impl<F, R>(&mut self, input: &input::Input, f: F) -> PathMap<Vec<Diagnostic<R>>>
+  fn get_many_impl<F, R>(
+    &mut self,
+    input: &input::Input,
+    f: F,
+  ) -> PathMap<Vec<diagnostic::Diagnostic<R>>>
   where
     F: Fn(&text_pos::PositionDb, text_size_util::TextRange) -> Option<R>,
   {
@@ -91,11 +95,12 @@ impl Analysis {
       .chain(res.mlb_errors.into_iter().filter_map(|err| {
         let path = err.path();
         let group = input.groups.get(&path).expect("should have a group for path");
-        let err = Diagnostic {
+        let err = diagnostic::Diagnostic {
           range: f(&group.pos_db, err.range())?,
           message: err.to_string(),
           code: err.code(),
           severity: err.severity(),
+          more_info: Vec::new(),
         };
         Some((path, vec![err]))
       }))

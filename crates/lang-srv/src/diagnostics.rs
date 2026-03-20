@@ -21,6 +21,7 @@ pub(crate) fn try_publish(st: &mut St) -> bool {
             err.range(),
             err.code(),
             err.severity(),
+            Vec::new(),
             st.cx.options.diagnostics.more_info_hint.0,
           );
           input_diagnostics.entry(url).or_default().push(d);

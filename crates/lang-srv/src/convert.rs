@@ -24,12 +24,21 @@ pub(crate) fn file_url(path: &std::path::Path) -> Result<Url> {
 }
 
 pub(crate) fn diagnostics(
-  errors: Vec<analysis::Diagnostic<text_pos::RangeUtf16>>,
+  errors: Vec<analysis::diagnostic::Diagnostic<text_pos::RangeUtf16>>,
   more_info_hint: bool,
 ) -> Vec<lsp_types::Diagnostic> {
   errors
     .into_iter()
-    .map(|err| diagnostic(err.message, Some(err.range), err.code, err.severity, more_info_hint))
+    .map(|err| {
+      diagnostic(
+        err.message,
+        Some(err.range),
+        err.code,
+        err.severity,
+        err.more_info,
+        more_info_hint,
+      )
+    })
     .collect()
 }
 
@@ -55,15 +64,22 @@ pub(crate) fn diagnostic(
   range: Option<text_pos::RangeUtf16>,
   code: diagnostic::Code,
   severity: diagnostic::Severity,
+  more_info: Vec<analysis::diagnostic::MoreInfo<text_pos::RangeUtf16>>,
   more_info_hint: bool,
 ) -> lsp_types::Diagnostic {
   let url = error_url(code);
-  let related_information = more_info_hint.then(|| {
-    vec![lsp_types::DiagnosticRelatedInformation {
-      location: lsp_types::Location { uri: url.clone(), range: lsp_types::Range::default() },
-      message: ClickCodeHint { code }.to_string(),
-    }]
+  let more_info_hint = more_info_hint.then(|| lsp_types::DiagnosticRelatedInformation {
+    location: lsp_types::Location { uri: url.clone(), range: lsp_types::Range::default() },
+    message: ClickCodeHint { code }.to_string(),
   });
+  let related_info: Vec<_> = std::iter::once(more_info_hint)
+    .flatten()
+    .chain(more_info.into_iter().map(|info| lsp_types::DiagnosticRelatedInformation {
+      // TODO use url for this file, not the error url
+      location: lsp_types::Location { uri: url.clone(), range: lsp_range(info.range) },
+      message: info.message,
+    }))
+    .collect();
   lsp_types::Diagnostic {
     range: range.map(lsp_range).unwrap_or_default(),
     severity: Some(match severity {
@@ -74,7 +90,7 @@ pub(crate) fn diagnostic(
     code_description: Some(lsp_types::CodeDescription { href: url }),
     source: Some("Millet".to_owned()),
     message,
-    related_information,
+    related_information: Some(related_info),
     tags: None,
     data: None,
   }
