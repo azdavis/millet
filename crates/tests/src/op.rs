@@ -1,6 +1,6 @@
-//! Using infix operators without `op`.
+//! Using infix operators and `op`.
 
-use crate::check::check;
+use crate::check::{check, check_with_warnings};
 
 #[test]
 fn exp() {
@@ -49,6 +49,17 @@ fn cons_not_atomic() {
 fun map f [] = []
   | map f x::xs = f x :: map f xs
 (**        ^^ infix name used as non-infix without `op` *)
+",
+  );
+}
+
+#[test]
+fn unnecessary_op() {
+  check_with_warnings(
+    r"
+fun f (a, b) = a + b
+val _ = op f (1, 2)
+(**     ^^ unnecessary `op` *)
 ",
   );
 }

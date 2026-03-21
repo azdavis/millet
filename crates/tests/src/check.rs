@@ -8,8 +8,6 @@ mod show;
 pub(crate) mod markdown;
 pub(crate) mod raw;
 
-use diagnostic::Severity;
-
 /// Given the string of an SML program with some expectation comments, panics iff the expectation
 /// comments are not satisfied.
 ///
@@ -50,7 +48,7 @@ pub(crate) fn check_multi<const N: usize>(files: [(&str, &str); N]) {
     std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
-    min_severity: Severity::Error,
+    min_severity: diagnostic::Severity::Error,
     expected_input: raw::ExpectedInput::Good,
   };
   raw::get(files, opts);
@@ -84,7 +82,7 @@ pub(crate) fn fail(s: &str) {
     std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Fail,
     limit: raw::Limit::First,
-    min_severity: Severity::Error,
+    min_severity: diagnostic::Severity::Error,
     expected_input: raw::ExpectedInput::Good,
   };
   raw::get(raw::one_file_fs(s), opts);
@@ -97,7 +95,7 @@ pub(crate) fn check_with_std_basis(s: &str) {
     std_basis: raw::StdBasis::Full,
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
-    min_severity: Severity::Error,
+    min_severity: diagnostic::Severity::Error,
     expected_input: raw::ExpectedInput::Good,
   };
   raw::get(raw::one_file_fs(s), opts);
@@ -110,7 +108,7 @@ pub(crate) fn check_with_warnings(s: &str) {
     std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
-    min_severity: Severity::Warning,
+    min_severity: diagnostic::Severity::Warning,
     expected_input: raw::ExpectedInput::Good,
   };
   raw::get(raw::one_file_fs(s), opts);
@@ -127,7 +125,7 @@ where
     std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
-    min_severity: Severity::Warning,
+    min_severity: diagnostic::Severity::Warning,
     expected_input: raw::ExpectedInput::Bad { path, msg },
   };
   raw::get(files, opts);
