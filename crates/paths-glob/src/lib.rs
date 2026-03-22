@@ -122,7 +122,6 @@ impl FileSystem for paths::MemoryFileSystem {
 
   fn walk<'g>(&self, glob: &'g mut Self::Glob<'_>) -> Self::Walk<'g> {
     let cs: Vec<_> = std::path::Path::new(glob).components().collect();
-    #[allow(clippy::needless_collect)]
     let ret: Vec<_> = self
       .inner
       .keys()

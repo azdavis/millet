@@ -1,7 +1,5 @@
 //! A language server for Standard ML.
 
-#![allow(clippy::single_match_else)]
-
 mod capabilities;
 mod convert;
 mod cx;

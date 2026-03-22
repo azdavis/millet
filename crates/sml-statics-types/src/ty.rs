@@ -144,13 +144,8 @@ impl Tys {
   /// Asserts that this ty is an unsolved meta var, and returns its mutable data.
   pub(crate) fn unsolved_meta_var(&mut self, mut ty: Ty) -> &mut UnsolvedMetaTyVarData {
     assert!(matches!(ty.kind, TyKind::MetaVar));
-    // wtf, borrow checker? just let me 'return' from the first loop!!
-    #[allow(clippy::while_let_loop)]
-    loop {
-      match &self.meta_var_data[ty.idx.to_usize()] {
-        MetaTyVarData::Solved(new_ty) => ty = *new_ty,
-        MetaTyVarData::Unsolved(_) => break,
-      }
+    while let MetaTyVarData::Solved(new_ty) = &self.meta_var_data[ty.idx.to_usize()] {
+      ty = *new_ty;
     }
     match &mut self.meta_var_data[ty.idx.to_usize()] {
       MetaTyVarData::Unsolved(x) => x,

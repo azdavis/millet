@@ -19,7 +19,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       if !st.lang().exp.path {
         st.err(exp.syntax(), ErrorKind::Disallowed(Disallowed::Exp("path")));
       }
-      sml_hir::Exp::Path(get_path(exp.path()?)?)
+      sml_hir::Exp::Path(get_path(&exp.path()?)?)
     }
     ast::Exp::RecordExp(exp) => {
       if !st.lang().exp.record {
@@ -31,7 +31,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let rows = exp.exp_rows().filter_map(|row| {
         let lab_ast = row.lab()?;
         let tok = row.lab()?.token;
-        let lab = get_lab(st, lab_ast);
+        let lab = get_lab(st, &lab_ast);
         let exp = match row.eq_exp() {
           Some(eq_exp) => get(st, eq_exp.exp()),
           None => match &lab {
@@ -60,7 +60,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       if !st.lang().exp.selector {
         st.err(exp.syntax(), ErrorKind::Disallowed(Disallowed::Exp("`#` selector")));
       }
-      let lab = get_lab(st, exp.lab()?);
+      let lab = get_lab(st, &exp.lab()?);
       let fresh = st.fresh();
       let pat = st.pat(pat::name(fresh.as_str()), ptr);
       let param = st.pat(sml_hir::Pat::Record { rows: vec![(lab, pat)], allows_other: true }, ptr);

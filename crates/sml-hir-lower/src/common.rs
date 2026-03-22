@@ -1,7 +1,5 @@
 //! Common utilities.
 
-#![allow(clippy::needless_pass_by_value)]
-
 use crate::util::{Disallowed, ErrorKind, St};
 use sml_syntax::ast;
 
@@ -107,7 +105,7 @@ pub(crate) fn get_name(n: Option<sml_syntax::kind::SyntaxToken>) -> Option<str_u
   n.map(|tok| str_util::Name::new(tok.text()))
 }
 
-pub(crate) fn get_path(p: ast::Path) -> Option<sml_path::Path> {
+pub(crate) fn get_path(p: &ast::Path) -> Option<sml_path::Path> {
   sml_path::Path::try_new(
     p.name_star_eq_dots()
       .filter_map(|x| Some(str_util::Name::new(x.name_star_eq()?.token.text())))
@@ -115,7 +113,7 @@ pub(crate) fn get_path(p: ast::Path) -> Option<sml_path::Path> {
   )
 }
 
-pub(crate) fn get_lab(st: &mut St<'_>, lab: ast::Lab) -> sml_hir::Lab {
+pub(crate) fn get_lab(st: &mut St<'_>, lab: &ast::Lab) -> sml_hir::Lab {
   match lab.kind {
     ast::LabKind::Name | ast::LabKind::Star => {
       sml_hir::Lab::Name(str_util::Name::new(lab.token.text()))

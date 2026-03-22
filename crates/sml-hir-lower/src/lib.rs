@@ -1,6 +1,6 @@
 //! Lowering AST into HIR.
 
-#![allow(clippy::too_many_lines, clippy::single_match_else)]
+#![allow(clippy::too_many_lines)]
 
 mod common;
 mod dec;

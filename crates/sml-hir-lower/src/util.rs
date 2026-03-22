@@ -331,7 +331,7 @@ pub(crate) struct St<'a> {
   seen_top_level: bool,
 }
 
-#[allow(clippy::unnecessary_wraps)]
+#[expect(clippy::unnecessary_wraps)]
 impl<'a> St<'a> {
   pub(crate) fn new(lang: &'a Language, file_kind: sml_file::Kind) -> St<'a> {
     St {

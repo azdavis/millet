@@ -29,7 +29,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
           st.err_tok(&name, ErrorKind::PatNameIsNameOfContainingFun(flavor));
         }
       }
-      sml_hir::Pat::Con(get_path(pat.path()?)?, pat.pat().map(|x| get(st, flavor, Some(x))))
+      sml_hir::Pat::Con(get_path(&pat.path()?)?, pat.pat().map(|x| get(st, flavor, Some(x))))
     }
     ast::Pat::RecordPat(pat) => {
       if let Some(s) = pat.pat_rows().last().and_then(|x| x.comma()) {
@@ -48,7 +48,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
           if let Some(r) = &mut rest_pat_row {
             r.last = false;
           }
-          Some((get_lab(st, row.lab()?), get(st, flavor, row.pat())))
+          Some((get_lab(st, &row.lab()?), get(st, flavor, row.pat())))
         }
         ast::PatRowInner::LabPatRow(row) => {
           if let Some(r) = &mut rest_pat_row {

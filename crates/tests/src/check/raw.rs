@@ -60,7 +60,7 @@ pub(crate) struct Opts<'a> {
 
 /// The low-level impl that almost all top-level "check" functions delegate to.
 #[track_caller]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub(crate) fn get<'a, I>(files: I, opts: Opts<'_>)
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
@@ -167,33 +167,30 @@ where
             }
           };
           let got_defs = an.get_defs(path.wrap(pos));
-          match defs.get(expect.msg.as_str()) {
-            Some(&def) => {
-              let any_def_matches = got_defs.iter().flatten().any(|&gd| {
-                if gd.path != path {
-                  return false;
-                }
-                let start = gd.val.start;
-                let end = gd.val.end;
-                match def {
-                  expect::Region::Exact { line, col_start, col_end } => {
-                    start.line == line
-                      && end.line == line
-                      && start.col == col_start
-                      && end.col == col_end
-                  }
-                  expect::Region::Line(n) => start.line == n && end.line == n,
-                }
-              });
-              if !any_def_matches {
-                let r = reason::Reason::NoMatchingDef(path.wrap(region), expect.msg.clone());
-                ck.reasons.push(r);
+          if let Some(&def) = defs.get(expect.msg.as_str()) {
+            let any_def_matches = got_defs.iter().flatten().any(|&gd| {
+              if gd.path != path {
+                return false;
               }
-            }
-            None => {
-              let r = reason::Reason::Undef(path.wrap(region), expect.msg.clone());
+              let start = gd.val.start;
+              let end = gd.val.end;
+              match def {
+                expect::Region::Exact { line, col_start, col_end } => {
+                  start.line == line
+                    && end.line == line
+                    && start.col == col_start
+                    && end.col == col_end
+                }
+                expect::Region::Line(n) => start.line == n && end.line == n,
+              }
+            });
+            if !any_def_matches {
+              let r = reason::Reason::NoMatchingDef(path.wrap(region), expect.msg.clone());
               ck.reasons.push(r);
             }
+          } else {
+            let r = reason::Reason::Undef(path.wrap(region), expect.msg.clone());
+            ck.reasons.push(r);
           }
         }
         expect::Kind::Completions { with_std } => {

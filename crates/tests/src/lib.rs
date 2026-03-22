@@ -4,7 +4,6 @@
 //! - If you have many similar tests, put them in an existing or new module.
 
 #![cfg(test)]
-#![allow(clippy::single_match_else)]
 
 mod diagnostics {
   include!(concat!(env!("OUT_DIR"), "/diagnostics.rs"));

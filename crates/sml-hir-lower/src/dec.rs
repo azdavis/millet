@@ -230,7 +230,7 @@ fn get_str_exp(st: &mut St<'_>, str_exp: Option<ast::StrExp>) -> sml_hir::StrExp
   let ptr = SyntaxNodePtr::new(str_exp.syntax());
   let ret = match str_exp {
     ast::StrExp::StructStrExp(str_exp) => sml_hir::StrExp::Struct(get_str_dec(st, str_exp.decs())),
-    ast::StrExp::PathStrExp(str_exp) => sml_hir::StrExp::Path(get_path(str_exp.path()?)?),
+    ast::StrExp::PathStrExp(str_exp) => sml_hir::StrExp::Path(get_path(&str_exp.path()?)?),
     ast::StrExp::AscriptionStrExp(str_exp) => {
       let (kind, sig_exp) = ascription_tail(st, str_exp.ascription_tail());
       sml_hir::StrExp::Ascription(get_str_exp(st, str_exp.str_exp()), kind, sig_exp)
@@ -274,13 +274,13 @@ fn get_sig_exp(st: &mut St<'_>, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExp
       get_sig_exp(st, sig_exp.sig_exp()),
       sml_hir::WhereKind::Type(
         ty::var_seq(st, sig_exp.ty_var_seq()),
-        get_path(sig_exp.path()?)?,
+        get_path(&sig_exp.path()?)?,
         ty::get(st, sig_exp.ty()),
       ),
     ),
     ast::SigExp::WhereSigExp(sig_exp) => sml_hir::SigExp::Where(
       get_sig_exp(st, sig_exp.sig_exp()),
-      sml_hir::WhereKind::Structure(get_path(sig_exp.lhs()?)?, get_path(sig_exp.rhs()?)?),
+      sml_hir::WhereKind::Structure(get_path(&sig_exp.lhs()?)?, get_path(&sig_exp.rhs()?)?),
     ),
   };
   st.sig_exp(ret, ptr)
@@ -310,7 +310,7 @@ where
       } else {
         sml_hir::SharingKind::Derived
       };
-      let paths_eq: Vec<_> = tail.path_eqs().filter_map(|x| get_path(x.path()?)).collect();
+      let paths_eq: Vec<_> = tail.path_eqs().filter_map(|x| get_path(&x.path()?)).collect();
       vec![st.spec(sml_hir::Spec::Sharing(ac, kind, paths_eq), ptr)]
     }));
   }
@@ -424,7 +424,7 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
         st.err(dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`datatype` copy")));
       }
       get_name(dec.name())
-        .zip(dec.path().and_then(get_path))
+        .zip(dec.path().and_then(|x| get_path(&x)))
         .map(|(name, path)| vec![st.spec(sml_hir::Spec::DatatypeCopy(name, path), ptr)])
         .unwrap_or_default()
     }
@@ -454,24 +454,22 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
           st.err(eq_str_exp.syntax(), ErrorKind::NonSpecDecSyntax);
         }
         let name = get_name(str_bind.name())?;
-        let sig_exp = match str_bind.ascription_tail() {
-          Some(tail) => match tail.ascription() {
-            Some(asc) => match asc.kind {
+        let sig_exp = if let Some(tail) = str_bind.ascription_tail() {
+          if let Some(asc) = tail.ascription() {
+            match asc.kind {
               ast::AscriptionKind::Colon => get_sig_exp(st, tail.sig_exp()),
               ast::AscriptionKind::ColonGt => {
                 st.err_tok(&asc.token, ErrorKind::NonSpecDecSyntax);
                 None
               }
-            },
-            None => {
-              st.err(tail.syntax(), ErrorKind::NonSpecDecSyntax);
-              None
             }
-          },
-          None => {
-            st.err(str_bind.syntax(), ErrorKind::NonSpecDecSyntax);
+          } else {
+            st.err(tail.syntax(), ErrorKind::NonSpecDecSyntax);
             None
           }
+        } else {
+          st.err(str_bind.syntax(), ErrorKind::NonSpecDecSyntax);
+          None
         };
         let spec = sml_hir::Spec::Str(sml_hir::StrDesc { name, sig_exp });
         Some(st.spec(spec, ptr))
@@ -718,7 +716,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
       if st.is_top_level() && st.file_kind().is_sig_or_fun() {
         st.err(dec.syntax(), ErrorKind::DiscouragedTopDecKindForSigFun);
       }
-      sml_hir::Dec::DatatypeCopy(get_name(dec.name())?, get_path(dec.path()?)?)
+      sml_hir::Dec::DatatypeCopy(get_name(dec.name())?, get_path(&dec.path()?)?)
     }
     ast::DecOne::AbstypeDec(dec) => {
       if st.is_top_level() && st.file_kind().is_sig_or_fun() {
@@ -742,7 +740,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
           None => sml_hir::ExBind::New(name, None),
           Some(ast::ExBindInner::OfTy(x)) => sml_hir::ExBind::New(name, Some(ty::get(st, x.ty()))),
           Some(ast::ExBindInner::EqExp(x)) => match x.exp()? {
-            ast::Exp::PathExp(exp) => sml_hir::ExBind::Copy(name, get_path(exp.path()?)?),
+            ast::Exp::PathExp(exp) => sml_hir::ExBind::Copy(name, get_path(&exp.path()?)?),
             exp => {
               st.err(exp.syntax(), ErrorKind::ExceptionCopyRhsNotPath);
               sml_hir::ExBind::New(name, None)
@@ -773,7 +771,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
       if st.is_top_level() {
         st.err(dec.syntax(), ErrorKind::TopLevelOpen);
       }
-      let paths: Vec<_> = dec.paths().filter_map(get_path).collect();
+      let paths: Vec<_> = dec.paths().filter_map(|x| get_path(&x)).collect();
       if paths.is_empty() {
         st.err(dec.syntax(), ErrorKind::RequiresOperand);
       }

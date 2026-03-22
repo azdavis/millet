@@ -1,7 +1,5 @@
 //! See the [xtask spec](https://github.com/matklad/cargo-xtask).
 
-#![allow(clippy::single_match_else)]
-
 mod cli_test;
 
 use anyhow::{Context as _, Result, anyhow, bail};
@@ -270,14 +268,13 @@ fn release(tag_arg: &str) -> Result<()> {
   }
   let cargo_toml = "Cargo.toml";
   modify_each_line(cargo_toml, |out, _, line| {
-    match line.strip_prefix("version = \"").and_then(|x| x.strip_suffix('"')) {
-      None => out.push_str(line),
-      Some(_) => {
-        out.push_str("version = ");
-        out.push('"');
-        out.push_str(version);
-        out.push('"');
-      }
+    if line.strip_prefix("version = \"").and_then(|x| x.strip_suffix('"')).is_none() {
+      out.push_str(line);
+    } else {
+      out.push_str("version = ");
+      out.push('"');
+      out.push_str(version);
+      out.push('"');
     }
   })?;
   // to update Cargo.lock
@@ -299,12 +296,11 @@ fn main() -> Result<()> {
     show_help();
     return Ok(());
   }
-  let cmd: Cmd = match args.subcommand()? {
-    Some(x) => x.parse()?,
-    None => {
-      show_help();
-      return Ok(());
-    }
+  let cmd: Cmd = if let Some(x) = args.subcommand()? {
+    x.parse()?
+  } else {
+    show_help();
+    return Ok(());
   };
   env::set_current_dir(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap())?;
   match cmd {

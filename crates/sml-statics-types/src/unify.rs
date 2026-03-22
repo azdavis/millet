@@ -28,7 +28,7 @@ pub struct Circularity {
 
 /// A reason why types were incompatible.
 #[derive(Debug)]
-#[allow(missing_docs)]
+#[expect(missing_docs)]
 pub enum Incompatible {
   FixedTyVar(sml_hir::TyVar, sml_hir::TyVar),
   MismatchedRows { missing: BTreeSet<sml_hir::Lab>, extra: BTreeSet<sml_hir::Lab> },

@@ -17,7 +17,7 @@ pub(crate) fn get(st: &mut St<'_>, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
       }
       let rows = ty.ty_rows().filter_map(|row| {
         forbid_opaque_asc(st, row.ascription());
-        let lab = get_lab(st, row.lab()?);
+        let lab = get_lab(st, &row.lab()?);
         let ty = get(st, row.ty());
         Some((lab, ty))
       });
@@ -28,7 +28,7 @@ pub(crate) fn get(st: &mut St<'_>, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
       sml_hir::Ty::Record(rows)
     }
     ast::Ty::ConTy(ty) => {
-      let path = get_path(ty.path()?)?;
+      let path = get_path(&ty.path()?)?;
       let last_comma =
         ty.ty_seq().into_iter().flat_map(|x| x.ty_args()).last().and_then(|x| x.comma());
       if let Some(s) = last_comma {
@@ -38,7 +38,7 @@ pub(crate) fn get(st: &mut St<'_>, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
       sml_hir::Ty::Con(ty_args.collect(), path)
     }
     ast::Ty::OneArgConTy(ty) => {
-      let path = get_path(ty.path()?)?;
+      let path = get_path(&ty.path()?)?;
       sml_hir::Ty::Con(vec![get(st, ty.ty())], path)
     }
     ast::Ty::TupleTy(ty) => {
