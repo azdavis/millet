@@ -72,7 +72,7 @@ impl Notes {
     self.records.entry(mv.idx).or_default().push((idx, ur));
   }
 
-  /// Get related types.
+  /// Gets events related to the types.
   #[must_use]
   pub fn get_events(&self, tys: &Tys, mut work: Vec<Ty>) -> Events {
     let mut ret = Events::default();

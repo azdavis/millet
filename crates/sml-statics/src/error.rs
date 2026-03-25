@@ -83,6 +83,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
           let mv = circ.meta_var.display(self.st, config::DiagnosticLines::One);
           let ty = circ.ty.display(self.st, config::DiagnosticLines::One);
           write!(f, "circular type: `{mv}` occurs in `{ty}`")
+          // TODO show with type var names in here
         }
         unify::Error::Incompatible(reason) => {
           let reason = reason.display(self.st);
