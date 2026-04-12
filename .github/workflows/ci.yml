@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -63,7 +63,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install gcc-aarch64-linux-gnu
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -71,7 +71,7 @@ jobs:
       - name: Cache rust
         uses: Swatinem/rust-cache@v2
       - name: Set up node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: 24.x
       - name: Make dist
@@ -82,17 +82,17 @@ jobs:
         run: npx --no-install vsce package --target ${{ matrix.vscode }} -o vsix/millet-${{ matrix.vscode }}.vsix
         working-directory: editors/vscode
       - name: Upload language server artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ls-${{ matrix.rust }}
           path: binary/millet-ls-${{ matrix.rust }}.gz
       - name: Upload CLI artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cli-${{ matrix.rust }}
           path: binary/millet-cli-${{ matrix.rust }}.gz
       - name: Upload VSIX artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vsix-${{ matrix.vscode }}
           path: editors/vscode/vsix/millet-${{ matrix.vscode }}.vsix
@@ -104,34 +104,34 @@ jobs:
       contents: write
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: 24.x
       - name: Install node dependencies
         run: npm ci
         working-directory: editors/vscode
       - name: Download language server artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: binary
           pattern: ls-*
           merge-multiple: true
       - name: Download CLI artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: binary
           pattern: cli-*
           merge-multiple: true
       - name: Download VSIX artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: editors/vscode/vsix
           pattern: vsix-*
           merge-multiple: true
       - name: Make GitHub release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           files: binary/*
       - name: Publish to VS Code Marketplace
