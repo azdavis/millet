@@ -72,7 +72,6 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
         }
       });
       let rows: Vec<_> = rows.collect();
-
       if let Some(r) = &rest_pat_row {
         if r.multiple {
           st.err(pat.syntax(), ErrorKind::MultipleRestPatRows);
