@@ -91,7 +91,7 @@
         "millet.server.diagnostics.unstable.unifyErrorExtraHelp.enable": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Enable experimental extra help for unify errors."
+          "markdownDescription": "**NOTE: this feature is experimental. It is not recommended for general use yet.**\n\nEnable experimental extra help for unify errors."
         },
         "millet.server.enable": {
           "type": "boolean",

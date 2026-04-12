@@ -585,6 +585,8 @@ Send diagnostics when file contents change before saving.
 - Type: `boolean`
 - Default: `false`
 
+**NOTE: this feature is experimental. It is not recommended for general use yet.**
+
 Enable experimental extra help for unify errors.
 
 #### `millet.server.enable`
