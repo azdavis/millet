@@ -176,8 +176,8 @@ val _ =
 fn record_ignore() {
   check_with_warnings(
     r"
-datatype t = A of {x: int}
-fun f (A {...}) = 1
+datatype t = A of { x: int }
+fun f (A { ... }) = 1
 ",
   );
 }
