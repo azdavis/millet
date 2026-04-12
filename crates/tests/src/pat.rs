@@ -178,7 +178,6 @@ fn record_ignore() {
     r"
 datatype t = A of {x: int}
 fun f (A {...}) = 1
-(**      ^^^^^ usually written as `()` *)
 ",
   );
 }

@@ -72,9 +72,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
         }
       });
       let rows: Vec<_> = rows.collect();
-      if rows.is_empty() {
-        st.err(pat.syntax(), ErrorKind::EmptyRecordPatOrExp);
-      }
+
       if let Some(r) = &rest_pat_row {
         if r.multiple {
           st.err(pat.syntax(), ErrorKind::MultipleRestPatRows);
@@ -82,6 +80,8 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
         if !r.last {
           st.err(pat.syntax(), ErrorKind::RestPatRowNotLast);
         }
+      } else if rows.is_empty() {
+        st.err(pat.syntax(), ErrorKind::EmptyRecordPatOrExp);
       }
       sml_hir::Pat::Record { rows, allows_other: rest_pat_row.is_some() }
     }
