@@ -79,8 +79,8 @@ jobs:
       - name: Make VSIX directory
         run: mkdir -p editors/vscode/vsix
       - name: Package VSIX
-        run: npx --no-install vsce package --target ${{ matrix.vscode }} -o vsix/millet-${{ matrix.vscode }}.vsix
         working-directory: editors/vscode
+        run: npx --no-install vsce package --target ${{ matrix.vscode }} -o vsix/millet-${{ matrix.vscode }}.vsix
       - name: Upload language server artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -110,8 +110,8 @@ jobs:
         with:
           node-version: 24.x
       - name: Install node dependencies
-        run: npm ci
         working-directory: editors/vscode
+        run: npm ci
       - name: Download language server artifacts
         uses: actions/download-artifact@v8
         with:
@@ -135,8 +135,8 @@ jobs:
         with:
           files: binary/*
       - name: Publish to VS Code Marketplace
+        working-directory: editors/vscode
         run: npx --no-install vsce publish --pat ${{ secrets.AZURE_MARKETPLACE_TOKEN }} --packagePath vsix/*
-        working-directory: editors/vscode
       - name: Publish to Open VSX
-        run: npx --no-install ovsx publish --pat ${{ secrets.OPEN_VSX_TOKEN }} --packagePath vsix/*
         working-directory: editors/vscode
+        run: npx --no-install ovsx publish --pat ${{ secrets.OPEN_VSX_TOKEN }} --packagePath vsix/*
