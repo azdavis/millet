@@ -1,8 +1,8 @@
-//! Or patterns.
+//! Patterns.
 
 mod or;
 
-use crate::check::check;
+use crate::check::{check, check_with_warnings};
 
 #[test]
 fn unexpected_arg_1() {
@@ -169,4 +169,16 @@ val _ =
 ",
   );
   cov_mark::check("weird_pat_fn_2");
+}
+
+// TODO fix
+#[test]
+fn record_ignore() {
+  check_with_warnings(
+    r"
+datatype t = A of {x: int}
+fun f (A {...}) = 1
+(**      ^^^^^ usually written as `()` *)
+",
+  );
 }
