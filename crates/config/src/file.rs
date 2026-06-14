@@ -199,7 +199,7 @@ pub struct SuccessorMl {
   #[serde(default)]
   pub or_pat: Tool,
   #[serde(default)]
-  pub exp_row_pun: bool,
+  pub record_pun: bool,
   #[serde(default)]
   pub sig_withtype: bool,
   #[serde(default)]

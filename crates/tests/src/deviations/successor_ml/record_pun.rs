@@ -1,4 +1,4 @@
-//! Tests for expression row punning, where `{foo}` is equivalent to `{foo = foo}`.
+//! Tests for record punning, where `{foo}` is equivalent to `{foo = foo}`.
 
 use crate::check::{check, check_multi, raw};
 
@@ -7,7 +7,7 @@ fn default_disallow() {
   check(
     r"
 fun incB {a, b, c} = {a, b = b + 1, c}
-(**                   ^ expression row punning *)
+(**                   ^ record punning *)
 ",
   );
 }
@@ -16,7 +16,7 @@ fun incB {a, b, c} = {a, b = b + 1, c}
 fn config_allow() {
   let config = r"
 version = 1
-language.successor-ml.exp-row-pun = true
+language.successor-ml.record-pun = true
 ";
   let sml = r"
 fun incB {a, b, c} = {a, b = b + 1, c}

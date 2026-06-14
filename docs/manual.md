@@ -460,7 +460,7 @@ datatype thing = Foo of int | Bar of int
 fun extract (Foo x | Bar x) = x
 ```
 
-#### `language.successor-ml.exp-row-pun`
+#### `language.successor-ml.record-pun`
 
 - Type: `boolean`
 - Default: `false`

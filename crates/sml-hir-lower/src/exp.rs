@@ -36,8 +36,8 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
           Some(eq_exp) => get(st, eq_exp.exp()),
           None => match &lab {
             sml_hir::Lab::Name(name) => {
-              if !st.lang().successor_ml.exp_row_pun {
-                let e = ErrorKind::Disallowed(Disallowed::SuccMl("expression row punning"));
+              if !st.lang().successor_ml.record_pun {
+                let e = ErrorKind::Disallowed(Disallowed::SuccMl("record punning"));
                 st.err_tok(&tok, e);
               }
               st.exp(sml_hir::Exp::Path(sml_path::Path::one(name.clone())), ptr)
