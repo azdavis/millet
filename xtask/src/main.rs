@@ -94,6 +94,7 @@ fn finish_args(args: Arguments) -> Result<()> {
 }
 
 fn run(c: &mut Command) -> Result<()> {
+  println!("run: {c:?}");
   let mut sp = c.spawn().with_context(|| format!("spawn {c:?}"))?;
   let w = sp.wait().with_context(|| format!("wait for {c:?}"))?;
   if w.success() { Ok(()) } else { bail!("unsuccessful {c:?}") }

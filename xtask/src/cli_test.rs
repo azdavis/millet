@@ -15,6 +15,7 @@ fn exe(s: &str) -> String {
 }
 
 pub fn run() -> Result<()> {
+  println!("run cli test");
   let tmp = TempDir::new().with_context(|| "couldn't make temp dir")?;
   std::fs::create_dir(tmp.path().join("code")).with_context(|| "couldn't make code dir")?;
   let millet_toml = r#"
