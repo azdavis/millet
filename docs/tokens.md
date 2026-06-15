@@ -348,6 +348,10 @@ A raised exception may be handled with `handle`.
 
 ## `where`
 
+This token has multiple uses.
+
+### In signatures
+
 Realize a type in a signature.
 
 This allows a type to "break through" opaque ascription and be known to users of a structure that ascribes to a signature.
@@ -367,6 +371,10 @@ end
 
 val y = S.x : int
 ```
+
+### In record update
+
+Used for record updating, which is only allowed in Successor ML. Separates the original record being updated with the fields to update.
 
 ## `while`
 
