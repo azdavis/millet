@@ -31,7 +31,6 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
   let Some(exp) = exp else { return Ty::NONE };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
-  let mut defs = def::Set::default();
   let ret = match &ars.exp[exp] {
     sml_hir::Exp::Hole => {
       let mv = st.syms_tys.tys.meta_var(Generalizable::Always, TyVarKind::Regular);
@@ -60,11 +59,11 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
           }
           ty_scheme = Some(val_info.ty_scheme.clone());
           for &def in &val_info.defs {
-            defs.insert(def);
             if let def::Def::Path(_, idx) = def {
               st.mark_used(idx);
             }
           }
+          st.info.entries.defs.exp.insert(exp, val_info.defs.clone());
           instantiate(&mut st.syms_tys.tys, Generalizable::Always, &val_info.ty_scheme)
         }
       }
@@ -166,9 +165,6 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
     }
   };
   st.info.entries.tys.exp.insert(exp, TyEntry::new(ret, ty_scheme));
-  if !defs.is_empty() {
-    st.info.entries.defs.exp.insert(exp, defs);
-  }
   ret
 }
 
