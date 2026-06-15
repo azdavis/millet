@@ -263,12 +263,12 @@ fn lint_app(
 type SomeExpIdx = sml_hir::la_arena::Idx<sml_hir::Exp>;
 
 fn get_pair(ars: &sml_hir::Arenas, idx: SomeExpIdx) -> Option<[SomeExpIdx; 2]> {
-  match &ars.exp[idx] {
-    sml_hir::Exp::Record(rows) => match rows.as_slice() {
-      &[(sml_hir::Lab::Num(1), a), (sml_hir::Lab::Num(2), b)] => Some([a?, b?]),
-      _ => None,
-    },
-    _ => None,
+  if let sml_hir::Exp::Record(rows) = &ars.exp[idx]
+    && let &[(sml_hir::Lab::Num(1), a), (sml_hir::Lab::Num(2), b)] = rows.as_slice()
+  {
+    Some([a?, b?])
+  } else {
+    None
   }
 }
 

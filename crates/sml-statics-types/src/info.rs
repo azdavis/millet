@@ -52,12 +52,8 @@ pub struct ValInfo {
   pub id_status: IdStatus,
   /// The definitions.
   ///
-  /// Note that for or patterns, each occurrence of a variable in each or pattern alternative should be one of
-  ///   the defs.
-  /// - Structures ascribing to signatures. The definition in the structure and signature are both
-  ///   important.
-  ///
-  /// It's an ordered set because we want to show documentation for all the defs in a stable order.
+  /// Note that for or patterns, each occurrence of a variable in each or pattern alternative should
+  /// be one of the defs.
   pub defs: def::Set,
   /// Whether this is disallowed.
   pub disallow: Option<Disallow>,

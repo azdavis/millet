@@ -55,6 +55,12 @@ impl Path {
   pub fn all_names(&self) -> impl Iterator<Item = &Name> {
     self.prefix.iter().chain(std::iter::once(&self.last))
   }
+
+  /// Returns whether this path is just the name.
+  #[must_use]
+  pub fn is_name(&self, name: &str_util::Name) -> bool {
+    self.prefix.is_empty() && self.last() == name
+  }
 }
 
 impl fmt::Display for Path {
