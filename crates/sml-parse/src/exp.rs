@@ -218,6 +218,16 @@ fn at_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Option<Exited> {
     }
     SK::LCurly => {
       p.bump();
+      if p.at(SK::Name) && p.at_n(1, SK::WhereKw) {
+        let ru = p.enter();
+        let path = p.enter();
+        // name (we use path here so it's an exp)
+        path_no_infix(p, fe);
+        p.exit(path, SK::PathExp);
+        // where
+        p.bump();
+        p.exit(ru, SK::RecordUpdate);
+      }
       comma_sep(p, SK::ExpRow, SK::RCurly, |p| {
         lab(p);
         eq_exp(p, fe);

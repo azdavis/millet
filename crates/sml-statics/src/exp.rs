@@ -1,5 +1,7 @@
 //! Checking expressions.
 
+use std::collections::BTreeSet;
+
 use crate::error::{AppendArg, ErrorKind};
 use crate::get_env::{get_env_raw, get_val_info};
 use crate::info::TyEntry;
@@ -8,7 +10,7 @@ use crate::{config::Cfg, pat_match::Pat};
 use crate::{dec, pat, st::St, ty, unify::unify};
 use sml_statics_types::env::{Cx, Env};
 use sml_statics_types::sym::{Sym, SymsMarker};
-use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme, TyVarKind, Tys};
+use sml_statics_types::ty::{Generalizable, RecordData, Ty, TyData, TyScheme, TyVarKind, Tys};
 use sml_statics_types::util::{get_scon, instantiate};
 use sml_statics_types::{def, info::ValEnv, item::Item, mode::Mode};
 
@@ -69,8 +71,33 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
       }
     }
     // @def(3)
-    sml_hir::Exp::Record(rows) => {
-      let rows = record(st, exp.into(), rows, |st, _, exp| get(st, cfg, cx, ars, exp));
+    sml_hir::Exp::Record(new_rows, update) => {
+      let mut rows = RecordData::new();
+      if let Some(u) = update {
+        let ty = get(st, cfg, cx, ars, u.orig);
+        if let TyData::Record(orig_rows) = st.syms_tys.tys.data(ty) {
+          rows = orig_rows;
+        } else {
+          st.err(exp, ErrorKind::RecordUpdateNotRecord(ty));
+        }
+      }
+      let new_rows = record(st, exp.into(), new_rows, |st, _, exp| get(st, cfg, cx, ars, exp));
+      if rows.is_empty() {
+        rows = new_rows;
+      } else {
+        let mut bad = false;
+        for (lab, &new_ty) in &new_rows {
+          match rows.get_mut(lab) {
+            Some(ty) => *ty = new_ty,
+            None => bad = true,
+          }
+        }
+        if bad {
+          let want: BTreeSet<_> = rows.keys().cloned().collect();
+          let got: BTreeSet<_> = new_rows.into_keys().collect();
+          st.err(exp, ErrorKind::RecordUpdateExtraRows(want, got));
+        }
+      }
       st.syms_tys.tys.record(rows)
     }
     // @def(4)
@@ -208,10 +235,11 @@ fn maybe_contains_free_var(
     // these introduce new bindings, so let's be conservative
     sml_hir::Exp::Let(_, _) | sml_hir::Exp::Handle(_, _) | sml_hir::Exp::Fn(_, _) => true,
     // interesting case
-    sml_hir::Exp::Path(path) => path.prefix().is_empty() && path.last() == name,
+    sml_hir::Exp::Path(path) => path.is_name(name),
     // recursive cases
-    sml_hir::Exp::Record(rows) => {
-      rows.iter().any(|&(_, exp)| maybe_contains_free_var(ars, exp, name))
+    sml_hir::Exp::Record(rows, update) => {
+      update.as_ref().is_some_and(|u| maybe_contains_free_var(ars, u.orig, name))
+        || rows.iter().any(|&(_, exp)| maybe_contains_free_var(ars, exp, name))
     }
     sml_hir::Exp::App(func, argument) => {
       maybe_contains_free_var(ars, *func, name) || maybe_contains_free_var(ars, *argument, name)
@@ -263,7 +291,7 @@ fn lint_app(
 type SomeExpIdx = sml_hir::la_arena::Idx<sml_hir::Exp>;
 
 fn get_pair(ars: &sml_hir::Arenas, idx: SomeExpIdx) -> Option<[SomeExpIdx; 2]> {
-  if let sml_hir::Exp::Record(rows) = &ars.exp[idx]
+  if let sml_hir::Exp::Record(rows, None) = &ars.exp[idx]
     && let &[(sml_hir::Lab::Num(1), a), (sml_hir::Lab::Num(2), b)] = rows.as_slice()
   {
     Some([a?, b?])
@@ -323,7 +351,7 @@ pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bo
   let Some(exp) = exp else { return true };
   match &ars.exp[exp] {
     sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) | sml_hir::Exp::Fn(_, _) => false,
-    sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| maybe_effectful(ars, exp)),
+    sml_hir::Exp::Record(rows, _) => rows.iter().any(|&(_, exp)| maybe_effectful(ars, exp)),
     sml_hir::Exp::Typed(exp, _, _) => maybe_effectful(ars, *exp),
     sml_hir::Exp::Let(dec, exp) => dec::maybe_effectful(ars, dec) || maybe_effectful(ars, *exp),
     sml_hir::Exp::Hole

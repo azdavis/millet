@@ -25,6 +25,12 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       if !st.lang().exp.record {
         st.err(exp.syntax(), ErrorKind::Disallowed(Disallowed::Exp("record")));
       }
+      if !st.lang().successor_ml.record_update
+        && let Some(ru) = exp.record_update()
+      {
+        let e = ErrorKind::Disallowed(Disallowed::SuccMl("record update"));
+        st.err(ru.syntax(), e);
+      }
       if let Some(s) = exp.exp_rows().last().and_then(|x| x.comma()) {
         st.err_tok(&s, ErrorKind::Trailing(Sep::Comma));
       }
@@ -54,7 +60,8 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       if rows.is_empty() {
         st.err(exp.syntax(), ErrorKind::EmptyRecordPatOrExp);
       }
-      sml_hir::Exp::Record(rows)
+      let update = exp.record_update().map(|x| sml_hir::RecordUpdate { orig: get(st, x.exp()) });
+      sml_hir::Exp::Record(rows, update)
     }
     ast::Exp::SelectorExp(exp) => {
       if !st.lang().exp.selector {
@@ -332,12 +339,12 @@ where
     es.into_iter().enumerate().map(|(idx, e)| (sml_hir::Lab::tuple(idx), e)).collect();
   // can't assert rows.len() != 1 because of this
   cov_mark::hit("trailing_exp_arg");
-  sml_hir::Exp::Record(rows)
+  sml_hir::Exp::Record(rows, None)
 }
 
 fn call_unit_fn(st: &mut St<'_>, vid: &str_util::Name, ptr: SyntaxNodePtr) -> sml_hir::ExpIdx {
   let vid_exp = st.exp(name(vid.as_str()), ptr);
-  let arg_exp = st.exp(sml_hir::Exp::Record(vec![]), ptr);
+  let arg_exp = st.exp(sml_hir::Exp::Record(vec![], None), ptr);
   st.exp(sml_hir::Exp::App(vid_exp, arg_exp), ptr)
 }
 

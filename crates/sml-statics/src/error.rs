@@ -5,10 +5,13 @@ mod suggestion;
 
 use crate::pat_match::Pat;
 use diagnostic::{Code, Severity};
+use fmt_util::comma_seq;
 use sml_statics_types::display::record_meta_var;
-use sml_statics_types::ty::{RecordData, Ty, TyScheme};
+use sml_statics_types::ty::{RecordData, Ty, TyData, TyScheme, UnsolvedMetaTyVarKind};
 use sml_statics_types::{disallow::Disallow, item::Item, notes, unify};
 use std::fmt;
+
+type LabSet = std::collections::BTreeSet<sml_hir::Lab>;
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
@@ -56,6 +59,8 @@ pub(crate) enum ErrorKind {
   Disallowed(Item, Disallow, str_util::Name),
   CanEtaReduce(str_util::Name),
   ShadowInCaseWithSameTy(str_util::Name, TyScheme),
+  RecordUpdateNotRecord(Ty),
+  RecordUpdateExtraRows(LabSet, LabSet),
 }
 
 struct ErrorKindDisplay<'a> {
@@ -194,6 +199,24 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         write!(f, "does not check any part of the matched expression for equality with the ")?;
         write!(f, "existing `{name}`, which has the same type, and which was already in scope")
       }
+      ErrorKind::RecordUpdateNotRecord(ty) => {
+        let what = if let TyData::UnsolvedMetaVar(u) = self.st.tys.data(*ty)
+          && let UnsolvedMetaTyVarKind::UnresolvedRecord(_) = u.kind
+        {
+          "fully-resolved "
+        } else {
+          ""
+        };
+        let ty = ty.display(self.st, config::DiagnosticLines::One);
+        write!(f, "record update of non-{what}record type: {ty}")
+      }
+      ErrorKind::RecordUpdateExtraRows(want, got) => {
+        write!(f, "record update provided extra rows: expected subset of {{")?;
+        comma_seq(f, want.iter())?;
+        write!(f, "}}, found {{")?;
+        comma_seq(f, got.iter())?;
+        write!(f, "}}")
+      }
     }
   }
 }
@@ -314,6 +337,8 @@ impl Error {
       ErrorKind::Disallowed(_, _, _) => Code::n(5041),
       ErrorKind::CanEtaReduce(_) => Code::n(5042),
       ErrorKind::ShadowInCaseWithSameTy(_, _) => Code::n(5043),
+      ErrorKind::RecordUpdateNotRecord(_) => Code::n(5044),
+      ErrorKind::RecordUpdateExtraRows(_, _) => Code::n(5045),
     }
   }
 

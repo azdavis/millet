@@ -198,7 +198,7 @@ pub enum Exp {
   Hole,
   SCon(SCon),
   Path(Path),
-  Record(Vec<(Lab, ExpIdx)>),
+  Record(Vec<(Lab, ExpIdx)>, Option<RecordUpdate>),
   Let(DecSeq, ExpIdx),
   App(ExpIdx, ExpIdx),
   Handle(ExpIdx, Vec<Arm>),
@@ -206,6 +206,12 @@ pub enum Exp {
   Fn(Vec<Arm>, FnFlavor),
   Typed(ExpIdx, TyIdx, TypedFlavor),
   Vector(Vec<ExpIdx>),
+}
+
+#[derive(Debug)]
+pub struct RecordUpdate {
+  /// The original record that gets updated, like `a` in `{ a where x = 1 }`.
+  pub orig: ExpIdx,
 }
 
 #[derive(Debug, Clone, Copy)]

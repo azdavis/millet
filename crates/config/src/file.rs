@@ -201,6 +201,8 @@ pub struct SuccessorMl {
   #[serde(default)]
   pub record_pun: bool,
   #[serde(default)]
+  pub record_update: bool,
+  #[serde(default)]
   pub sig_withtype: bool,
   #[serde(default)]
   pub vector: bool,

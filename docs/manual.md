@@ -475,6 +475,23 @@ fun incB {a, b, c} = {a, b = b + 1, c}
 fun incB {a, b, c} = {a = a, b = b + 1, c = c}
 ```
 
+#### `language.successor-ml.record-update`
+
+- Type: `boolean`
+- Default: `false`
+
+Whether record updating is allowed. This is where you can e.g. write `{ x where a = b }` and this creates a record with `x`'s fields except for `a`, which is set to `b`.
+
+```sml
+(* record punning *)
+val x = { a = 1, b = "hey", c = false }
+val y = { x with b = "hi" }
+
+(* equivalent to *)
+val x = { a = 1, b = "hey", c = false }
+val y = { a = #a x, b = "hi", c = #c x }
+```
+
 #### `language.successor-ml.sig-withtype`
 
 - Type: `boolean`

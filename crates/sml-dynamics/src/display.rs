@@ -416,9 +416,10 @@ impl fmt::Display for ExpDisplay<'_> {
       sml_hir::Exp::Hole => f.write_str("_"),
       sml_hir::Exp::SCon(scon) => scon.fmt(f),
       sml_hir::Exp::Path(path) => path.fmt(f),
-      sml_hir::Exp::Record(rows) => {
-        let is_tuple =
-          rows.len() != 1 && rows.iter().enumerate().all(|(idx, (lab, _))| Lab::tuple(idx) == *lab);
+      sml_hir::Exp::Record(rows, kind) => {
+        let is_tuple = kind.is_none()
+          && rows.len() != 1
+          && rows.iter().enumerate().all(|(idx, (lab, _))| Lab::tuple(idx) == *lab);
         if is_tuple {
           f.write_str("(")?;
           let rows = rows.iter().map(|&(_, exp)| ExpDisplay { exp, prec: Prec::Min, cx: self.cx });

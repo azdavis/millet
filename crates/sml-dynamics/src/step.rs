@@ -35,9 +35,10 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
           (Step::Val(val), visible)
         }
       },
-      sml_hir::Exp::Record(exp_rows) => {
+      sml_hir::Exp::Record(exp_rows, kind) => {
         let mut exp_rows = exp_rows.clone();
-        let is_tuple = exp_rows.len() != 1
+        let is_tuple = kind.is_none()
+          && exp_rows.len() != 1
           && exp_rows.iter().enumerate().all(|(idx, (lab, _))| Lab::tuple(idx) == *lab);
         exp_rows.reverse();
         match exp_rows.pop() {

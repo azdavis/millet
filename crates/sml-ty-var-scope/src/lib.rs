@@ -333,7 +333,7 @@ fn get_exp(
 ) {
   let Some(exp) = exp else { return };
   match &ars.exp[exp] {
-    sml_hir::Exp::Record(rows) => {
+    sml_hir::Exp::Record(rows, _) => {
       for &(_, exp) in rows {
         get_exp(st, ars, scope, mode, exp);
       }

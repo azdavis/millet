@@ -24,6 +24,7 @@ pub(crate) fn check(contents: &str) {
   let mut ignore_next = false;
   let mut limit = raw::Limit::None;
   let mut ac = String::new();
+  let mut config_str = "version = 1\n".to_owned();
   for ev in parser {
     match ev {
       Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
@@ -34,7 +35,7 @@ pub(crate) fn check(contents: &str) {
       Event::End(TagEnd::CodeBlock) => {
         if inside {
           if !ignore_next {
-            raw::get(raw::one_file_fs(ac.as_ref()), opts(limit));
+            raw::get(raw::singleton(&config_str, ac.as_ref()), opts(limit));
           }
           ac.clear();
           inside = false;
@@ -49,15 +50,23 @@ pub(crate) fn check(contents: &str) {
       }
       Event::Html(s) => {
         let s = s.trim();
-        if s.strip_prefix("<!-- @ignore ").and_then(|s| s.strip_suffix(" -->")).is_some() {
+        if special_comment(s, "<!-- @ignore ").is_some() {
           ignore_next = true;
-        } else if s == "<!-- @limit first -->" {
+        } else if let Some(what) = special_comment(s, "<!-- @limit ") {
+          assert_eq!(what, "first", "only know how to limit to first");
           limit = raw::Limit::First;
-        } else if let Some(x) = s.strip_prefix("!-- @") {
-          panic!("unknown special @ comment: {x}");
+        } else if let Some(x) = special_comment(s, "<!-- @config ") {
+          config_str.push_str(x);
+          config_str.push('\n');
+        } else if s.starts_with("<!--") {
+          panic!("unknown comment: {s}");
         }
       }
       _ => {}
     }
   }
+}
+
+fn special_comment<'c>(comm: &'c str, prefix: &str) -> Option<&'c str> {
+  comm.strip_prefix(prefix)?.strip_suffix(" -->")
 }

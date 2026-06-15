@@ -442,7 +442,7 @@ fn expansive(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
     | sml_hir::Exp::Raise(_)
     | sml_hir::Exp::Handle(_, _)
     | sml_hir::Exp::Vector(_) => true,
-    sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| expansive(cx, ars, exp)),
+    sml_hir::Exp::Record(rows, _) => rows.iter().any(|&(_, exp)| expansive(cx, ars, exp)),
     sml_hir::Exp::App(func, argument) => {
       !constructor(cx, ars, *func) || expansive(cx, ars, *argument)
     }
@@ -460,7 +460,7 @@ fn constructor(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
     | sml_hir::Exp::Raise(_)
     | sml_hir::Exp::Fn(_, _)
     | sml_hir::Exp::Vector(_)
-    | sml_hir::Exp::Record(_) => false,
+    | sml_hir::Exp::Record(_, _) => false,
     sml_hir::Exp::Typed(exp, _, _) => constructor(cx, ars, *exp),
     sml_hir::Exp::Path(path) => {
       if path.prefix().is_empty() && path.last().as_str() == "ref" {
@@ -503,7 +503,7 @@ fn maybe_fn(ar: &sml_hir::ExpArena, exp: sml_hir::ExpIdx) -> bool {
     sml_hir::Exp::Hole | sml_hir::Exp::Fn(_, _) => true,
     sml_hir::Exp::SCon(_)
     | sml_hir::Exp::Path(_)
-    | sml_hir::Exp::Record(_)
+    | sml_hir::Exp::Record(_, _)
     | sml_hir::Exp::Let(_, _)
     | sml_hir::Exp::App(_, _)
     | sml_hir::Exp::Handle(_, _)

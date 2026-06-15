@@ -168,7 +168,7 @@ OpAndalsoExp = 'op' 'andalso'
 OpOrelseExp = 'op' 'orelse'
 SConExp = SCon
 PathExp = 'op'? Path
-RecordExp = '{' ExpRow* '}'
+RecordExp = '{' RecordUpdate? ExpRow* '}'
 SelectorExp = '#' Lab
 ParenExp = '(' Exp ')'
 TupleExp = '(' ExpArg* ')'
@@ -188,6 +188,8 @@ WhileExp = 'while' cond:Exp 'do' body:Exp
 CaseExp = 'case' Exp 'of' Matcher
 FnExp = 'fn' Matcher
 
+// in the parser, the exp is restricted to only be a name (not even an arbitrary path).
+RecordUpdate = Exp 'where'
 ExpRow = Lab EqExp? ','?
 ExpArg = Exp ','?
 ExpInSeq = Exp ';'?
