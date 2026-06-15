@@ -605,15 +605,23 @@ val a : int as b = 3
 
 ## `do`
 
-1. Separate a `while` loop condition from the loop body.
+This token has multiple uses.
 
-   ```sml
-   val () =
-     while true do
-       print "y\n"
-   ```
+### In while loops
 
-2. Begin a `do` declaration, only allowed in Successor ML. `do e` is equivalent to `val () = e`.
+Separate a `while` loop condition from the loop body.
+
+```sml
+val () =
+  while true do
+    print "y\n"
+```
+
+### In declarations
+
+Begin a `do` declaration, only allowed in Successor ML.
+
+`do e` is equivalent to `val () = e`.
 
 ## `fn`
 
@@ -662,23 +670,31 @@ val _ =
 
 ## `of`
 
-1. Separate the head expression of a `case` from the arms.
+This token has multiple uses.
 
-   ```sml
-   fun hm x =
-     case x of
-       1 => 2
-     | _ => 3
-   ```
+### In case expressions
 
-2. Denote that a value or exception constructor takes an argument.
+Separate the head expression of a `case` from the arms.
 
-   ```sml
-   datatype answer =
-     No
-   | Yes
-   | Custom of string
-   ```
+```sml
+fun hm x =
+  case x of
+    1 => 2
+  | _ => 3
+```
+
+### In declarations
+
+Denote that a value or exception constructor takes an argument.
+
+```sml
+datatype answer =
+  No
+| Yes
+| Custom of string
+
+exception Nope of string
+```
 
 ## `op`
 
@@ -808,36 +824,45 @@ val { year, ... } = tvShow
 
 ## `(`
 
-1. Group things together. Can be used to override precedence.
+This token has multiple uses.
 
-   ```sml
-   fun doMath a b c = a * (b + c)
-   ```
+### Grouper
 
-2. Begin a tuple expression or pattern.
+Group things together. Can be used to override precedence.
 
-   ```sml
-   val tup = (123, "hi")
-   val (n, s) = tup
-   ```
+```sml
+fun doMath a b c = a * (b + c)
+val ten = doMath 2 1 4
+```
 
-3. Begin a list of type arguments or parameters.
+### Tuples
 
-   ```sml
-   datatype ('t, 'e) result =
-     Ok of 't
-   | Err of 'e
+Begin a tuple expression or pattern.
 
-   fun ('t, 'e, 'u) map
-     (f : 't -> 'u)
-     (res : ('t, 'e) result)
-     : ('u, 'e) result =
-     case res of
-       Ok x => Ok (f x)
-     | Err e => Err e
+```sml
+val tup = (123, "hi")
+val (n, s) = tup
+```
 
-   val x : (int, string) result = Ok 3
-   ```
+### Types
+
+Begin a list of type arguments or parameters.
+
+```sml
+datatype ('t, 'e) result =
+  Ok of 't
+| Err of 'e
+
+fun ('t, 'e, 'u) map
+  (f : 't -> 'u)
+  (res : ('t, 'e) result)
+  : ('u, 'e) result =
+  case res of
+    Ok x => Ok (f x)
+  | Err e => Err e
+
+val x : (int, string) result = Ok 3
+```
 
 ## `)`
 
@@ -845,17 +870,25 @@ The companion of `(`.
 
 ## `*`
 
-1. Separate types in a tuple type.
+This token has multiple uses.
 
-   ```sml
-   type pair = int * string
-   ```
+### Multiplication
 
-2. Multiply numbers.
+Multiply numbers.
 
-   ```sml
-   val _ = 3 * 6
-   ```
+```sml
+val _ = 3 * 6
+```
+
+### Tuple types
+
+Separate types in a tuple type.
+
+```sml
+type pair = int * string
+```
+
+Tuple types are (anonymous, unlabeled) "product" types, which is probably why `*` was used for both number multiplication (the product of numbers) and tuples (product types).
 
 ## `,`
 
@@ -880,28 +913,34 @@ val _ = Int.max (1, 5)
 
 ## `:`
 
-1. Annotate an expression or pattern with a type.
+This token has multiple uses.
 
-   ```sml
-   val a : int = 1 + 4
-   val b = "hi" : string
-   ```
+### Annotation
 
-2. Transparently ascribe a structure to a signature.
+Annotate an expression or pattern with a type.
 
-   ```sml
-   structure S : sig
-     type t
-     val x : t
-   end = struct
-     type t = int
-     val x = 5
-   end
+```sml
+val a : int = 1 + 4
+val b = "hi" : string
+```
 
-   val n : int = S.x + 3
-   ```
+### Ascription
 
-   Compare with `:>`, which opaquely ascribes.
+Transparently ascribe a structure to a signature.
+
+```sml
+structure S : sig
+  type t
+  val x : t
+end = struct
+  type t = int
+  val x = 5
+end
+
+val n : int = S.x + 3
+```
+
+Compare with `:>`, which opaquely ascribes.
 
 ## `;`
 
@@ -922,19 +961,21 @@ Compare with `,`, which can also separate expressions, but constructs tuples or 
 
 ## `=`
 
-1. Assign things.
+This token has multiple uses.
 
-   ```sml
-   val a = 5
-   fun f x = x + 4
-   ```
+### Assignment
 
-2. Check for equality.
+```sml
+val a = 5
+fun f x = x + 4
+```
 
-   ```sml
-   fun isZero n = n = 0
-   fun f s = if "foo" = s then 1 else 2
-   ```
+### Equality check
+
+```sml
+fun isZero n = n = 0
+fun f s = if "foo" = s then 1 else 2
+```
 
 ## `[`
 
