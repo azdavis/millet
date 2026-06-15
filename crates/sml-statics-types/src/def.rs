@@ -9,6 +9,10 @@ pub enum Def {
   /// A primitive, inherent def.
   Primitive(Primitive),
   /// A def contained at a path.
+  ///
+  /// Because it was defined at a path we run statics on, we lower it into hir, which means we can
+  /// index into it. This is true and useful even for builtin library paths, e.g. for getting
+  /// documentation for specific items.
   Path(Path, sml_hir::Idx),
 }
 
