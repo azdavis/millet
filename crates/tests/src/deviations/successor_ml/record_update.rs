@@ -42,3 +42,19 @@ val y = { x where b = false }
 "#,
   );
 }
+
+#[test]
+fn with_pun() {
+  let config = r"
+version = 1
+language.successor-ml.record-update = true
+language.successor-ml.record-pun = true
+";
+  let sml = r"
+val x = { a = 1, b = 2 }
+val b = false
+val y = { x where b }
+(** ^ hover: { a : int, b : bool } *)
+";
+  check_multi(raw::singleton(config, sml));
+}
