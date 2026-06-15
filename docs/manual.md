@@ -465,10 +465,10 @@ fun extract (Foo x | Bar x) = x
 - Type: `boolean`
 - Default: `false`
 
-Whether expression row punning is allowed.
+Whether record punning is allowed. This is where you shorten e.g. `{ a = a }` to just `{ a }`.
 
 ```sml
-(* row punning *)
+(* record punning *)
 fun incB {a, b, c} = {a, b = b + 1, c}
 
 (* equivalent to *)
