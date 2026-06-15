@@ -4,6 +4,11 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 Millet technically follows [SemVer][sem-ver], but the major version is zero, and it probably will be [for a while][zero-ver].
 
+## main
+
+- Rename `language.successor-ml.exp-row-pun` to `language.successor-ml.record-pun`.
+- Support record update syntax `{ a where x = y }` under the config `language.successor-ml.record-update`.
+
 ## v0.15.1
 
 - Fix a spurious 4035 on the `{ ... }` pattern.
