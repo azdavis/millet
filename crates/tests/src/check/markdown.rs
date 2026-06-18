@@ -50,12 +50,12 @@ pub(crate) fn check(contents: &str) {
       }
       Event::Html(s) => {
         let s = s.trim();
-        if special_comment(s, "<!-- @ignore ").is_some() {
+        if special_comment(s, "ignore").is_some() {
           ignore_next = true;
-        } else if let Some(what) = special_comment(s, "<!-- @limit ") {
+        } else if let Some(what) = special_comment(s, "limit") {
           assert_eq!(what, "first", "only know how to limit to first");
           limit = raw::Limit::First;
-        } else if let Some(x) = special_comment(s, "<!-- @config ") {
+        } else if let Some(x) = special_comment(s, "config") {
           config_str.push_str(x);
           config_str.push('\n');
         } else if s.starts_with("<!--") {
@@ -68,5 +68,6 @@ pub(crate) fn check(contents: &str) {
 }
 
 fn special_comment<'c>(comm: &'c str, prefix: &str) -> Option<&'c str> {
-  comm.strip_prefix(prefix)?.strip_suffix(" -->")
+  // is this better than allocating a big prefix to strip? :shrug:
+  comm.strip_prefix("<!-- @")?.strip_prefix(prefix)?.strip_prefix(' ')?.strip_suffix(" -->")
 }
