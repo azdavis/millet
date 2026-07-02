@@ -16,6 +16,8 @@ fn opts(limit: raw::Limit) -> raw::Opts<'static> {
   }
 }
 
+const EMPTY_CONFIG: &str = "version = 1\n";
+
 pub(crate) fn check(contents: &str) {
   let mut options = Options::empty();
   options.insert(Options::ENABLE_TABLES);
@@ -24,7 +26,7 @@ pub(crate) fn check(contents: &str) {
   let mut ignore_next = false;
   let mut limit = raw::Limit::None;
   let mut ac = String::new();
-  let mut config_str = "version = 1\n".to_owned();
+  let mut config_str = EMPTY_CONFIG.to_owned();
   for ev in parser {
     match ev {
       Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
@@ -37,6 +39,8 @@ pub(crate) fn check(contents: &str) {
           if !ignore_next {
             raw::get(raw::singleton(&config_str, ac.as_ref()), opts(limit));
           }
+          config_str.clear();
+          config_str.push_str(EMPTY_CONFIG);
           ac.clear();
           inside = false;
           ignore_next = false;
