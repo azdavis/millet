@@ -11,3 +11,8 @@ fn primitives() {
 fn tokens() {
   check(include_str!("../../../docs/tokens.md"));
 }
+
+#[test]
+fn manual() {
+  check(include_str!("../../../docs/manual.md"));
+}

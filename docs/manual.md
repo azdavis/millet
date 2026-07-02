@@ -391,12 +391,14 @@ Configuration for [Successor ML][succ-ml] features.
 
 Whether `do` declarations are allowed.
 
+<!-- @config language.successor-ml.do-dec = true -->
+
 ```sml
 (* do dec *)
-do e
+do print "hi"
 
 (* equivalent to *)
-val () = e
+val () = print "hi"
 ```
 
 #### `language.successor-ml.opt-bar`
@@ -405,6 +407,8 @@ val () = e
 - Default: `false`
 
 Whether `|` are allowed before the first `datatype`, `fn`, `case`, `handle`, or `fun` case.
+
+<!-- @config language.successor-ml.opt-bar = true -->
 
 ```sml
 datatype thing =
@@ -425,26 +429,22 @@ fun check x =
 
 Whether a trailing `;` is allowed in the expression sequence of a `let` expression.
 
+<!-- @config language.successor-ml.opt-semi = true -->
+
 ```sml
 (* trailing ; *)
 val () =
-  let
-    val x = 3
-    val y = 4
-  in
-    foo x;
-    bar y;
+  let val s = "hi" in
+  print s;
+  print s;
   end
 
 (* equivalent to *)
 val () =
-  let
-    val x = 3
-    val y = 4
-  in
-    foo x;
-    bar y;
-    ()
+  let val s = "hi" in
+  print s;
+  print s;
+  ()
   end
 ```
 
@@ -454,6 +454,8 @@ val () =
 - Default: `true`
 
 Whether or-patterns are allowed.
+
+<!-- @config language.successor-ml.or-pat = true -->
 
 ```sml
 datatype thing = Foo of int | Bar of int
@@ -466,6 +468,8 @@ fun extract (Foo x | Bar x) = x
 - Default: `false`
 
 Whether record punning is allowed. This is where you shorten e.g. `{ a = a }` to just `{ a }`.
+
+<!-- @config language.successor-ml.record-pun = true -->
 
 ```sml
 (* record punning *)
@@ -482,10 +486,12 @@ fun incB {a, b, c} = {a = a, b = b + 1, c = c}
 
 Whether record updating is allowed. This is where you can e.g. write `{ x where a = b }` and this creates a record with `x`'s fields except for `a`, which is set to `b`.
 
+<!-- @config language.successor-ml.record-update = true -->
+
 ```sml
-(* record punning *)
+(* record update *)
 val x = { a = 1, b = "hey", c = false }
-val y = { x with b = "hi" }
+val y = { x where b = "hi" }
 
 (* equivalent to *)
 val x = { a = 1, b = "hey", c = false }
@@ -498,6 +504,8 @@ val y = { a = #a x, b = "hi", c = #c x }
 - Default: `false`
 
 Whether `withtype` in specifications is allowed.
+
+<!-- @config language.successor-ml.sig-withtype = true -->
 
 ```sml
 signature STREAM = sig
@@ -512,6 +520,8 @@ end
 - Default: `false`
 
 Whether vector expressions and patterns are allowed.
+
+<!-- @config language.successor-ml.vector = true -->
 
 ```sml
 val vec : int vector = #[1, 2, 3]
@@ -535,6 +545,8 @@ Configuration for [Lunar ML][lunar-ml] features.
 - Default: `false`
 
 Whether `_esImport` declarations are allowed. Described [in the docs](https://lunarml.readthedocs.io/en/latest/language.html#importing-ecmascript-modules).
+
+<!-- @config language.lunar-ml.es-import = true -->
 
 ```sml
 _esImport "module-name"
@@ -834,6 +846,8 @@ Millet provides completions for the current cursor location. Completions can be 
 
 In this example, Millet provides the given completions at the given cursor location.
 
+<!-- @ignore has syntax error -->
+
 ```sml
 structure Foo = struct
   val bar = 3
@@ -912,24 +926,24 @@ So, the formatter is disabled by default, and great care should be taken when us
 
 The naive Millet formatter employs exceedingly unsophisticated strategies to break code across many lines. What this means is that large expressions (e.g. a function call expression with many long arguments) may be formatted all on one line.
 
-The suggested workaround is to use a `let ... in ... end` expression and split out sub-expressions into variables. So instead of:
+The suggested workaround is to use a `let ... in ... end` expression and split out sub-expressions into variables. So instead of the former, try the latter:
+
+<!-- @ignore references undefined stuff -->
 
 ```sml
-Boop.beep (if bar x then quz y else Fee.Fi.Fo.fum z) (fn res => s (blab :: res)) (fn () => k []) (fn (x, ac) => ac andalso x) (xs @ ys @ zs)
-```
+val long =
+  Boop.beep (if bar x then quz y else Fee.Fi.Fo.fum z) (fn res => s (blab :: res)) (fn () => k []) (fn (x, ac) => ac andalso x) (xs @ ys @ zs)
 
-Try something like:
-
-```sml
-let
-  val fst = if bar x then quz y else Fee.Fi.Fo.fum z
-  fun succeed res = s (blab :: res)
-  fun fail () = k []
-  fun andBoth (x, ac) = ac andalso x
-  val all = xs @ ys @ zs
-in
-  Boop.beep fst succeed fail andBoth all
-end
+val better =
+  let
+    val fst = if bar x then quz y else Fee.Fi.Fo.fum z
+    fun succeed res = s (blab :: res)
+    fun fail () = k []
+    fun andBoth (x, ac) = ac andalso x
+    val all = xs @ ys @ zs
+  in
+    Boop.beep fst succeed fail andBoth all
+  end
 ```
 
 An arguably good thing about this is that it might improve readability anyway.
@@ -952,6 +966,8 @@ datatype dayKind = Weekday | Weekend
 ```
 
 Comments in other positions, like inside expressions, are not supported:
+
+<!-- @ignore undefined stuff -->
 
 ```sml
 val uh =

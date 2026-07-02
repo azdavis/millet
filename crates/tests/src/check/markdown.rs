@@ -62,6 +62,8 @@ pub(crate) fn check(contents: &str) {
         } else if let Some(x) = special_comment(s, "config") {
           config_str.push_str(x);
           config_str.push('\n');
+        } else if special_comment(s, "begin").is_some() || special_comment(s, "end").is_some() {
+          // skip
         } else if s.starts_with("<!--") {
           panic!("unknown comment: {s}");
         }
