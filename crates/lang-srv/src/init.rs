@@ -1,6 +1,6 @@
 //! Initialize a new server.
 
-use crate::state::{Mode, Root, St};
+use crate::state::{Root, St};
 use crate::{convert, cx::Cx, diagnostics};
 use crossbeam_channel::Sender;
 use diagnostic::Code;
@@ -50,13 +50,10 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
     root_uri.map(|url| convert::clean_path_buf(&url).map_err(|e| (e, url))).transpose();
   let mut ret = St {
     // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
-    mode: match root.as_mut().ok().and_then(Option::take) {
-      Some(path) => {
-        let input = cx.get_input(path.as_clean_path());
-        Mode::Root(Box::new(Root { path, input }))
-      }
-      None => Mode::NoRoot,
-    },
+    root: root.as_mut().ok().and_then(Option::take).map(|path| {
+      let input = cx.get_input(path.as_clean_path());
+      Box::new(Root { path, input })
+    }),
     cx,
     analysis,
     has_diagnostics: FxHashSet::default(),
@@ -70,7 +67,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
       .workspace
       .and_then(|x| x.file_operations?.dynamic_registration)
       .unwrap_or_default();
-  if want_file_ops && let Mode::Root(root) = &ret.mode {
+  if want_file_ops && let Some(root) = &ret.root {
     // we'd like to activate on millet.toml, but "nested alternate groups are not allowed" at time
     // of writing, and we'd rather not activate on all toml.
     let watchers = vec![lsp_types::FileSystemWatcher {

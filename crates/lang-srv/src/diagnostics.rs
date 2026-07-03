@@ -1,16 +1,13 @@
 //! Publish diagnostics.
 
 use crate::convert;
-use crate::state::{Mode, St};
+use crate::state::St;
 use fast_hash::{FxHashMap, FxHashSet};
 use lsp_types::Url;
 use paths::FileSystem as _;
 
 pub(crate) fn try_publish(st: &mut St) -> bool {
-  let root = match &mut st.mode {
-    Mode::Root(x) => x,
-    Mode::NoRoot => return false,
-  };
+  let Some(root) = &mut st.root else { return false };
   let mut input_diagnostics = FxHashMap::<Url, Vec<lsp_types::Diagnostic>>::default();
   for err in &root.input.errors {
     let did_send_as_diagnostic = if st.cx.fs.is_file(err.abs_path()) {
