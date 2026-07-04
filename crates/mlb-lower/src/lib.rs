@@ -1,13 +1,14 @@
 //! Lower a MLB root group into a map of source files and parsed groups.
 
-use crate::types::Group;
-use crate::util::{
-  Error, ErrorKind, ErrorSource, GroupPathToProcess, StartedGroup, get_path_id_in_group, read_file,
-};
 use fast_hash::FxHashSet;
+use input_util::{
+  Error, ErrorKind, ErrorSource, Group, GroupPathToProcess, StartedGroup, get_path_id_in_group,
+  read_file,
+};
 use paths::{PathId, PathMap};
 
-pub(crate) fn get<F>(
+/// Do the lowering.
+pub fn get<F>(
   fs: &F,
   sources: &mut PathMap<String>,
   groups: &mut PathMap<Group>,

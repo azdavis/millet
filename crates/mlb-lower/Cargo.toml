@@ -1,5 +1,5 @@
 [package]
-name = "input"
+name = "mlb-lower"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -13,21 +13,19 @@ test = false
 doctest = false
 
 [dependencies]
-diagnostic.workspace = true
 fast-hash.workspace = true
 paths.workspace = true
 str-util.workspace = true
 text-pos.workspace = true
 text-size-util.workspace = true
-toml.workspace = true
-topo-sort.workspace = true
 
-cm-lower.path = "../cm-lower"
-config.path = "../config"
+cov-mark.path = "../cov-mark"
 input-util.path = "../input-util"
 mlb-hir.path = "../mlb-hir"
-mlb-lower.path = "../mlb-lower"
-paths-glob.path = "../paths-glob"
+mlb-syntax.path = "../mlb-syntax"
 slash-var-path.path = "../slash-var-path"
+sml-file-syntax.path = "../sml-file-syntax"
+sml-file.path = "../sml-file"
+sml-fixity.path = "../sml-fixity"
 sml-namespace.path = "../sml-namespace"
-sml-path.path = "../sml-path"
+sml-syntax.path = "../sml-syntax"

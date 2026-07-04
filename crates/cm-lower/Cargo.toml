@@ -1,5 +1,5 @@
 [package]
-name = "input"
+name = "cm-lower"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -13,21 +13,18 @@ test = false
 doctest = false
 
 [dependencies]
-diagnostic.workspace = true
 fast-hash.workspace = true
 paths.workspace = true
 str-util.workspace = true
 text-pos.workspace = true
 text-size-util.workspace = true
-toml.workspace = true
-topo-sort.workspace = true
 
-cm-lower.path = "../cm-lower"
-config.path = "../config"
+cm-syntax.path = "../cm-syntax"
 input-util.path = "../input-util"
 mlb-hir.path = "../mlb-hir"
-mlb-lower.path = "../mlb-lower"
-paths-glob.path = "../paths-glob"
 slash-var-path.path = "../slash-var-path"
+sml-file-syntax.path = "../sml-file-syntax"
+sml-file.path = "../sml-file"
+sml-fixity.path = "../sml-fixity"
 sml-namespace.path = "../sml-namespace"
-sml-path.path = "../sml-path"
+sml-syntax.path = "../sml-syntax"

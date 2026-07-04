@@ -1,4 +1,8 @@
-//! Pervasive utilities.
+//! Utils for getting input.
+
+#![expect(missing_docs)]
+#![expect(clippy::missing_panics_doc)]
+#![expect(clippy::missing_errors_doc)]
 
 use diagnostic::{Code, Severity};
 use paths::PathId;
@@ -6,8 +10,17 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use text_pos::RangeUtf16;
 
+/// A description of how to check a group of source files.
 #[derive(Debug)]
-pub(crate) enum ErrorKind {
+pub struct Group {
+  /// A lowered `BasDec`, describing the group.
+  pub bas_dec: mlb_hir::BasDec,
+  /// A position DB for the group file that yielded the dec.
+  pub pos_db: text_pos::PositionDb,
+}
+
+#[derive(Debug)]
+pub enum ErrorKind {
   Io(std::io::Error),
   MultipleRoots(PathBuf, PathBuf),
   NoRoot(NoRootFlavor),
@@ -31,7 +44,7 @@ pub(crate) enum ErrorKind {
 }
 
 #[derive(Debug)]
-pub(crate) enum NoRootFlavor {
+pub enum NoRootFlavor {
   NoFile,
   NoGlob,
   EmptyGlob(str_util::SmolStr),
@@ -82,9 +95,9 @@ impl fmt::Display for ErrorDisplay<'_> {
 }
 
 #[derive(Debug, Default, Clone)]
-pub(crate) struct ErrorSource {
-  pub(crate) path: Option<PathBuf>,
-  pub(crate) range: Option<RangeUtf16>,
+pub struct ErrorSource {
+  pub path: Option<PathBuf>,
+  pub range: Option<RangeUtf16>,
 }
 
 /// An error when getting input.
@@ -99,7 +112,8 @@ pub struct Error {
 }
 
 impl Error {
-  pub(crate) fn new(source: ErrorSource, path: PathBuf, kind: ErrorKind) -> Self {
+  #[must_use]
+  pub fn new(source: ErrorSource, path: PathBuf, kind: ErrorKind) -> Self {
     Self { source: Box::new(source), path, kind: Box::new(kind) }
   }
 
@@ -174,7 +188,7 @@ impl Error {
   }
 }
 
-pub(crate) type Result<T, E = Error> = std::result::Result<T, E>;
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 fn maybe_rel_to_root<'a>(root: &Path, path: &'a Path) -> &'a Path {
   match path.strip_prefix(root) {
@@ -189,7 +203,7 @@ fn maybe_rel_to_root<'a>(root: &Path, path: &'a Path) -> &'a Path {
   }
 }
 
-pub(crate) fn get_path_id_in_group(
+pub fn get_path_id_in_group(
   paths: &mut paths::Store,
   group: &StartedGroup,
   path: &Path,
@@ -205,21 +219,21 @@ pub(crate) fn get_path_id_in_group(
   (id, path, source)
 }
 
-pub(crate) fn read_file<F>(fs: &F, source: ErrorSource, path: &Path) -> Result<String>
+pub fn read_file<F>(fs: &F, source: ErrorSource, path: &Path) -> Result<String>
 where
   F: paths::FileSystem,
 {
   fs.read_to_string(path).map_err(|e| Error::new(source, path.to_owned(), ErrorKind::Io(e)))
 }
 
-pub(crate) fn read_dir<F>(fs: &F, source: ErrorSource, path: &Path) -> Result<Vec<PathBuf>>
+pub fn read_dir<F>(fs: &F, source: ErrorSource, path: &Path) -> Result<Vec<PathBuf>>
 where
   F: paths::FileSystem,
 {
   fs.read_dir(path).map_err(|e| Error::new(source, path.to_owned(), ErrorKind::Io(e)))
 }
 
-pub(crate) fn str_path(source: ErrorSource, path: &Path) -> Result<&str> {
+pub fn str_path(source: ErrorSource, path: &Path) -> Result<&str> {
   path
     .as_os_str()
     .to_str()
@@ -227,23 +241,25 @@ pub(crate) fn str_path(source: ErrorSource, path: &Path) -> Result<&str> {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct GroupPathToProcess {
+pub struct GroupPathToProcess {
   /// the path that led us to `path`.
-  pub(crate) parent: PathId,
+  pub parent: PathId,
   /// the range in the file at `parent` that led us to `path`, if any.
-  pub(crate) range: Option<RangeUtf16>,
+  pub range: Option<RangeUtf16>,
   /// the path to process.
-  pub(crate) path: PathId,
+  pub path: PathId,
 }
 
-pub(crate) struct StartedGroup {
-  pub(crate) path: paths::CleanPathBuf,
-  pub(crate) contents: String,
-  pub(crate) pos_db: text_pos::PositionDb,
+#[derive(Debug)]
+pub struct StartedGroup {
+  pub path: paths::CleanPathBuf,
+  pub contents: String,
+  pub pos_db: text_pos::PositionDb,
 }
 
 /// A type which can be converted into an [`Error`], but is known to be an I/O error.
-pub(crate) struct IoError {
+#[derive(Debug)]
+pub struct IoError {
   error_path: paths::CleanPathBuf,
   source_path: paths::CleanPathBuf,
   range: Option<RangeUtf16>,
@@ -251,7 +267,8 @@ pub(crate) struct IoError {
 }
 
 impl IoError {
-  pub(crate) fn into_error(self) -> Error {
+  #[must_use]
+  pub fn into_error(self) -> Error {
     Error::new(
       ErrorSource { path: Some(self.source_path.into_path_buf()), range: self.range },
       self.error_path.into_path_buf(),
@@ -262,11 +279,7 @@ impl IoError {
 
 impl StartedGroup {
   /// This must only return [`IoError`] in the error case.
-  pub(crate) fn new<F>(
-    paths: &mut paths::Store,
-    cur: GroupPathToProcess,
-    fs: &F,
-  ) -> Result<Self, IoError>
+  pub fn new<F>(paths: &mut paths::Store, cur: GroupPathToProcess, fs: &F) -> Result<Self, IoError>
   where
     F: paths::FileSystem,
   {
@@ -289,7 +302,7 @@ impl StartedGroup {
 
 /// A kind of group path.
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum GroupPathKind {
+pub enum GroupPathKind {
   /// SML/NJ Compilation Manager files.
   Cm,
   /// ML Basis files.

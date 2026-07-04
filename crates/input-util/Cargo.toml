@@ -1,5 +1,5 @@
 [package]
-name = "input"
+name = "input-util"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -14,20 +14,12 @@ doctest = false
 
 [dependencies]
 diagnostic.workspace = true
-fast-hash.workspace = true
 paths.workspace = true
 str-util.workspace = true
 text-pos.workspace = true
 text-size-util.workspace = true
 toml.workspace = true
-topo-sort.workspace = true
 
-cm-lower.path = "../cm-lower"
-config.path = "../config"
-input-util.path = "../input-util"
+cm-syntax.path = "../cm-syntax"
 mlb-hir.path = "../mlb-hir"
-mlb-lower.path = "../mlb-lower"
-paths-glob.path = "../paths-glob"
-slash-var-path.path = "../slash-var-path"
-sml-namespace.path = "../sml-namespace"
-sml-path.path = "../sml-path"
+mlb-syntax.path = "../mlb-syntax"

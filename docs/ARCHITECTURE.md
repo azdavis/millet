@@ -235,9 +235,17 @@ These crates are related to "group files" in the SML ecosystem, namely SML/NJ Co
 
 Processes the syntax of SML/NJ Compilation Manager (`.cm`) files.
 
+### `crates/cm-lower`
+
+Lowers CM into MLB.
+
 ### `crates/mlb-syntax`
 
 Processes the syntax of ML Basis (`.mlb`) files into AST values.
+
+### `crates/mlb-lower`
+
+Lowers MLB.
 
 ### `crates/mlb-hir`
 
@@ -272,6 +280,10 @@ Depends on `analysis` and a bunch of third party crates to implement a language 
 ## Other crates
 
 These crates don't really fit in anywhere else.
+
+### `crates/input-util`
+
+Util for getting input.
 
 ### `crates/paths-glob`
 

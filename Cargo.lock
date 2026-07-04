@@ -202,6 +202,26 @@ version = "0.1.0"
 source = "git+https://github.com/azdavis/language-util.git#94e6858197f5dd5e21e6ab7ddce68c63274cdc65"
 
 [[package]]
+name = "cm-lower"
+version = "0.15.2"
+dependencies = [
+ "cm-syntax",
+ "fast-hash",
+ "input-util",
+ "mlb-hir",
+ "paths",
+ "slash-var-path",
+ "sml-file",
+ "sml-file-syntax",
+ "sml-fixity",
+ "sml-namespace",
+ "sml-syntax",
+ "str-util",
+ "text-pos",
+ "text-size-util",
+]
+
+[[package]]
 name = "cm-syntax"
 version = "0.15.2"
 dependencies = [
@@ -634,27 +654,38 @@ dependencies = [
 name = "input"
 version = "0.15.2"
 dependencies = [
- "cm-syntax",
+ "cm-lower",
  "config",
- "cov-mark",
  "diagnostic",
  "fast-hash",
+ "input-util",
  "mlb-hir",
- "mlb-syntax",
+ "mlb-lower",
  "paths",
  "paths-glob",
  "slash-var-path",
- "sml-file",
- "sml-file-syntax",
- "sml-fixity",
  "sml-namespace",
  "sml-path",
- "sml-syntax",
  "str-util",
  "text-pos",
  "text-size-util",
  "toml",
  "topo-sort",
+]
+
+[[package]]
+name = "input-util"
+version = "0.15.2"
+dependencies = [
+ "cm-syntax",
+ "diagnostic",
+ "mlb-hir",
+ "mlb-syntax",
+ "paths",
+ "str-util",
+ "text-pos",
+ "text-size-util",
+ "toml",
 ]
 
 [[package]]
@@ -845,6 +876,27 @@ dependencies = [
  "sml-file",
  "sml-namespace",
  "str-util",
+ "text-size-util",
+]
+
+[[package]]
+name = "mlb-lower"
+version = "0.15.2"
+dependencies = [
+ "cov-mark",
+ "fast-hash",
+ "input-util",
+ "mlb-hir",
+ "mlb-syntax",
+ "paths",
+ "slash-var-path",
+ "sml-file",
+ "sml-file-syntax",
+ "sml-fixity",
+ "sml-namespace",
+ "sml-syntax",
+ "str-util",
+ "text-pos",
  "text-size-util",
 ]
 
