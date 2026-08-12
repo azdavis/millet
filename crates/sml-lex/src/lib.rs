@@ -174,7 +174,7 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
   // num lit. note e.g. `~3` is one token but `~ 3` is two
   if b.is_ascii_digit() || (b == b'~' && bs.get(st.i + 1).is_some_and(u8::is_ascii_digit)) {
     let mut idx = st.i;
-    let ret = lex_util::num::get(&mut idx, bs, |idx, kind| {
+    let res = lex_util::num::get(&mut idx, bs, |idx, kind| {
       let kind = match kind {
         lex_util::num::ErrorKind::MissingDigitsInNumLit => ErrorKind::MissingDigitsInNumLit,
         lex_util::num::ErrorKind::NegativeWordLit => ErrorKind::NegativeWordLit,
@@ -182,10 +182,10 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
       st.errors.push(Error { range: range(start, idx), kind });
     });
     st.i = idx;
-    return match ret {
-      lex_util::num::Kind::Int => SK::IntLit,
-      lex_util::num::Kind::Word => SK::WordLit,
-      lex_util::num::Kind::Real => SK::RealLit,
+    return match res {
+      lex_util::num::Kind::Int(_) => SK::IntLit,
+      lex_util::num::Kind::Word(_) => SK::WordLit,
+      lex_util::num::Kind::Real { .. } => SK::RealLit,
     };
   }
   // string lit

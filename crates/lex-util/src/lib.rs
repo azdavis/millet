@@ -11,9 +11,9 @@ pub fn is_whitespace(b: u8) -> bool {
 }
 
 /// Advances `idx` until `bs` is out of bytes or `p` no longer holds.
-pub fn advance_while<P>(idx: &mut usize, bs: &[u8], p: P)
+pub fn advance_while<P>(idx: &mut usize, bs: &[u8], mut p: P)
 where
-  P: Fn(u8) -> bool,
+  P: FnMut(u8) -> bool,
 {
   while let Some(&b) = bs.get(*idx) {
     if p(b) {
