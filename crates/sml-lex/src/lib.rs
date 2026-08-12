@@ -173,77 +173,20 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
   }
   // num lit. note e.g. `~3` is one token but `~ 3` is two
   if b.is_ascii_digit() || (b == b'~' && bs.get(st.i + 1).is_some_and(u8::is_ascii_digit)) {
-    let neg = b == b'~';
-    let b = if neg {
-      st.i += 1;
-      bs[st.i]
-    } else {
-      b
+    let mut idx = st.i;
+    let ret = lex_util::num::get(&mut idx, bs, |idx, kind| {
+      let kind = match kind {
+        lex_util::num::ErrorKind::MissingDigitsInNumLit => ErrorKind::MissingDigitsInNumLit,
+        lex_util::num::ErrorKind::NegativeWordLit => ErrorKind::NegativeWordLit,
+      };
+      st.errors.push(Error { range: range(start, idx), kind });
+    });
+    st.i = idx;
+    return match ret {
+      lex_util::num::Kind::Int => SK::IntLit,
+      lex_util::num::Kind::Word => SK::WordLit,
+      lex_util::num::Kind::Real => SK::RealLit,
     };
-    if b == b'0' {
-      st.i += 1;
-      match bs.get(st.i) {
-        None => return SK::IntLit,
-        // word
-        Some(&b'w') => {
-          st.i += 1;
-          let valid_digit = match bs.get(st.i) {
-            Some(&b'x') => {
-              st.i += 1;
-              u8::is_ascii_hexdigit
-            }
-            _ => u8::is_ascii_digit,
-          };
-          let s = st.i;
-          advance_while(&mut st.i, bs, |b| valid_digit(&b));
-          if s == st.i {
-            err(st, start, ErrorKind::MissingDigitsInNumLit);
-          }
-          if neg {
-            err(st, start, ErrorKind::NegativeWordLit);
-          }
-          return SK::WordLit;
-        }
-        // hex int
-        Some(&b'x') => {
-          st.i += 1;
-          let s = st.i;
-          advance_while(&mut st.i, bs, |b| b.is_ascii_hexdigit());
-          if s == st.i {
-            err(st, start, ErrorKind::MissingDigitsInNumLit);
-          }
-          return SK::IntLit;
-        }
-        // dec int that happens to start with 0
-        Some(_) => {}
-      }
-    }
-    advance_while(&mut st.i, bs, |b| b.is_ascii_digit());
-    let mut kind = SK::IntLit;
-    if let Some(&b'.') = bs.get(st.i) {
-      kind = SK::RealLit;
-      st.i += 1;
-      let s = st.i;
-      advance_while(&mut st.i, bs, |b| b.is_ascii_digit());
-      if s == st.i {
-        err(st, start, ErrorKind::MissingDigitsInNumLit);
-      }
-    }
-    if let Some(&b'e' | &b'E') = bs.get(st.i) {
-      kind = SK::RealLit;
-      st.i += 1;
-      if bs.get(st.i) == Some(&b'~') {
-        st.i += 1;
-      }
-      let s = st.i;
-      advance_while(&mut st.i, bs, |b| b.is_ascii_digit());
-      if s == st.i {
-        err(st, start, ErrorKind::MissingDigitsInNumLit);
-      }
-    }
-    cov_mark::hit("num_suffix");
-    advance_while(&mut st.i, bs, |b| b.is_ascii_alphanumeric());
-    return kind;
   }
   // string lit
   if b == b'"' {

@@ -1,6 +1,7 @@
 //! Utilities for lexing SML-adjacent languages.
 
 pub mod block_comment;
+pub mod num;
 pub mod string;
 
 /// Returns whether `b` is a whitespace character for our purposes.
