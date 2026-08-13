@@ -21,8 +21,6 @@ la-arena = "0.3.1"
 log = "0.4.20"
 lsp-server = "0.7.5"
 lsp-types = { version = "0.95.0", features = ["proposed"] }
-num-bigint = "0.4.4"
-num-traits = "0.2.17"
 pico-args = "0.5.0"
 pretty_assertions = "1.4.0"
 proc-macro2 = "1.0.70"
