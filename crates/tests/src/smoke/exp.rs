@@ -3,28 +3,6 @@
 use crate::check::check;
 
 #[test]
-fn scon() {
-  check(
-    r#"
-val _: int = 3
-and _: int = ~4
-and _: real = 3.2
-and _: real = ~3.2e9
-and _: real = 3.2E9
-and _: real = 3.2E~9
-and _: word = 0w123
-and _: int = 0x123beef
-and _: word = 0wx123beef
-and _: char = #"a"
-and _: string = "foo"
-(* not actually scon *)
-and _: bool = true
-and _: bool = false
-"#,
-  );
-}
-
-#[test]
 fn record() {
   check(
     r#"

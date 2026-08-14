@@ -2,9 +2,12 @@
 
 use crate::util::{Disallowed, ErrorKind, St};
 use sml_syntax::ast;
+use std::fmt::Write as _;
 
 /// unfortunately, although we already kind of "parsed" these tokens in lex, that information is not
 /// carried to here. so we must do it again.
+///
+/// TODO: make this not return option?
 pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon> {
   let tok = scon.token;
   let ret = match scon.kind {
@@ -12,26 +15,12 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       if !st.lang().exp.int_lit {
         st.err_tok(&tok, ErrorKind::Disallowed(Disallowed::Exp("`int` literal")));
       }
-      let chars = tok.text();
-      let mut chars = chars.chars();
-      let neg = chars.as_str().starts_with('~');
-      if neg {
-        chars.next();
-      }
-      let mul: i32 = if neg { -1 } else { 1 };
-      let radix: u32 = if chars.as_str().starts_with("0x") {
-        chars.next();
-        chars.next();
-        16
+      let n = if let lex_util::num::Kind::Int { n, .. } =
+        lex_util::num::get(&mut 0, tok.text().as_bytes(), |_, _| ())
+      {
+        n
       } else {
-        10
-      };
-      let n = match sml_hir::Int::from_str_radix(chars.as_str(), radix) {
-        Ok(x) => x * mul,
-        Err(e) => {
-          st.err_tok(&tok, ErrorKind::InvalidIntLit(e));
-          sml_hir::Int::from(0i32)
-        }
+        0
       };
       sml_hir::SCon::Int(n)
     }
@@ -39,19 +28,31 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       if !st.lang().exp.real_lit {
         st.err_tok(&tok, ErrorKind::Disallowed(Disallowed::Exp("`real` literal")));
       }
-      let owned: String;
-      let mut text = tok.text();
-      // only alloc if needed
-      if text.contains('~') {
-        owned = tok.text().replace('~', "-");
-        text = owned.as_str();
-      }
-      let n = match text.parse() {
-        Ok(x) => x,
-        Err(e) => {
-          st.err_tok(&tok, ErrorKind::InvalidRealLit(e));
-          0.0
+      let n = if let lex_util::num::Kind::Real { neg, whole, frac_leading_zeroes, frac, exp } =
+        lex_util::num::get(&mut 0, tok.text().as_bytes(), |_, _| ())
+      {
+        let mut s = String::new();
+        if neg {
+          s.push('-');
         }
+        write!(&mut s, "{whole}").expect("write num");
+        s.push('.');
+        for _ in 0..frac_leading_zeroes {
+          s.push('0');
+        }
+        write!(&mut s, "{frac}").expect("write frac");
+        if exp != 0 {
+          write!(&mut s, "e{exp}").expect("write exp");
+        }
+        match s.parse() {
+          Ok(x) => x,
+          Err(e) => {
+            st.err_tok(&tok, ErrorKind::InvalidRealLit(e));
+            0.0
+          }
+        }
+      } else {
+        0.0
       };
       sml_hir::SCon::Real(n)
     }
@@ -59,23 +60,12 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       if !st.lang().exp.word_lit {
         st.err_tok(&tok, ErrorKind::Disallowed(Disallowed::Exp("`word` literal")));
       }
-      let mut chars = tok.text().chars();
-      // 0
-      chars.next();
-      // w
-      chars.next();
-      let radix: u32 = if chars.as_str().starts_with('x') {
-        chars.next();
-        16
+      let n = if let lex_util::num::Kind::Word { n, .. } =
+        lex_util::num::get(&mut 0, tok.text().as_bytes(), |_, _| ())
+      {
+        n
       } else {
-        10
-      };
-      let n = match u64::from_str_radix(chars.as_str(), radix) {
-        Ok(x) => x,
-        Err(e) => {
-          st.err_tok(&tok, ErrorKind::InvalidWordLit(e));
-          0
-        }
+        0
       };
       sml_hir::SCon::Word(n)
     }
@@ -119,8 +109,19 @@ pub(crate) fn get_lab(st: &mut St<'_>, lab: &ast::Lab) -> sml_hir::Lab {
       sml_hir::Lab::Name(str_util::Name::new(lab.token.text()))
     }
     ast::LabKind::IntLit => {
-      let n = match lab.token.text().parse::<usize>() {
-        Ok(n) => n,
+      let n = if let lex_util::num::Kind::Int { n, hex } =
+        lex_util::num::get(&mut 0, lab.token.text().as_bytes(), |_, _| ())
+      {
+        if hex {
+          st.err_tok(&lab.token, ErrorKind::HexNumLab);
+        }
+        n
+      } else {
+        // should never happen?
+        1
+      };
+      let n = match usize::try_from(n) {
+        Ok(x) => x,
         Err(e) => {
           st.err_tok(&lab.token, ErrorKind::InvalidNumLab(e));
           1

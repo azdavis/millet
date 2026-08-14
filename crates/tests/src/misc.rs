@@ -338,10 +338,9 @@ fn num_suffix() {
   check(
     r"
 val _ = 3and _ = 4
-(**     ^^^^ invalid literal: invalid digit found in string *)
+(**     ^^^^ trailing suffix *)
 ",
   );
-  cov_mark::hit("num_suffix");
 }
 
 #[test]

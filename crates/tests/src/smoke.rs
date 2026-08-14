@@ -4,6 +4,7 @@ use crate::check::{check, check_multi};
 
 mod dec;
 mod exp;
+mod scon;
 
 #[test]
 fn empty() {

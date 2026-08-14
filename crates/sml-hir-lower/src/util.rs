@@ -45,11 +45,10 @@ impl Ptrs {
 pub(crate) enum ErrorKind {
   FunBindMismatchedName(String, String),
   FunBindWrongNumPats(usize, usize),
-  InvalidIntLit(sml_hir::ParseIntError),
-  InvalidWordLit(std::num::ParseIntError),
   InvalidRealLit(std::num::ParseFloatError),
-  InvalidNumLab(std::num::ParseIntError),
+  InvalidNumLab(std::num::TryFromIntError),
   ZeroNumLab,
+  HexNumLab,
   MultipleRestPatRows,
   RestPatRowNotLast,
   RequiresOperand,
@@ -94,11 +93,10 @@ impl fmt::Display for Error {
         let s = if *want == 1 { "" } else { "s" };
         write!(f, "expected {want} pattern{s}, found {got}")
       }
-      ErrorKind::InvalidIntLit(e) => write!(f, "invalid literal: {e}"),
-      ErrorKind::InvalidWordLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidRealLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidNumLab(e) => write!(f, "invalid numeric label: {e}"),
       ErrorKind::ZeroNumLab => f.write_str("invalid numeric label: numeric labels start at 1"),
+      ErrorKind::HexNumLab => f.write_str("invalid numeric label: hexadecimal"),
       ErrorKind::MultipleRestPatRows => f.write_str("multiple `...`"),
       ErrorKind::RestPatRowNotLast => f.write_str("`...` must come last"),
       ErrorKind::RequiresOperand => f.write_str("requires at least 1 operand"),
@@ -240,15 +238,15 @@ impl Error {
   ///
   /// No longer in use:
   ///
+  /// - `Code::n(4003)`
   /// - `Code::n(4008)`
   #[must_use]
   pub fn code(&self) -> Code {
     match self.kind {
       ErrorKind::FunBindMismatchedName(_, _) => Code::n(4001),
       ErrorKind::FunBindWrongNumPats(_, _) => Code::n(4002),
-      ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidWordLit(_) => Code::n(4003),
       ErrorKind::InvalidRealLit(_) => Code::n(4004),
-      ErrorKind::InvalidNumLab(_) | ErrorKind::ZeroNumLab => Code::n(4005),
+      ErrorKind::InvalidNumLab(_) | ErrorKind::ZeroNumLab | ErrorKind::HexNumLab => Code::n(4005),
       ErrorKind::MultipleRestPatRows => Code::n(4006),
       ErrorKind::RestPatRowNotLast => Code::n(4007),
       ErrorKind::RequiresOperand => Code::n(4009),

@@ -1,7 +1,7 @@
 //! Lexing a string into tokens.
 
 use diagnostic::{Code, Severity};
-use lex_util::{advance_while, block_comment, is_whitespace, string};
+use lex_util::{advance_while, block_comment, is_whitespace, num, string};
 use sml_syntax::kind::SyntaxKind as SK;
 use std::fmt;
 use text_size_util::{TextRange, TextSize};
@@ -24,10 +24,9 @@ enum ErrorKind {
   InvalidSource,
   UnclosedComment,
   IncompleteTyVar,
-  NegativeWordLit,
   WrongLenCharLit,
-  MissingDigitsInNumLit,
   String(string::Error),
+  Num(num::Error),
   NameStartingWithUnderscore,
 }
 
@@ -37,14 +36,20 @@ impl fmt::Display for Error {
       ErrorKind::InvalidSource => f.write_str("invalid source character"),
       ErrorKind::UnclosedComment => f.write_str("unclosed comment"),
       ErrorKind::IncompleteTyVar => f.write_str("incomplete type variable"),
-      ErrorKind::String(string::Error::Unclosed) => f.write_str("unclosed string literal"),
-      ErrorKind::NegativeWordLit => f.write_str("negative word literal"),
       ErrorKind::WrongLenCharLit => f.write_str("character literal must have length 1"),
-      ErrorKind::MissingDigitsInNumLit => f.write_str("missing digits in number literal"),
-      ErrorKind::String(string::Error::InvalidEscape) => f.write_str("invalid string escape"),
-      ErrorKind::String(string::Error::NonWhitespaceInContinuation) => {
-        f.write_str("non-whitespace in string continuation")
-      }
+      ErrorKind::String(x) => match x {
+        string::Error::InvalidEscape => f.write_str("invalid string escape"),
+        string::Error::Unclosed => f.write_str("unclosed string literal"),
+        string::Error::NonWhitespaceInContinuation => {
+          f.write_str("non-whitespace in string continuation")
+        }
+      },
+      ErrorKind::Num(x) => match x {
+        num::Error::MissingDigitsInNumLit => f.write_str("missing digits in number literal"),
+        num::Error::NegativeWordLit => f.write_str("negative word literal"),
+        num::Error::Overflow => f.write_str("number literal too large"),
+        num::Error::TrailingSuffix => f.write_str("trailing suffix on number literal"),
+      },
       ErrorKind::NameStartingWithUnderscore => f.write_str("name cannot start with a `_`"),
     }
   }
@@ -72,12 +77,14 @@ impl Error {
       ErrorKind::UnclosedComment => Code::n(2002),
       ErrorKind::IncompleteTyVar => Code::n(2003),
       ErrorKind::String(string::Error::Unclosed) => Code::n(2004),
-      ErrorKind::NegativeWordLit => Code::n(2005),
+      ErrorKind::Num(num::Error::NegativeWordLit) => Code::n(2005),
       ErrorKind::WrongLenCharLit => Code::n(2006),
-      ErrorKind::MissingDigitsInNumLit => Code::n(2007),
+      ErrorKind::Num(num::Error::MissingDigitsInNumLit) => Code::n(2007),
       ErrorKind::String(string::Error::InvalidEscape) => Code::n(2008),
       ErrorKind::String(string::Error::NonWhitespaceInContinuation) => Code::n(2009),
       ErrorKind::NameStartingWithUnderscore => Code::n(2010),
+      ErrorKind::Num(num::Error::Overflow) => Code::n(2011),
+      ErrorKind::Num(num::Error::TrailingSuffix) => Code::n(2012),
     }
   }
 
@@ -175,16 +182,12 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
   if b.is_ascii_digit() || (b == b'~' && bs.get(st.i + 1).is_some_and(u8::is_ascii_digit)) {
     let mut idx = st.i;
     let res = lex_util::num::get(&mut idx, bs, |idx, kind| {
-      let kind = match kind {
-        lex_util::num::ErrorKind::MissingDigitsInNumLit => ErrorKind::MissingDigitsInNumLit,
-        lex_util::num::ErrorKind::NegativeWordLit => ErrorKind::NegativeWordLit,
-      };
-      st.errors.push(Error { range: range(start, idx), kind });
+      st.errors.push(Error { range: range(start, idx), kind: ErrorKind::Num(kind) });
     });
     st.i = idx;
     return match res {
-      lex_util::num::Kind::Int(_) => SK::IntLit,
-      lex_util::num::Kind::Word(_) => SK::WordLit,
+      lex_util::num::Kind::Int { .. } => SK::IntLit,
+      lex_util::num::Kind::Word { .. } => SK::WordLit,
       lex_util::num::Kind::Real { .. } => SK::RealLit,
     };
   }

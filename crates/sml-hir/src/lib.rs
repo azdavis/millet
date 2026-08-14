@@ -13,7 +13,7 @@ use str_util::Name;
 
 pub use la_arena;
 pub use sml_lab::Lab;
-pub use sml_scon::{Int, ParseIntError, SCon};
+pub use sml_scon::SCon;
 
 #[derive(Debug, Default)]
 pub struct Arenas {

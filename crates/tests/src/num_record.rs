@@ -50,7 +50,7 @@ fn neg_label() {
   check(
     r"
 type t = { ~3: int, 1: bool }
-(**        ^^ invalid numeric label: invalid digit found in string *)
+(**        ^^ invalid numeric label: out of range integral type conversion attempted *)
 ",
   );
 }
@@ -60,7 +60,7 @@ fn hex_label() {
   check(
     r"
 type t = { 0x3: int, 1: bool }
-(**        ^^^ invalid numeric label: invalid digit found in string *)
+(**        ^^^ invalid numeric label: hexadecimal *)
 ",
   );
 }

@@ -75,7 +75,7 @@ fn get_(
     // @def(33)
     sml_hir::Pat::SCon(special_con) => {
       let con = match special_con {
-        sml_hir::SCon::Int(i) => Con::Int(i.clone()),
+        sml_hir::SCon::Int(i) => Con::Int(*i),
         sml_hir::SCon::Real(_) => {
           st.err(pat_idx, ErrorKind::RealPat);
           Con::Any
