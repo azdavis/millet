@@ -24,7 +24,8 @@ impl SourceFileSyntax {
     contents: &str,
   ) -> Self {
     elapsed::log("SourceFileSyntax::new", || {
-      let (lex_errors, parse) = Self::lex_and_parse(fix_env, contents);
+      let (lex_errors, parse) =
+        Self::lex_and_parse(fix_env, contents, lang.successor_ml.num_underscore);
       let mut lower = sml_hir_lower::get(lang, kind, &parse.root);
       sml_ty_var_scope::get(&mut lower.arenas, &lower.root);
       Self { pos_db: text_pos::PositionDb::new(contents), lex_errors, parse, lower, kind }
@@ -35,8 +36,9 @@ impl SourceFileSyntax {
   pub fn lex_and_parse(
     fix_env: &mut sml_fixity::Env,
     contents: &str,
+    num_underscore: bool,
   ) -> (Vec<sml_lex::Error>, sml_parse::Parse) {
-    let lexed = sml_lex::get(contents);
+    let lexed = sml_lex::get(contents, num_underscore);
     let parse = sml_parse::get(&lexed.tokens, fix_env);
     (lexed.errors, parse)
   }

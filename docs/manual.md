@@ -102,7 +102,7 @@ There are four places where Millet can be configured:
 - [Language server initialization](#language-server-initialization). This is for advanced use-cases and/or non-VS-Code editors.
 - [ML Basis annotations](#ml-basis-annotations). This is for specific files.
 
-### `millet.toml`
+### millet.toml
 
 Millet can be configured with a `millet.toml` in the workspace root. It is a [TOML][] file with the following format:
 
@@ -533,6 +533,21 @@ fun foo (xs : int vector) : int =
   | #[a, b, _] => a * b
   | #[_] => 5
   | _ => 6
+```
+
+#### `language.successor-ml.num-underscore`
+
+- Type: `boolean`
+- Default: `false`
+
+Whether underscores in number literals are allowed.
+
+<!-- @config language.successor-ml.num-underscore = true -->
+
+```sml
+val i = 123_456
+val w = 0w0755_0644
+val r = 123_345.456_987
 ```
 
 #### `language.lunar-ml`

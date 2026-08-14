@@ -76,8 +76,14 @@ impl Default for Ac {
 }
 
 impl Ac {
-  fn advance_while<F>(&mut self, idx: &mut usize, bs: &[u8], base: i64, mut f: F)
-  where
+  fn advance_while<F>(
+    &mut self,
+    idx: &mut usize,
+    has_underscore: &mut bool,
+    bs: &[u8],
+    base: i64,
+    mut f: F,
+  ) where
     F: FnMut(u8) -> Option<u8>,
   {
     advance_while(idx, bs, |b| match f(b) {
@@ -93,7 +99,14 @@ impl Ac {
           self.n.and_then(|ac| ac.checked_mul(base)).and_then(|ac| ac.checked_add(i64::from(x)));
         true
       }
-      None => false,
+      None => {
+        if b == b'_' {
+          *has_underscore = true;
+          true
+        } else {
+          false
+        }
+      }
     });
   }
 }
@@ -118,15 +131,24 @@ fn maybe_neg(neg: bool, n: i64) -> i64 {
   if neg { -n } else { n }
 }
 
+#[derive(Debug)]
+#[expect(missing_docs)]
+pub struct Res {
+  pub kind: Kind,
+  pub has_underscore: bool,
+}
+
 /// Get a number from some bytes.
 ///
 /// # Panics
 ///
 /// On internal error.
-pub fn get<F>(idx: &mut usize, bs: &[u8], mut f: F) -> Kind
+#[allow(clippy::too_many_lines)]
+pub fn get<F>(idx: &mut usize, bs: &[u8], mut f: F) -> Res
 where
   F: FnMut(usize, Error),
 {
+  let mut has_underscore = false;
   let b = bs[*idx];
   let neg = b == b'~';
   let b = if neg {
@@ -139,7 +161,12 @@ where
   if b == b'0' {
     *idx += 1;
     match bs.get(*idx) {
-      None => return Kind::Int { n: ac.n.expect("we know it's zero"), hex: false },
+      None => {
+        return Res {
+          kind: Kind::Int { n: ac.n.expect("we know it's zero"), hex: false },
+          has_underscore,
+        };
+      }
       // word
       Some(&b'w') => {
         *idx += 1;
@@ -153,37 +180,43 @@ where
           _ => dec_digit,
         };
         let s = *idx;
-        ac.advance_while(idx, bs, base, mk_digit);
+        ac.advance_while(idx, &mut has_underscore, bs, base, mk_digit);
         if s == *idx {
           f(*idx, Error::MissingDigitsInNumLit);
         }
         if neg {
           f(*idx, Error::NegativeWordLit);
         }
-        return Kind::Word { n: pos(maybe_note_overflow(ac.n, *idx, &mut f)), hex: base == 16 };
+        return Res {
+          kind: Kind::Word { n: pos(maybe_note_overflow(ac.n, *idx, &mut f)), hex: base == 16 },
+          has_underscore,
+        };
       }
       // hex int
       Some(&b'x') => {
         *idx += 1;
         let s = *idx;
-        ac.advance_while(idx, bs, 16, hex_digit);
+        ac.advance_while(idx, &mut has_underscore, bs, 16, hex_digit);
         if s == *idx {
           f(*idx, Error::MissingDigitsInNumLit);
         }
-        return Kind::Int { n: maybe_neg(neg, maybe_note_overflow(ac.n, *idx, &mut f)), hex: true };
+        return Res {
+          kind: Kind::Int { n: maybe_neg(neg, maybe_note_overflow(ac.n, *idx, &mut f)), hex: true },
+          has_underscore,
+        };
       }
       // dec int that happens to start with 0
       Some(_) => {}
     }
   }
-  ac.advance_while(idx, bs, 10, dec_digit);
+  ac.advance_while(idx, &mut has_underscore, bs, 10, dec_digit);
   let mut frac = None::<(u64, u32)>;
   let mut exp = None::<i64>;
   if let Some(&b'.') = bs.get(*idx) {
     *idx += 1;
     let s = *idx;
     let mut ac = Ac::default();
-    ac.advance_while(idx, bs, 10, dec_digit);
+    ac.advance_while(idx, &mut has_underscore, bs, 10, dec_digit);
     if s == *idx {
       f(*idx, Error::MissingDigitsInNumLit);
     }
@@ -200,7 +233,7 @@ where
     }
     let s = *idx;
     let mut ac = Ac::default();
-    ac.advance_while(idx, bs, 10, dec_digit);
+    ac.advance_while(idx, &mut has_underscore, bs, 10, dec_digit);
     if s == *idx {
       f(*idx, Error::MissingDigitsInNumLit);
     }
@@ -216,10 +249,15 @@ where
   }
   let whole = maybe_note_overflow(ac.n, *idx, &mut f);
   let (frac, lz, exp) = match (frac, exp) {
-    (None, None) => return Kind::Int { n: maybe_neg(neg, whole), hex: false },
+    (None, None) => {
+      return Res { kind: Kind::Int { n: maybe_neg(neg, whole), hex: false }, has_underscore };
+    }
     (Some((frac, lz)), None) => (frac, lz, 0),
     (None, Some(exp)) => (0, 0, exp),
     (Some((frac, lz)), Some(exp)) => (frac, lz, exp),
   };
-  Kind::Real { neg, whole: pos(whole), frac, frac_leading_zeroes: lz, exp }
+  Res {
+    kind: Kind::Real { neg, whole: pos(whole), frac, frac_leading_zeroes: lz, exp },
+    has_underscore,
+  }
 }

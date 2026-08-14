@@ -356,7 +356,7 @@ where
 /// it's pretty annoying to have to do this here, but not sure if there's a better option.
 fn get_top_defs(contents: &str, ac: &mut NameExports, range: TextRange) {
   let mut fix_env = sml_fixity::STD_BASIS.clone();
-  let (_, parse) = sml_file_syntax::SourceFileSyntax::lex_and_parse(&mut fix_env, contents);
+  let (_, parse) = sml_file_syntax::SourceFileSyntax::lex_and_parse(&mut fix_env, contents, true);
   get_top_defs_dec(ac, parse.root.decs(), range);
 }
 

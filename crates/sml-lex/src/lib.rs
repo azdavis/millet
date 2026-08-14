@@ -28,6 +28,7 @@ enum ErrorKind {
   String(string::Error),
   Num(num::Error),
   NameStartingWithUnderscore,
+  Underscore,
 }
 
 impl fmt::Display for Error {
@@ -51,6 +52,7 @@ impl fmt::Display for Error {
         num::Error::TrailingSuffix => f.write_str("trailing suffix on number literal"),
       },
       ErrorKind::NameStartingWithUnderscore => f.write_str("name cannot start with a `_`"),
+      ErrorKind::Underscore => f.write_str("disallowed underscore in number literal"),
     }
   }
 }
@@ -85,6 +87,7 @@ impl Error {
       ErrorKind::NameStartingWithUnderscore => Code::n(2010),
       ErrorKind::Num(num::Error::Overflow) => Code::n(2011),
       ErrorKind::Num(num::Error::TrailingSuffix) => Code::n(2012),
+      ErrorKind::Underscore => Code::n(2013),
     }
   }
 
@@ -101,13 +104,13 @@ impl Error {
 ///
 /// If the lexer failed to advance (an internal error).
 #[must_use]
-pub fn get(s: &str) -> Lex<'_> {
+pub fn get(s: &str, num_underscore: bool) -> Lex<'_> {
   let bs = s.as_bytes();
   let mut tokens = Vec::new();
   let mut st = St::default();
   while st.i < bs.len() {
     let start = st.i;
-    let kind = go(&mut st, bs);
+    let kind = go(&mut st, bs, num_underscore);
     assert!(start < st.i, "lexer failed to advance");
     let text = std::str::from_utf8(&bs[start..st.i]).expect("should get utf-8");
     tokens.push(Token { kind, text });
@@ -126,7 +129,7 @@ struct St {
 /// this returns `sk` and updates `st.i` to `end` such that `bs[start..end]` is a `str` and `sk` is
 /// the kind for that `str`.
 #[allow(clippy::too_many_lines)]
-fn go(st: &mut St, bs: &[u8]) -> SK {
+fn go(st: &mut St, bs: &[u8], num_underscore: bool) -> SK {
   let b = bs[st.i];
   let start = st.i;
   // block comments
@@ -185,7 +188,10 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
       st.errors.push(Error { range: range(start, idx), kind: ErrorKind::Num(kind) });
     });
     st.i = idx;
-    return match res {
+    if res.has_underscore && !num_underscore {
+      err(st, start, ErrorKind::Underscore);
+    }
+    return match res.kind {
       lex_util::num::Kind::Int { .. } => SK::IntLit,
       lex_util::num::Kind::Word { .. } => SK::WordLit,
       lex_util::num::Kind::Real { .. } => SK::RealLit,

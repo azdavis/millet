@@ -16,7 +16,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
         st.err_tok(&tok, ErrorKind::Disallowed(Disallowed::Exp("`int` literal")));
       }
       let n = if let lex_util::num::Kind::Int { n, .. } =
-        lex_util::num::get(&mut 0, tok.text().as_bytes(), |_, _| ())
+        lex_util::num::get(&mut 0, tok.text().as_bytes(), |_, _| ()).kind
       {
         n
       } else {
@@ -29,7 +29,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
         st.err_tok(&tok, ErrorKind::Disallowed(Disallowed::Exp("`real` literal")));
       }
       let n = if let lex_util::num::Kind::Real { neg, whole, frac_leading_zeroes, frac, exp } =
-        lex_util::num::get(&mut 0, tok.text().as_bytes(), |_, _| ())
+        lex_util::num::get(&mut 0, tok.text().as_bytes(), |_, _| ()).kind
       {
         let mut s = String::new();
         if neg {
@@ -61,7 +61,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
         st.err_tok(&tok, ErrorKind::Disallowed(Disallowed::Exp("`word` literal")));
       }
       let n = if let lex_util::num::Kind::Word { n, .. } =
-        lex_util::num::get(&mut 0, tok.text().as_bytes(), |_, _| ())
+        lex_util::num::get(&mut 0, tok.text().as_bytes(), |_, _| ()).kind
       {
         n
       } else {
@@ -110,7 +110,7 @@ pub(crate) fn get_lab(st: &mut St<'_>, lab: &ast::Lab) -> sml_hir::Lab {
     }
     ast::LabKind::IntLit => {
       let n = if let lex_util::num::Kind::Int { n, hex } =
-        lex_util::num::get(&mut 0, lab.token.text().as_bytes(), |_, _| ())
+        lex_util::num::get(&mut 0, lab.token.text().as_bytes(), |_, _| ()).kind
       {
         if hex {
           st.err_tok(&lab.token, ErrorKind::HexNumLab);

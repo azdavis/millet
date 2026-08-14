@@ -206,6 +206,8 @@ pub struct SuccessorMl {
   pub sig_withtype: bool,
   #[serde(default)]
   pub vector: bool,
+  #[serde(default)]
+  pub num_underscore: bool,
 }
 
 /// Configuration for [Lunar ML][1] features.
