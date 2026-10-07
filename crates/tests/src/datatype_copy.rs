@@ -58,3 +58,14 @@ val _ = S.A: S.a
   ",
   );
 }
+
+#[test]
+fn structure_primitive_app() {
+  check(
+    r"
+structure S = struct datatype ref = datatype ref datatype list = datatype list end
+val _: int ref = S.ref 0
+val _: int list = S.:: (1, [])
+",
+  );
+}

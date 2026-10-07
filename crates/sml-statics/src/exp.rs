@@ -264,7 +264,8 @@ fn lint_app(
       match iter.next()? {
         def::Def::Primitive(_) => {
           assert!(iter.next().is_none(), "primitives should have exactly one def");
-          assert!(path.prefix().is_empty(), "primitives are at the top level");
+          // a primitive may be reached through a structure via datatype replication, e.g.
+          // `structure S = struct datatype ref = datatype ref end` makes `S.ref` primitive.
           match path.last().as_str() {
             "=" | "<>" => lint_eq(cx, ars, argument),
             "use" => {
