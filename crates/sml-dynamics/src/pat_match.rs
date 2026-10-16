@@ -12,7 +12,7 @@ pub(crate) fn get(ac: &mut ValEnv, cx: Cx<'_>, pat: sml_hir::PatIdx, val: &Val) 
       IdStatus::Con => get_con(ac, cx, path.last(), ConKind::Dat, *pat_arg, val),
       IdStatus::Exn(exn) => get_con(ac, cx, path.last(), ConKind::Exn(*exn), *pat_arg, val),
       IdStatus::Val => {
-        assert!(path.prefix().is_empty());
+        assert!(path.prefix().is_empty(), "val pat should have no path prefix");
         assert!(pat_arg.is_none());
         ac.insert(path.last().clone(), val.clone());
         true

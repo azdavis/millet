@@ -50,7 +50,7 @@ fn neg_label() {
   check(
     r"
 type t = { ~3: int, 1: bool }
-(**        ^^ invalid numeric label: out of range integral type conversion attempted *)
+(**        ^^ invalid numeric label: out of range *)
 ",
   );
 }

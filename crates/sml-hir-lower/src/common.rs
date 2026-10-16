@@ -120,13 +120,10 @@ pub(crate) fn get_lab(st: &mut St<'_>, lab: &ast::Lab) -> sml_hir::Lab {
         // should never happen?
         1
       };
-      let n = match usize::try_from(n) {
-        Ok(x) => x,
-        Err(e) => {
-          st.err_tok(&lab.token, ErrorKind::InvalidNumLab(e));
-          1
-        }
-      };
+      let n = usize::try_from(n).unwrap_or_else(|_| {
+        st.err_tok(&lab.token, ErrorKind::InvalidNumLab);
+        1
+      });
       if n == 0 {
         st.err_tok(&lab.token, ErrorKind::ZeroNumLab);
       }

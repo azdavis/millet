@@ -265,7 +265,7 @@ fn get_str_exp(
         let ty_info = to_add.ty_env.get(ov.as_str()).expect("should get overloaded ty");
         match st.syms_tys.tys.data(ty_info.ty_scheme.ty) {
           TyData::Con(data) => {
-            assert!(data.args.is_empty());
+            assert!(data.args.is_empty(), "overloaded ty con should have no args");
             st.syms_tys.syms.overloads_mut()[ov].push(data.sym);
           }
           t => unreachable!("overload not a Con: {t:?}"),

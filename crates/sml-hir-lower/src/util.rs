@@ -46,7 +46,7 @@ pub(crate) enum ErrorKind {
   FunBindMismatchedName(String, String),
   FunBindWrongNumPats(usize, usize),
   InvalidRealLit(std::num::ParseFloatError),
-  InvalidNumLab(std::num::TryFromIntError),
+  InvalidNumLab,
   ZeroNumLab,
   HexNumLab,
   MultipleRestPatRows,
@@ -94,7 +94,7 @@ impl fmt::Display for Error {
         write!(f, "expected {want} pattern{s}, found {got}")
       }
       ErrorKind::InvalidRealLit(e) => write!(f, "invalid literal: {e}"),
-      ErrorKind::InvalidNumLab(e) => write!(f, "invalid numeric label: {e}"),
+      ErrorKind::InvalidNumLab => f.write_str("invalid numeric label: out of range"),
       ErrorKind::ZeroNumLab => f.write_str("invalid numeric label: numeric labels start at 1"),
       ErrorKind::HexNumLab => f.write_str("invalid numeric label: hexadecimal"),
       ErrorKind::MultipleRestPatRows => f.write_str("multiple `...`"),
@@ -246,7 +246,7 @@ impl Error {
       ErrorKind::FunBindMismatchedName(_, _) => Code::n(4001),
       ErrorKind::FunBindWrongNumPats(_, _) => Code::n(4002),
       ErrorKind::InvalidRealLit(_) => Code::n(4004),
-      ErrorKind::InvalidNumLab(_) | ErrorKind::ZeroNumLab | ErrorKind::HexNumLab => Code::n(4005),
+      ErrorKind::InvalidNumLab | ErrorKind::ZeroNumLab | ErrorKind::HexNumLab => Code::n(4005),
       ErrorKind::MultipleRestPatRows => Code::n(4006),
       ErrorKind::RestPatRowNotLast => Code::n(4007),
       ErrorKind::RequiresOperand => Code::n(4009),
