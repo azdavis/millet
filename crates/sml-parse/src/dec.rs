@@ -409,7 +409,7 @@ fn fixity(p: &mut Parser<'_>) -> u16 {
     } else {
       match text.parse::<u16>() {
         Ok(x) => ret = x,
-        Err(e) => p.error(ErrorKind::InvalidFixity(e)),
+        Err(_) => p.error(ErrorKind::InvalidFixity),
       }
     }
     p.bump();

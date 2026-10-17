@@ -48,7 +48,7 @@ fn hex() {
   check(
     r"
 infix 0x1 bad
-(**   ^^^ invalid fixity: invalid digit found in string *)
+(**   ^^^ invalid fixity *)
 ",
   );
 }

@@ -44,12 +44,11 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
         if exp != 0 {
           write!(&mut s, "e{exp}").expect("write exp");
         }
-        match s.parse() {
-          Ok(x) => x,
-          Err(e) => {
-            st.err_tok(&tok, ErrorKind::InvalidRealLit(e));
-            0.0
-          }
+        if let Ok(x) = s.parse() {
+          x
+        } else {
+          st.err_tok(&tok, ErrorKind::InvalidRealLit);
+          0.0
         }
       } else {
         0.0
@@ -120,12 +119,11 @@ pub(crate) fn get_lab(st: &mut St<'_>, lab: &ast::Lab) -> sml_hir::Lab {
         // should never happen?
         1
       };
-      let n = match usize::try_from(n) {
-        Ok(x) => x,
-        Err(e) => {
-          st.err_tok(&lab.token, ErrorKind::InvalidNumLab(e));
-          1
-        }
+      let n = if let Ok(x) = usize::try_from(n) {
+        x
+      } else {
+        st.err_tok(&lab.token, ErrorKind::InvalidNumLab);
+        1
       };
       if n == 0 {
         st.err_tok(&lab.token, ErrorKind::ZeroNumLab);

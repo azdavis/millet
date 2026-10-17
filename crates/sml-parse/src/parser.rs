@@ -15,7 +15,7 @@ pub(crate) type Parser<'a> = event_parse::Parser<'a, SyntaxKind, ErrorKind>;
 pub(crate) enum ErrorKind {
   NotInfix(str_util::Name),
   InfixWithoutOp(str_util::Name),
-  InvalidFixity(std::num::ParseIntError),
+  InvalidFixity,
   NegativeFixity,
   SameFixityDiffAssoc,
   Expected(Expected),
@@ -31,7 +31,7 @@ impl fmt::Display for Error {
       ErrorKind::InfixWithoutOp(name) => {
         write!(f, "infix name used as non-infix without `op`: `{name}`")
       }
-      ErrorKind::InvalidFixity(e) => write!(f, "invalid fixity: {e}"),
+      ErrorKind::InvalidFixity => f.write_str("invalid fixity"),
       ErrorKind::NegativeFixity => f.write_str("fixity is negative"),
       ErrorKind::SameFixityDiffAssoc => {
         f.write_str("consecutive infix names with same fixity but different associativity")
@@ -127,7 +127,7 @@ impl Error {
     match self.0.inner {
       ErrorKind::NotInfix(_) => Code::n(3001),
       ErrorKind::InfixWithoutOp(_) => Code::n(3002),
-      ErrorKind::InvalidFixity(_) => Code::n(3003),
+      ErrorKind::InvalidFixity => Code::n(3003),
       ErrorKind::NegativeFixity => Code::n(3004),
       ErrorKind::SameFixityDiffAssoc => Code::n(3005),
       ErrorKind::Expected(_) => Code::n(3006),
