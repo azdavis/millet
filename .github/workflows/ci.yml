@@ -6,10 +6,10 @@ on:
     branches: [main]
     tags: [v*]
 env:
+  CARGO_BUILD_WARNINGS: deny
   CARGO_INCREMENTAL: 0
   CI: 1
   RUST_BACKTRACE: short
-  RUSTFLAGS: "-D warnings"
 jobs:
   test:
     runs-on: ubuntu-latest
