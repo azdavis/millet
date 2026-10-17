@@ -51,10 +51,10 @@ fn structure() {
     r"
 structure S = struct datatype a = A end
 datatype b = datatype S.a
-val _ = A: b
-val _ = A: S.a
-val _ = S.A: b
-val _ = S.A: S.a
+val _: b = A
+val _: S.a = A
+val _: b = S.A
+val _: S.a = S.A
   ",
   );
 }
