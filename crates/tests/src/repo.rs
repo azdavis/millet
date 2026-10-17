@@ -58,8 +58,8 @@ fn empty_git_grep(patterns: &[&str], msg: &str) {
     cmd.args(["-e", pattern]);
   }
   let out = cmd.output().unwrap();
-  assert!(out.stderr.is_empty());
   let out = String::from_utf8(out.stdout).unwrap();
+  assert_eq!(out, "");
   let lines: Vec<_> = out.lines().collect();
   assert!(lines.is_empty(), "{msg}: {lines:#?}");
 }
