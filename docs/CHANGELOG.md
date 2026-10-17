@@ -4,6 +4,11 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 Millet technically follows [SemVer][sem-ver], but the major version is zero, and it probably will be [for a while][zero-ver].
 
+## v0.15.3
+
+- Allow `language.successor-ml.num-underscore`.
+- Fix bug with primitives datatype-copied into structures.
+
 ## v0.15.2
 
 - Rename `language.successor-ml.exp-row-pun` to `language.successor-ml.record-pun`.
