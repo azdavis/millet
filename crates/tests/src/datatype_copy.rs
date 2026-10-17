@@ -58,3 +58,16 @@ val _: S.a = S.A
   ",
   );
 }
+
+#[test]
+fn primitive_in_structure() {
+  check(
+    r"
+structure S = struct
+  datatype ref = datatype ref
+end
+
+val _: int ref = S.ref 0
+",
+  );
+}

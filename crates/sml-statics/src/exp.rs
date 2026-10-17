@@ -264,7 +264,6 @@ fn lint_app(
       match iter.next()? {
         def::Def::Primitive(_) => {
           assert!(iter.next().is_none(), "primitives should have exactly one def");
-          assert!(path.prefix().is_empty(), "primitives are at the top level");
           match path.last().as_str() {
             "=" | "<>" => lint_eq(cx, ars, argument),
             "use" => {
