@@ -634,3 +634,41 @@ val _ =
 ",
   );
 }
+
+/// Isabelle-generated code has type class dictionaries as nested record types, which can expand to
+/// thousands of nodes. Pattern matching on them used to recurse once per node of the expanded type
+/// and overflow the stack.
+#[test]
+fn nested_record_ty_no_overflow() {
+  let n = 14;
+  let mut s = String::from("type t0 = {x : int}\n");
+  for i in 1..=n {
+    let j = i - 1;
+    s.push_str(&format!("type t{i} = {{a{i} : t{j}, b{i} : t{j}}}\n"));
+  }
+  let m = n - 1;
+  s.push_str(&format!("fun f (d : t{n}) = d\n"));
+  s.push_str(&format!("val g = #a{n} : t{n} -> t{m}\n"));
+  s.push_str(&format!(
+    "val h = fn (d : t{n}) => case d of {{b{n} = {{a{m} = _, ...}}, ...}} => 1\n"
+  ));
+  check(&s);
+}
+
+/// Expanding a record argument nobody matches on used to use up the depth budget in `split`, after
+/// which this exhaustive match was reported as missing a case.
+#[test]
+fn record_arg_does_not_hide_exhaustiveness() {
+  check(
+    r"
+type t0 = {x : int}
+type t1 = {a1 : t0, b1 : t0}
+type t2 = {a2 : t1, b2 : t1}
+type t3 = {a3 : t2, b3 : t2}
+datatype 'a option = NONE | SOME of 'a
+fun f (d : t3) (SOME a) (SOME b) = 0
+  | f d NONE _ = 1
+  | f d _ NONE = 2
+",
+  );
+}

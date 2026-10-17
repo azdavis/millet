@@ -67,7 +67,16 @@ impl pattern_match::Lang for Lang {
           if use_any { vec![Con::Any] } else { all_cons }
         }
         TyData::Record(rows) => {
-          vec![Con::Record { labels: rows.keys().cloned().collect(), allows_other: false }]
+          // a record type has exactly one constructor, so if no row in this column has a record
+          // pattern, a wildcard covers it. splitting into the record constructor anyway would
+          // push one wildcard column per field, recursing through the whole (possibly huge,
+          // after expanding type abbreviations) nested record type.
+          let mut cons = cons;
+          if cons.any(|c| matches!(c, Con::Record { .. })) {
+            vec![Con::Record { labels: rows.keys().cloned().collect(), allows_other: false }]
+          } else {
+            vec![Con::Any]
+          }
         }
       },
       Con::Int(_)
@@ -90,7 +99,10 @@ impl pattern_match::Lang for Lang {
       | TyData::UnsolvedMetaVar(_)
       | TyData::FixedVar(_)
       | TyData::Fn(_) => Vec::new(),
-      TyData::Record(rows) => rows.values().copied().collect(),
+      TyData::Record(rows) => match con {
+        Con::Any => Vec::new(),
+        _ => rows.values().copied().collect(),
+      },
       TyData::Con(data) => match con {
         Con::Any | Con::Int(_) | Con::Word(_) | Con::Char(_) | Con::String(_) => Vec::new(),
         Con::Variant(sym, variant_name) => {

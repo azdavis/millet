@@ -187,8 +187,16 @@ fn list_pat<'p>(ac: &mut Vec<&'p ConPat<Lang>>, mut pat: &'p ConPat<Lang>) -> Li
           RawPat::Con(x) => x,
           RawPat::Or(_) => unreachable!("the argument to :: is a con pat"),
         };
-        let Con::Record { allows_other: false, labels } = &arg_pat.con else {
-          unreachable!("the argument to :: is a record that does not allow others")
+        let labels = match &arg_pat.con {
+          Con::Record { allows_other: false, labels } => labels,
+          // a wildcard for the whole (head, tail) pair, i.e. `_ :: _`.
+          Con::Any => {
+            assert!(arg_pat.args.is_empty());
+            ac.push(arg_pat);
+            ac.push(arg_pat);
+            return ListPatLen::Unknown;
+          }
+          _ => unreachable!("the argument to :: is a record that does not allow others, or _"),
         };
         let is_2_tup =
           labels.len() == 2 && (0..2).all(|x| labels.contains(&sml_hir::Lab::tuple(x)));
